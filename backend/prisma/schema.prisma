@@ -28,6 +28,7 @@ model User {
   applications       Application[] @relation("ApplicantApplications")
   savedJobs          SavedJob[]
   analytics          Analytics?
+  company            Company?
 
   @@index([email])
   @@index([clerkId])
@@ -49,33 +50,61 @@ model Document {
   @@index([userId])
 }
 
-model Job {
-  id             String        @id @default(cuid())
-  title          String
-  description    String
-  requirements   String
-  location       String?
-  latitude       Float?
-  longitude      Float?
-  category       String?
-  customCategory String?
-  type           String
-  customJobType  String?
-  deadline       DateTime?
-  companyId      String
-  company        User          @relation("EmployerJobs", fields: [companyId], references: [id], onDelete: Cascade)
-  salaryMin      Float?
-  salaryMax      Float?
-  isClosed       Boolean       @default(false)
-  jobType        String?
-  companyLogo    String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+// Company profile — rich employer-managed company page
+model Company {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  logo        String?
+  cover       String?
+  description String?
+  hq          String?
+  stage       String?
+  employees   String?
+  industry    String?
+  website     String?
+  rating      Float?   @default(0)
+  verified    Boolean  @default(false)
+  stack       String[]
+  perks       String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  jobs        Job[]    @relation("CompanyJobs")
 
-  applications   Application[]
-  savedBy        SavedJob[]
+  @@index([industry])
+}
+
+model Job {
+  id               String        @id @default(cuid())
+  title            String
+  description      String
+  requirements     String
+  location         String?
+  latitude         Float?
+  longitude        Float?
+  category         String?
+  customCategory   String?
+  type             String
+  customJobType    String?
+  deadline         DateTime?
+  companyId        String
+  company          User          @relation("EmployerJobs", fields: [companyId], references: [id], onDelete: Cascade)
+  companyProfileId String?
+  companyProfile   Company?      @relation("CompanyJobs", fields: [companyProfileId], references: [id], onDelete: SetNull)
+  salaryMin        Float?
+  salaryMax        Float?
+  isClosed         Boolean       @default(false)
+  jobType          String?
+  companyLogo      String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  applications     Application[]
+  savedBy          SavedJob[]
 
   @@index([companyId])
+  @@index([companyProfileId])
   @@index([category])
   @@index([isClosed])
 }
@@ -137,4 +166,44 @@ model Analytics {
   totalHired        Int      @default(0)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+
+// Salary benchmark data — admin-managed market compensation data
+model SalaryBenchmark {
+  id        String   @id @default(cuid())
+  role      String
+  location  String?
+  sector    String?
+  tenure    String?
+  p25       Float
+  median    Float
+  p75       Float
+  p90       Float
+  currency  String   @default("GH₵")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+}
+
+// Skill premium data — admin-managed
+model SkillPremium {
+  id        String   @id @default(cuid())
+  skill     String
+  premium   String
+  demand    String
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Anonymous salary submissions from users
+model SalarySubmission {
+  id           String   @id @default(cuid())
+  role         String
+  compensation String
+  experience   String
+  location     String
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
 }
