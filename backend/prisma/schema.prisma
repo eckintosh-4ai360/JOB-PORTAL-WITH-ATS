@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                 String        @id @default(cuid())
+  name               String
+  email              String        @unique
+  password           String?
+  role               String        @default("jobseeker")
+  avatar             String?
+  resume             String?
+  clerkId            String?       @unique
+  companyName        String?
+  companyDescription String?
+  companyLogo        String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  documents          Document[]
+  postedJobs         Job[]         @relation("EmployerJobs")
+  applications       Application[] @relation("ApplicantApplications")
+  savedJobs          SavedJob[]
+  analytics          Analytics?
+
+  @@index([email])
+  @@index([clerkId])
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  url          String
+  category     String   @default("Other")
+  fileType     String?
+  size         Int?
+  publicId     String?
+  resourceType String?
+  uploadedAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Job {
+  id             String        @id @default(cuid())
+  title          String
+  description    String
+  requirements   String
+  location       String?
+  latitude       Float?
+  longitude      Float?
+  category       String?
+  customCategory String?
+  type           String
+  customJobType  String?
+  deadline       DateTime?
+  companyId      String
+  company        User          @relation("EmployerJobs", fields: [companyId], references: [id], onDelete: Cascade)
+  salaryMin      Float?
+  salaryMax      Float?
+  isClosed       Boolean       @default(false)
+  jobType        String?
+  companyLogo    String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  applications   Application[]
+  savedBy        SavedJob[]
+
+  @@index([companyId])
+  @@index([category])
+  @@index([isClosed])
+}
+
+model Application {
+  id                String    @id @default(cuid())
+  jobId             String
+  job               Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  applicantId       String?
+  applicant         User?     @relation("ApplicantApplications", fields: [applicantId], references: [id], onDelete: SetNull)
+  guestName         String?
+  guestEmail        String?
+  guestPhone        String?
+  resume            String
+  coverLetter       String?
+  coverLetterFile   String?
+  status            String    @default("Applied")
+  interviewDate     DateTime?
+  interviewTime     String?
+  interviewLocation String?
+  interviewNotes    String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([jobId])
+  @@index([applicantId])
+}
+
+model SavedJob {
+  id          String   @id @default(cuid())
+  jobSeekerId String
+  jobSeeker   User     @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([jobSeekerId, jobId])
+  @@index([jobSeekerId])
+}
+
+model EmailTemplate {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String?  @default("")
+  subject     String
+  html        String
+  variables   String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Analytics {
+  id                String   @id @default(cuid())
+  employerId        String   @unique
+  employer          User     @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  totalJobsPosted   Int      @default(0)
+  totalApplications Int      @default(0)
+  totalHired        Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
