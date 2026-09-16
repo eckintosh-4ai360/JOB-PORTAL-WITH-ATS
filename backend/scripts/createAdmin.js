@@ -1,7 +1,7 @@
 require("dotenv").config();
 
-const mongoose = require("mongoose");
-const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+const prisma = require("../config/prisma");
 
 const [, , email, password, ...nameParts] = process.argv;
 const name = nameParts.join(" ") || "Platform Admin";
@@ -13,33 +13,31 @@ if (!email || !password) {
 
 const createAdmin = async () => {
     try {
-        if (!process.env.MONGO_URI) {
-            throw new Error("MONGO_URI is not configured");
-        }
+        const cleanEmail = email.toLowerCase().trim();
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-        await mongoose.connect(process.env.MONGO_URI);
-        let user = await User.findOne({ email: email.toLowerCase().trim() });
-
-        if (!user) {
-            user = new User({
-                name,
-                email: email.toLowerCase().trim(),
-                password,
+        const user = await prisma.user.upsert({
+            where: { email: cleanEmail },
+            update: {
                 role: "admin",
-            });
-        } else {
-            user.role = "admin";
-            user.name = name;
-            user.password = password;
-        }
+                name,
+                password: hashedPassword,
+            },
+            create: {
+                name,
+                email: cleanEmail,
+                password: hashedPassword,
+                role: "admin",
+            },
+        });
 
-        await user.save();
         console.log(`Admin access enabled for ${user.email}`);
     } catch (error) {
         console.error("Could not create admin:", error.message);
         process.exitCode = 1;
     } finally {
-        await mongoose.disconnect();
+        await prisma.$disconnect();
     }
 };
 
