@@ -1,7 +1,9 @@
-const User = require("../models/User");
+const prisma = require("../config/prisma");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { createClerkClient, verifyToken } = require("@clerk/backend");
 const { sendAccountCreatedEmail } = require("../utils/emailService");
+const { toClient } = require("../utils/prismaHelper");
 
 const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 
@@ -17,9 +19,19 @@ exports.register = async (req, res) => {
         if (!role || !["jobseeker", "employer"].includes(role)) {
             return res.status(400).json({message: "A valid user role is required"});
         }
-        const userExist = await User.findOne({email});
+        const userExist = await prisma.user.findUnique({ where: { email } });
         if(userExist) return res.status(400).json({message: "User already exists"});
-        const user = await User.create({name, email, password, avatar, role});
+
+        // Hash password before storing
+        let hashedPassword = null;
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            hashedPassword = await bcrypt.hash(password, salt);
+        }
+
+        const user = await prisma.user.create({
+            data: { name, email, password: hashedPassword, avatar, role }
+        });
 
         sendAccountCreatedEmail({
             to: user.email,
@@ -28,9 +40,9 @@ exports.register = async (req, res) => {
         });
 
         res.status(201).json({
-            token: genarateToken(user._id),
-            user: {
-                _id: user._id,
+            token: genarateToken(user.id),
+            user: toClient({
+                _id: user.id,
                 name: user.name,
                 email: user.email,
                 avatar: user.avatar,
@@ -39,7 +51,7 @@ exports.register = async (req, res) => {
                 companyDescription: user.companyDescription || '',
                 companyLogo: user.companyLogo || '',
                 resume: user.resume || '',
-            }
+            })
         });
 
     } catch (error){
@@ -51,14 +63,21 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     try{
         const {email, password} = req.body;
-        const user = await User.findOne({email});
-        if(!user || !await user.matchPassword(password)){
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if(!user || !user.password) {
             return res.status(401).json({message: "Invalid credentials"});
         }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({message: "Invalid credentials"});
+        }
+
         res.json({
-            token: genarateToken(user._id),
-            user: {
-                _id: user._id,
+            token: genarateToken(user.id),
+            user: toClient({
+                _id: user.id,
                 name: user.name,
                 email: user.email,
                 avatar: user.avatar,
@@ -67,7 +86,7 @@ exports.login = async (req, res) => {
                 companyDescription: user.companyDescription || '',
                 companyLogo: user.companyLogo || '',
                 resume: user.resume || '',
-            }
+            })
         });
     } catch (error){
         console.error(error);
@@ -81,7 +100,7 @@ exports.getMe = async (req, res) => {
             return res.status(401).json({message: "Not authorized"});
         }
 
-        res.status(200).json({user: req.user});
+        res.status(200).json({user: toClient(req.user)});
     } catch (error){
         console.error(error);
         res.status(500).json({message: error.message});
@@ -103,8 +122,6 @@ exports.clerkAuth = async (req, res) => {
         // Verify the session token with Clerk and get the user
         let clerkUser;
         try {
-            // verifyToken decodes & verifies the Clerk session JWT and returns the payload
-            // The "sub" claim is the Clerk user ID (user_xxxx)
             const payload = await verifyToken(clerkToken, {
                 secretKey: process.env.CLERK_SECRET_KEY,
             });
@@ -122,15 +139,24 @@ exports.clerkAuth = async (req, res) => {
             return res.status(400).json({ message: "No email found on Clerk account" });
         }
 
-        // Find existing user by clerkId or email, or create a new one
-        let user = await User.findOne({ $or: [{ clerkId: clerkUser.id }, { email }] });
+        // Find existing user by clerkId or email
+        let user = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { clerkId: clerkUser.id },
+                    { email }
+                ]
+            }
+        });
         let isNewUser = false;
 
         if (user) {
-            // Update clerkId if missing (e.g. email-account user now signs in with Google)
+            // Update clerkId if missing
             if (!user.clerkId) {
-                user.clerkId = clerkUser.id;
-                await user.save();
+                user = await prisma.user.update({
+                    where: { id: user.id },
+                    data: { clerkId: clerkUser.id }
+                });
             }
         } else {
             // New user — role is required on first sign-in
@@ -140,13 +166,15 @@ exports.clerkAuth = async (req, res) => {
                     requiresRole: true,
                 });
             }
-            user = await User.create({
-                clerkId: clerkUser.id,
-                name,
-                email,
-                avatar,
-                role,
-                password: null,
+            user = await prisma.user.create({
+                data: {
+                    clerkId: clerkUser.id,
+                    name,
+                    email,
+                    avatar,
+                    role,
+                    password: null,
+                }
             });
             isNewUser = true;
         }
@@ -160,9 +188,9 @@ exports.clerkAuth = async (req, res) => {
         }
 
         res.json({
-            token: genarateToken(user._id),
-            user: {
-                _id: user._id,
+            token: genarateToken(user.id),
+            user: toClient({
+                _id: user.id,
                 name: user.name,
                 email: user.email,
                 avatar: user.avatar,
@@ -171,7 +199,7 @@ exports.clerkAuth = async (req, res) => {
                 companyDescription: user.companyDescription || '',
                 companyLogo: user.companyLogo || '',
                 resume: user.resume || '',
-            }
+            })
         });
 
     } catch (error) {
