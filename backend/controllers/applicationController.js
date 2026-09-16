@@ -1,7 +1,5 @@
-const Application = require("../models/Application");
-const Job = require("../models/Job");
-const User = require("../models/User");
-const mongoose = require("mongoose");
+const prisma = require("../config/prisma");
+const { toClient } = require("../utils/prismaHelper");
 const { uploadToCloudinary, uploadToLocalDisk } = require("../middlewares/uploadMiddleware");
 const {
     sendApplicationSubmittedEmail,
@@ -15,23 +13,39 @@ const {
 const APPLICATION_STATUSES = ["Applied", "Under Review", "Interviewing", "Offered", "Rejected"];
 
 const normalizeApplication = (application) => {
-    const normalized = application.toObject({ virtuals: true });
+    const normalized = toClient(application);
 
-    if (normalized.isGuest) {
-        normalized.applicantName = normalized.guestName;
-        normalized.applicantEmail = normalized.guestEmail;
+    const isGuest = !normalized.applicantId && !normalized.applicant;
+    normalized.isGuest = isGuest;
+
+    if (isGuest) {
+        normalized.applicantName = normalized.guestName || "";
+        normalized.applicantEmail = normalized.guestEmail || "";
         normalized.applicantPhone = normalized.guestPhone || "";
     } else if (normalized.applicant) {
-        normalized.applicantName = normalized.applicant.name;
-        normalized.applicantEmail = normalized.applicant.email;
+        normalized.applicantName = normalized.applicant.name || "";
+        normalized.applicantEmail = normalized.applicant.email || "";
+        normalized.applicantPhone = normalized.applicant.phone || "";
+    }
+
+    if (normalized.interviewDate || normalized.interviewTime || normalized.interviewLocation || normalized.interviewNotes) {
+        normalized.interview = {
+            date: normalized.interviewDate,
+            time: normalized.interviewTime,
+            location: normalized.interviewLocation,
+            notes: normalized.interviewNotes || "",
+        };
     }
 
     return normalized;
 };
 
 const getEmployerJobIds = async (employerId) => {
-    const jobs = await Job.find({ company: employerId }).select("_id");
-    return jobs.map((job) => job._id);
+    const jobs = await prisma.job.findMany({
+        where: { companyId: employerId },
+        select: { id: true },
+    });
+    return jobs.map((job) => job.id);
 };
 
 const getPagination = (query) => {
@@ -46,7 +60,9 @@ const getPagination = (query) => {
 // @access  Public (optionalAuth — works with or without JWT)
 const applyForJob = async (req, res) => {
     try {
-        const job = await Job.findById(req.params.jobId);
+        const job = await prisma.job.findUnique({
+            where: { id: req.params.jobId },
+        });
 
         if (!job) {
             return res.status(404).json({ message: "Job not found" });
@@ -65,9 +81,11 @@ const applyForJob = async (req, res) => {
 
         // Duplicate prevention  
         if (isLoggedIn) {
-            const alreadyApplied = await Application.findOne({
-                job: req.params.jobId,
-                applicant: req.user._id,
+            const alreadyApplied = await prisma.application.findFirst({
+                where: {
+                    jobId: req.params.jobId,
+                    applicantId: req.user._id,
+                },
             });
             if (alreadyApplied) {
                 return res.status(400).json({ message: "You have already applied for this job" });
@@ -78,16 +96,19 @@ const applyForJob = async (req, res) => {
             if (!guestName || !guestEmail) {
                 return res.status(400).json({ message: "Name and email are required for guest applications" });
             }
-            const alreadyApplied = await Application.findOne({
-                job: req.params.jobId,
-                guestEmail: guestEmail.toLowerCase().trim(),
+            const cleanEmail = guestEmail.toLowerCase().trim();
+            const alreadyApplied = await prisma.application.findFirst({
+                where: {
+                    jobId: req.params.jobId,
+                    guestEmail: { equals: cleanEmail, mode: "insensitive" },
+                },
             });
             if (alreadyApplied) {
                 return res.status(400).json({ message: "An application with this email already exists for this job" });
             }
         }
 
-        //Resume handling   
+        // Resume handling   
         const resumeFile = req.files?.resume?.[0];
         let resume = req.body.resume;
         if (resumeFile) {
@@ -108,7 +129,7 @@ const applyForJob = async (req, res) => {
             return res.status(400).json({ message: "A resume (file or URL) is required" });
         }
 
-        //Cover letter file handling 
+        // Cover letter file handling 
         const coverLetterFileUpload = req.files?.coverLetterFile?.[0];
         let coverLetterFileUrl = "";
         if (coverLetterFileUpload) {
@@ -125,36 +146,37 @@ const applyForJob = async (req, res) => {
             }
         }
 
-        //Create application 
+        // Create application 
         const applicationData = {
-            job: req.params.jobId,
+            jobId: req.params.jobId,
             resume,
             coverLetter: req.body.coverLetter || "",
             coverLetterFile: coverLetterFileUrl || "",
         };
 
         if (isLoggedIn) {
-            applicationData.applicant = req.user._id;
+            applicationData.applicantId = req.user._id;
         } else {
             applicationData.guestName = req.body.guestName.trim();
             applicationData.guestEmail = req.body.guestEmail.toLowerCase().trim();
             applicationData.guestPhone = req.body.guestPhone?.trim() || "";
         }
 
-        const application = await Application.create(applicationData);
-
-        //Send confirmation email to applicant 
-        const jobForEmail = await Job.findById(req.params.jobId).select("title");
-        const recipientEmail = isLoggedIn ? req.user.email : applicationData.guestEmail;
-        const recipientName  = isLoggedIn ? req.user.name  : applicationData.guestName;
-
-        sendApplicationSubmittedEmail({
-            to:            recipientEmail,
-            applicantName: recipientName,
-            jobTitle:      jobForEmail?.title || "the position",
+        const application = await prisma.application.create({
+            data: applicationData,
         });
 
-        res.status(201).json({ message: "Application submitted successfully", application });
+        // Send confirmation email to applicant 
+        const recipientEmail = isLoggedIn ? req.user.email : applicationData.guestEmail;
+        const recipientName = isLoggedIn ? req.user.name : applicationData.guestName;
+
+        sendApplicationSubmittedEmail({
+            to: recipientEmail,
+            applicantName: recipientName,
+            jobTitle: job.title || "the position",
+        });
+
+        res.status(201).json({ message: "Application submitted successfully", application: normalizeApplication(application) });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error", error: error.message });
@@ -170,18 +192,31 @@ const getMyApplications = async (req, res) => {
             return res.status(403).json({ message: "Only jobseekers can access this route" });
         }
 
-        const applications = await Application.find({ applicant: req.user._id })
-            .populate({
-                path: "job",
-                select: "title location type company isClosed",
-                populate: {
-                    path: "company",
-                    select: "name companyName companyLogo",
+        const applications = await prisma.application.findMany({
+            where: { applicantId: req.user._id },
+            include: {
+                job: {
+                    select: {
+                        id: true,
+                        title: true,
+                        location: true,
+                        type: true,
+                        isClosed: true,
+                        company: {
+                            select: {
+                                id: true,
+                                name: true,
+                                companyName: true,
+                                companyLogo: true,
+                            },
+                        },
+                    },
                 },
-            })
-            .sort({ createdAt: -1 });
+            },
+            orderBy: { createdAt: "desc" },
+        });
 
-        res.status(200).json(applications);
+        res.status(200).json(applications.map(normalizeApplication));
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error", error: error.message });
@@ -200,10 +235,6 @@ const getEmployerApplications = async (req, res) => {
         const { jobId, status } = req.query;
         const { page, limit, skip } = getPagination(req.query);
 
-        if (jobId && !mongoose.isValidObjectId(jobId)) {
-            return res.status(400).json({ message: "Invalid job ID" });
-        }
-
         if (status && !APPLICATION_STATUSES.includes(status)) {
             return res.status(400).json({
                 message: `Status must be one of: ${APPLICATION_STATUSES.join(", ")}`,
@@ -211,26 +242,46 @@ const getEmployerApplications = async (req, res) => {
         }
 
         const employerJobIds = await getEmployerJobIds(req.user._id);
-        const filter = { job: { $in: employerJobIds } };
+        const where = { jobId: { in: employerJobIds } };
 
         if (jobId) {
-            const ownsJob = employerJobIds.some((id) => id.toString() === jobId);
+            const ownsJob = employerJobIds.includes(jobId);
             if (!ownsJob) {
                 return res.status(403).json({ message: "Not authorized to view this job's applications" });
             }
-            filter.job = jobId;
+            where.jobId = jobId;
         }
 
-        if (status) filter.status = status;
+        if (status) where.status = status;
 
         const [total, applications] = await Promise.all([
-            Application.countDocuments(filter),
-            Application.find(filter)
-                .populate("applicant", "name email avatar resume")
-                .populate("job", "title location type isClosed")
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit),
+            prisma.application.count({ where }),
+            prisma.application.findMany({
+                where,
+                include: {
+                    applicant: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            avatar: true,
+                            resume: true,
+                        },
+                    },
+                    job: {
+                        select: {
+                            id: true,
+                            title: true,
+                            location: true,
+                            type: true,
+                            isClosed: true,
+                        },
+                    },
+                },
+                orderBy: { createdAt: "desc" },
+                skip,
+                take: limit,
+            }),
         ]);
 
         res.status(200).json({
@@ -256,10 +307,6 @@ const getEmployerApplicants = async (req, res) => {
 
         const { jobId, status } = req.query;
 
-        if (jobId && !mongoose.isValidObjectId(jobId)) {
-            return res.status(400).json({ message: "Invalid job ID" });
-        }
-
         if (status && !APPLICATION_STATUSES.includes(status)) {
             return res.status(400).json({
                 message: `Status must be one of: ${APPLICATION_STATUSES.join(", ")}`,
@@ -267,29 +314,41 @@ const getEmployerApplicants = async (req, res) => {
         }
 
         const employerJobIds = await getEmployerJobIds(req.user._id);
-        const filter = { job: { $in: employerJobIds } };
+        const where = { jobId: { in: employerJobIds } };
 
         if (jobId) {
-            const ownsJob = employerJobIds.some((id) => id.toString() === jobId);
+            const ownsJob = employerJobIds.includes(jobId);
             if (!ownsJob) {
                 return res.status(403).json({ message: "Not authorized to view this job's applicants" });
             }
-            filter.job = jobId;
+            where.jobId = jobId;
         }
 
-        if (status) filter.status = status;
+        if (status) where.status = status;
 
-        const applications = await Application.find(filter)
-            .populate("applicant", "name email phone avatar resume")
-            .sort({ createdAt: -1 });
+        const applications = await prisma.application.findMany({
+            where,
+            include: {
+                applicant: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true,
+                        resume: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: "desc" },
+        });
 
         const applicants = new Map();
 
         for (const application of applications) {
             const isGuest = !application.applicant;
             const key = isGuest
-                ? `guest:${application.guestEmail.toLowerCase()}`
-                : `user:${application.applicant._id}`;
+                ? `guest:${application.guestEmail?.toLowerCase()}`
+                : `user:${application.applicant.id}`;
             const existing = applicants.get(key);
 
             if (existing) {
@@ -298,11 +357,12 @@ const getEmployerApplicants = async (req, res) => {
             }
 
             applicants.set(key, {
-                _id: isGuest ? null : application.applicant._id,
+                _id: isGuest ? null : application.applicant.id,
+                id: isGuest ? null : application.applicant.id,
                 type: isGuest ? "guest" : "registered",
                 name: isGuest ? application.guestName : application.applicant.name,
                 email: isGuest ? application.guestEmail : application.applicant.email,
-                phone: isGuest ? application.guestPhone || "" : application.applicant.phone || "",
+                phone: isGuest ? application.guestPhone || "" : "",
                 avatar: isGuest ? "" : application.applicant.avatar || "",
                 resume: isGuest ? application.resume : application.applicant.resume || application.resume,
                 applicationCount: 1,
@@ -329,25 +389,35 @@ const getApplicationsForJob = async (req, res) => {
             return res.status(403).json({ message: "Only employers can access this route" });
         }
 
-        const job = await Job.findById(req.params.jobId);
+        const job = await prisma.job.findUnique({
+            where: { id: req.params.jobId },
+        });
 
         if (!job) {
             return res.status(404).json({ message: "Job not found" });
         }
 
-        if (job.company.toString() !== req.user._id.toString()) {
+        if (job.companyId !== req.user._id) {
             return res.status(403).json({ message: "Not authorized to view applications for this job" });
         }
 
-        const applications = await Application.find({ job: req.params.jobId })
-            .populate("applicant", "name email avatar resume")
-            .sort({ createdAt: -1 });
+        const applications = await prisma.application.findMany({
+            where: { jobId: req.params.jobId },
+            include: {
+                applicant: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true,
+                        resume: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: "desc" },
+        });
 
-        // Normalize output so employers see consistent name/email for both
-        // registered and guest applicants
-        const normalized = applications.map(normalizeApplication);
-
-        res.status(200).json(normalized);
+        res.status(200).json(applications.map(normalizeApplication));
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error", error: error.message });
@@ -359,30 +429,49 @@ const getApplicationsForJob = async (req, res) => {
 // @access  Private (Owner applicant or job's employer)
 const getApplicationById = async (req, res) => {
     try {
-        const application = await Application.findById(req.params.id)
-            .populate({
-                path: "job",
-                select: "title location type company",
-                populate: {
-                    path: "company",
-                    select: "name companyName companyLogo",
+        const application = await prisma.application.findUnique({
+            where: { id: req.params.id },
+            include: {
+                job: {
+                    select: {
+                        id: true,
+                        title: true,
+                        location: true,
+                        type: true,
+                        companyId: true,
+                        company: {
+                            select: {
+                                id: true,
+                                name: true,
+                                companyName: true,
+                                companyLogo: true,
+                            },
+                        },
+                    },
                 },
-            })
-            .populate("applicant", "name email avatar");
+                applicant: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true,
+                    },
+                },
+            },
+        });
 
         if (!application) {
             return res.status(404).json({ message: "Application not found" });
         }
 
-        const isApplicant = application.applicant && application.applicant._id.toString() === req.user._id.toString();
-        const job = await Job.findById(application.job._id);
-        const isJobOwner = job && job.company.toString() === req.user._id.toString();
+        const isApplicant = application.applicantId && application.applicantId === req.user._id;
+        const isJobOwner = application.job && application.job.companyId === req.user._id;
 
         if (!isApplicant && !isJobOwner) {
             return res.status(403).json({ message: "Not authorized to view this application" });
         }
 
-        res.status(200).json(application);
+        res.status(200).json(normalizeApplication(application));
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error", error: error.message });
@@ -405,59 +494,76 @@ const updateApplicationStatus = async (req, res) => {
             return res.status(400).json({ message: `Status must be one of: ${allowedStatuses.join(", ")}` });
         }
 
-        const application = await Application.findById(req.params.id);
+        const application = await prisma.application.findUnique({
+            where: { id: req.params.id },
+            include: {
+                job: true,
+                applicant: true,
+            },
+        });
 
         if (!application) {
             return res.status(404).json({ message: "Application not found" });
         }
 
-        const job = await Job.findById(application.job);
-
-        if (!job || job.company.toString() !== req.user._id.toString()) {
+        if (!application.job || application.job.companyId !== req.user._id) {
             return res.status(403).json({ message: "Not authorized to update this application" });
         }
 
+        const updateData = { status };
+
         if (status === "Interviewing") {
-            if (!application.applicant) {
+            if (!application.applicantId) {
                 return res.status(400).json({ message: "Interviews can only be scheduled for candidates with registered accounts." });
             }
             if (!interview || !interview.date || !interview.time || !interview.location) {
                 return res.status(400).json({ message: "Interview date, time, and location/link are required when scheduling an interview." });
             }
-            application.interview = {
-                date: new Date(interview.date),
-                time: interview.time,
-                location: interview.location,
-                notes: interview.notes || "",
-            };
+            updateData.interviewDate = new Date(interview.date);
+            updateData.interviewTime = interview.time;
+            updateData.interviewLocation = interview.location;
+            updateData.interviewNotes = interview.notes || "";
         }
 
-        application.status = status;
-        await application.save();
+        const updatedApplication = await prisma.application.update({
+            where: { id: req.params.id },
+            data: updateData,
+            include: {
+                job: true,
+                applicant: true,
+            },
+        });
 
-        //Send status notification email to applicant
+        // Send status notification email to applicant
         let recipientEmail, recipientName;
 
-        if (application.applicant) {
-            const user = await User.findById(application.applicant).select("name email");
-            recipientEmail = user?.email;
-            recipientName  = user?.name || "Applicant";
+        if (updatedApplication.applicant) {
+            recipientEmail = updatedApplication.applicant.email;
+            recipientName = updatedApplication.applicant.name || "Applicant";
         } else {
-            recipientEmail = application.guestEmail;
-            recipientName  = application.guestName || "Applicant";
+            recipientEmail = updatedApplication.guestEmail;
+            recipientName = updatedApplication.guestName || "Applicant";
         }
 
         if (recipientEmail) {
             const emailPayload = {
-                to:            recipientEmail,
+                to: recipientEmail,
                 applicantName: recipientName,
-                jobTitle:      job.title,
+                jobTitle: updatedApplication.job.title,
             };
 
             if (status === "Under Review") {
                 sendUnderReviewEmail(emailPayload);
             } else if (status === "Interviewing") {
-                sendInterviewScheduledEmail({ ...emailPayload, interview: application.interview });
+                sendInterviewScheduledEmail({
+                    ...emailPayload,
+                    interview: {
+                        date: updateData.interviewDate,
+                        time: updateData.interviewTime,
+                        location: updateData.interviewLocation,
+                        notes: updateData.interviewNotes,
+                    },
+                });
             } else if (status === "Offered") {
                 sendOfferEmail(emailPayload);
             } else if (status === "Rejected") {
@@ -467,7 +573,7 @@ const updateApplicationStatus = async (req, res) => {
             }
         }
 
-        res.status(200).json({ message: "Application status updated", application });
+        res.status(200).json({ message: "Application status updated", application: normalizeApplication(updatedApplication) });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error", error: error.message });
@@ -479,17 +585,21 @@ const updateApplicationStatus = async (req, res) => {
 // @access  Private (Jobseeker — must be the applicant)
 const withdrawApplication = async (req, res) => {
     try {
-        const application = await Application.findById(req.params.id);
+        const application = await prisma.application.findUnique({
+            where: { id: req.params.id },
+        });
 
         if (!application) {
             return res.status(404).json({ message: "Application not found" });
         }
 
-        if (application.applicant.toString() !== req.user._id.toString()) {
+        if (application.applicantId !== req.user._id) {
             return res.status(403).json({ message: "Not authorized to withdraw this application" });
         }
 
-        await application.deleteOne();
+        await prisma.application.delete({
+            where: { id: req.params.id },
+        });
 
         res.status(200).json({ message: "Application withdrawn successfully" });
     } catch (error) {
