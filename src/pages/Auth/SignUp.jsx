@@ -219,76 +219,89 @@ const SignUp = () => {
     <div className="min-h-screen bg-gray-50 flex font-display text-secondary overflow-hidden">
       
       {/* LEFT SIDE: Brand Showcase (Hidden on Mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-secondary overflow-hidden flex-col justify-between p-12">
-        {/* Background Decorative Mesh Gradients */}
-        <div className="absolute inset-0 bg-radial-to-br from-primary/20 via-transparent to-transparent opacity-60 pointer-events-none" />
-        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-primary/10 blur-3xl pointer-events-none animate-pulse duration-10000" />
-        <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-primary/20 blur-3xl pointer-events-none" />
+      <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-b from-[#026cb6] via-[#015894] to-[#014478] overflow-hidden flex-col justify-between p-12 xl:p-16 select-none">
+        {/* Soft Ambient Oceanic Light Accents */}
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-cyan-400/15 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-blue-600/20 blur-3xl pointer-events-none" />
 
         {/* Logo Header */}
-        <div className="relative z-10 flex items-center space-x-3 cursor-pointer" onClick={() => navigate("/")}>
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center border border-primary/40 shadow-lg shadow-primary/20">
-            <img src="/spg-logo.png" alt="logo" className="w-full h-full object-cover rounded-full" />
+        <div className="relative z-10 flex items-center space-x-3.5 cursor-pointer" onClick={() => navigate("/")}>
+          <div className="w-10 h-10 rounded-full border-2 border-white/80 flex items-center justify-center overflow-hidden shadow-sm">
+            <img src="/spg-logo.png" alt="SPG Logo" className="w-full h-full object-cover" />
           </div>
-          <span className="text-2xl font-bold text-white tracking-wide">
-            SPG <span className="text-primary">JobPortal</span>
+          <span className="text-2xl xl:text-[26px] font-bold text-white tracking-tight">
+            SPG <span className="text-[#8b5cf6]">JobPortal</span>
           </span>
         </div>
 
         {/* Brand Core Value Section */}
-        <div className="relative z-10 my-auto max-w-lg space-y-8">
+        <div className="relative z-10 my-auto max-w-lg space-y-7 xl:space-y-8">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="space-y-4"
+            transition={{ duration: 0.7 }}
+            className="space-y-5"
           >
-            <div className="inline-flex items-center space-x-2 bg-primary/10 border border-primary/20 text-primary px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#034475]/80 border border-[#2563eb]/40 text-[#818cf8] text-[11px] font-bold uppercase tracking-widest">
               <span>Next-Gen Job Matching</span>
             </div>
-            <h1 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight">
-              Start your career journey with <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-orange-400">Us</span> today.
+            <h1 className="text-4xl sm:text-5xl xl:text-[56px] font-extrabold text-white leading-[1.12] tracking-tight">
+              Start your career<br />
+              journey with{" "}
+              <span className="inline-block font-extrabold">
+                <span className="text-[#8b5cf6]">U</span>
+                <span className="text-[#f97316]">s</span>
+              </span><br />
+              today.
             </h1>
-            <p className="text-gray-400 text-lg leading-relaxed">
+            <p className="text-blue-100/80 text-base xl:text-lg leading-relaxed max-w-md">
               Create your profile to explore curated opportunities, engage directly with premium hiring managers, and apply seamlessly with one click.
             </p>
           </motion.div>
 
           {/* Stats Visual Cards */}
           <motion.div 
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="grid grid-cols-3 gap-4"
+            transition={{ duration: 0.7, delay: 0.15 }}
+            className="grid grid-cols-3 gap-3.5 xl:gap-4.5"
           >
-            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4 hover:border-primary/40 transition-colors group">
-              <div className="p-2 w-fit rounded-lg bg-primary/10 text-primary mb-2 group-hover:scale-110 transition-transform">
+            <div className="bg-[#03497d]/55 backdrop-blur-md border border-[#1e6ca8]/40 rounded-2xl p-5 xl:p-6 hover:border-white/20 transition-colors flex flex-col justify-between min-h-[145px]">
+              <div className="w-10 h-10 rounded-xl bg-[#8b5cf6]/20 text-[#8b5cf6] flex items-center justify-center">
                 <Briefcase className="w-5 h-5" />
               </div>
-              <div className="text-2xl font-bold text-white">12k+</div>
-              <div className="text-xs text-gray-400">Active Jobs</div>
+              <div className="mt-3">
+                <div className="text-2xl xl:text-[28px] font-bold text-white tracking-tight">12k+</div>
+                <div className="text-xs text-blue-200/70 font-medium mt-0.5">Active Jobs</div>
+              </div>
             </div>
-            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4 hover:border-primary/40 transition-colors group">
-              <div className="p-2 w-fit rounded-lg bg-primary/10 text-primary mb-2 group-hover:scale-110 transition-transform">
+
+            <div className="bg-[#03497d]/55 backdrop-blur-md border border-[#1e6ca8]/40 rounded-2xl p-5 xl:p-6 hover:border-white/20 transition-colors flex flex-col justify-between min-h-[145px]">
+              <div className="w-10 h-10 rounded-xl bg-[#8b5cf6]/20 text-[#8b5cf6] flex items-center justify-center">
                 <Building2 className="w-5 h-5" />
               </div>
-              <div className="text-2xl font-bold text-white">500+</div>
-              <div className="text-xs text-gray-400">Companies</div>
+              <div className="mt-3">
+                <div className="text-2xl xl:text-[28px] font-bold text-white tracking-tight">500+</div>
+                <div className="text-xs text-blue-200/70 font-medium mt-0.5">Companies</div>
+              </div>
             </div>
-            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4 hover:border-primary/40 transition-colors group">
-              <div className="p-2 w-fit rounded-lg bg-primary/10 text-primary mb-2 group-hover:scale-110 transition-transform">
+
+            <div className="bg-[#03497d]/55 backdrop-blur-md border border-[#1e6ca8]/40 rounded-2xl p-5 xl:p-6 hover:border-white/20 transition-colors flex flex-col justify-between min-h-[145px]">
+              <div className="w-10 h-10 rounded-xl bg-[#8b5cf6]/20 text-[#8b5cf6] flex items-center justify-center">
                 <Users className="w-5 h-5" />
               </div>
-              <div className="text-2xl font-bold text-white">98%</div>
-              <div className="text-xs text-gray-400">Match Rate</div>
+              <div className="mt-3">
+                <div className="text-2xl xl:text-[28px] font-bold text-white tracking-tight">98%</div>
+                <div className="text-xs text-blue-200/70 font-medium mt-0.5">Match Rate</div>
+              </div>
             </div>
           </motion.div>
         </div>
 
         {/* Footer info */}
-        <div className="relative z-10 text-sm text-gray-500 flex justify-between items-center">
-          <span>&copy; {new Date().getFullYear()} SPG JobPortal.</span>
-          <div className="flex space-x-4">
+        <div className="relative z-10 text-sm text-blue-200/60 flex justify-between items-center pt-6">
+          <span>&copy; 2026 SPG JobPortal.</span>
+          <div className="flex space-x-6">
             <a href="#" className="hover:text-white transition-colors">Privacy</a>
             <a href="#" className="hover:text-white transition-colors">Terms</a>
           </div>
