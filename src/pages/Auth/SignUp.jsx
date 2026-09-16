@@ -219,10 +219,10 @@ const SignUp = () => {
     <div className="min-h-screen bg-gray-50 flex font-display text-secondary overflow-hidden">
       
       {/* LEFT SIDE: Brand Showcase (Hidden on Mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-b from-[#026cb6] via-[#015894] to-[#014478] overflow-hidden flex-col justify-between p-12 xl:p-16 select-none">
-        {/* Soft Ambient Oceanic Light Accents */}
-        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-cyan-400/15 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-blue-600/20 blur-3xl pointer-events-none" />
+      <div className="hidden lg:flex lg:w-1/2 relative bg-[#131211] overflow-hidden flex-col justify-between p-12 xl:p-16 select-none">
+        {/* Ambient Warm Corner Glows */}
+        <div className="absolute -bottom-36 -right-36 w-[580px] h-[580px] rounded-full bg-gradient-to-tl from-orange-600/20 via-orange-950/10 to-transparent blur-3xl pointer-events-none" />
+        <div className="absolute top-0 left-0 w-80 h-80 rounded-full bg-orange-500/5 blur-3xl pointer-events-none" />
 
         {/* Logo Header */}
         <div className="relative z-10 flex items-center space-x-3.5 cursor-pointer" onClick={() => navigate("/")}>
@@ -230,7 +230,7 @@ const SignUp = () => {
             <img src="/spg-logo.png" alt="SPG Logo" className="w-full h-full object-cover" />
           </div>
           <span className="text-2xl xl:text-[26px] font-bold text-white tracking-tight">
-            SPG <span className="text-[#8b5cf6]">JobPortal</span>
+            SPG <span className="text-[#f97316]">JobPortal</span>
           </span>
         </div>
 
@@ -242,19 +242,15 @@ const SignUp = () => {
             transition={{ duration: 0.7 }}
             className="space-y-5"
           >
-            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#034475]/80 border border-[#2563eb]/40 text-[#818cf8] text-[11px] font-bold uppercase tracking-widest">
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#241a14] border border-[#f97316]/35 text-[#f97316] text-[11px] font-bold uppercase tracking-widest">
               <span>Next-Gen Job Matching</span>
             </div>
             <h1 className="text-4xl sm:text-5xl xl:text-[56px] font-extrabold text-white leading-[1.12] tracking-tight">
               Start your career<br />
-              journey with{" "}
-              <span className="inline-block font-extrabold">
-                <span className="text-[#8b5cf6]">U</span>
-                <span className="text-[#f97316]">s</span>
-              </span><br />
+              journey with <span className="text-[#f97316]">Us</span><br />
               today.
             </h1>
-            <p className="text-blue-100/80 text-base xl:text-lg leading-relaxed max-w-md">
+            <p className="text-gray-400 text-base xl:text-lg leading-relaxed max-w-md">
               Create your profile to explore curated opportunities, engage directly with premium hiring managers, and apply seamlessly with one click.
             </p>
           </motion.div>
@@ -266,40 +262,40 @@ const SignUp = () => {
             transition={{ duration: 0.7, delay: 0.15 }}
             className="grid grid-cols-3 gap-3.5 xl:gap-4.5"
           >
-            <div className="bg-[#03497d]/55 backdrop-blur-md border border-[#1e6ca8]/40 rounded-2xl p-5 xl:p-6 hover:border-white/20 transition-colors flex flex-col justify-between min-h-[145px]">
-              <div className="w-10 h-10 rounded-xl bg-[#8b5cf6]/20 text-[#8b5cf6] flex items-center justify-center">
+            <div className="bg-[#1c1b1a]/85 backdrop-blur-md border border-white/5 rounded-2xl p-5 xl:p-6 hover:border-[#f97316]/30 transition-colors flex flex-col justify-between min-h-[145px]">
+              <div className="w-10 h-10 rounded-xl bg-[#f97316]/10 text-[#f97316] flex items-center justify-center">
                 <Briefcase className="w-5 h-5" />
               </div>
               <div className="mt-3">
                 <div className="text-2xl xl:text-[28px] font-bold text-white tracking-tight">12k+</div>
-                <div className="text-xs text-blue-200/70 font-medium mt-0.5">Active Jobs</div>
+                <div className="text-xs text-gray-400 font-medium mt-0.5">Active Jobs</div>
               </div>
             </div>
 
-            <div className="bg-[#03497d]/55 backdrop-blur-md border border-[#1e6ca8]/40 rounded-2xl p-5 xl:p-6 hover:border-white/20 transition-colors flex flex-col justify-between min-h-[145px]">
-              <div className="w-10 h-10 rounded-xl bg-[#8b5cf6]/20 text-[#8b5cf6] flex items-center justify-center">
+            <div className="bg-[#1c1b1a]/85 backdrop-blur-md border border-white/5 rounded-2xl p-5 xl:p-6 hover:border-[#f97316]/30 transition-colors flex flex-col justify-between min-h-[145px]">
+              <div className="w-10 h-10 rounded-xl bg-[#f97316]/10 text-[#f97316] flex items-center justify-center">
                 <Building2 className="w-5 h-5" />
               </div>
               <div className="mt-3">
                 <div className="text-2xl xl:text-[28px] font-bold text-white tracking-tight">500+</div>
-                <div className="text-xs text-blue-200/70 font-medium mt-0.5">Companies</div>
+                <div className="text-xs text-gray-400 font-medium mt-0.5">Companies</div>
               </div>
             </div>
 
-            <div className="bg-[#03497d]/55 backdrop-blur-md border border-[#1e6ca8]/40 rounded-2xl p-5 xl:p-6 hover:border-white/20 transition-colors flex flex-col justify-between min-h-[145px]">
-              <div className="w-10 h-10 rounded-xl bg-[#8b5cf6]/20 text-[#8b5cf6] flex items-center justify-center">
+            <div className="bg-[#1c1b1a]/85 backdrop-blur-md border border-white/5 rounded-2xl p-5 xl:p-6 hover:border-[#f97316]/30 transition-colors flex flex-col justify-between min-h-[145px]">
+              <div className="w-10 h-10 rounded-xl bg-[#f97316]/10 text-[#f97316] flex items-center justify-center">
                 <Users className="w-5 h-5" />
               </div>
               <div className="mt-3">
                 <div className="text-2xl xl:text-[28px] font-bold text-white tracking-tight">98%</div>
-                <div className="text-xs text-blue-200/70 font-medium mt-0.5">Match Rate</div>
+                <div className="text-xs text-gray-400 font-medium mt-0.5">Match Rate</div>
               </div>
             </div>
           </motion.div>
         </div>
 
         {/* Footer info */}
-        <div className="relative z-10 text-sm text-blue-200/60 flex justify-between items-center pt-6">
+        <div className="relative z-10 text-sm text-gray-500 flex justify-between items-center pt-6">
           <span>&copy; 2026 SPG JobPortal.</span>
           <div className="flex space-x-6">
             <a href="#" className="hover:text-white transition-colors">Privacy</a>
