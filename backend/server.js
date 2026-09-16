@@ -12,6 +12,8 @@ const applicationRoutes = require("./routes/applicationRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const savedJobRoutes = require("./routes/savedJobRoutes");
 const emailTemplateRoutes = require("./routes/emailTemplateRoutes");
+const companyRoutes = require("./routes/companyRoutes");
+const salaryRoutes = require("./routes/salaryRoutes");
 
 
 const app = express();
@@ -31,11 +33,13 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/jobs', jobRoutes)
-app.use('/api/applications', applicationRoutes)
-app.use('/api/analytics', analyticsRoutes)
-app.use('/api/saved-jobs', savedJobRoutes)
-app.use('/api/email-templates', emailTemplateRoutes)
+app.use('/api/jobs', jobRoutes);
+app.use('/api/companies', companyRoutes);
+app.use('/api/salaries', salaryRoutes);
+app.use('/api/applications', applicationRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/saved-jobs', savedJobRoutes);
+app.use('/api/email-templates', emailTemplateRoutes);
 
 //Serve UPloads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {}));

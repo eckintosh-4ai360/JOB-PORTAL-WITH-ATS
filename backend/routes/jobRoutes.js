@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const {
     createJob,
+    getCompanies,
     getAllJobs,
     getJobById,
     getMyJobs,
@@ -12,6 +13,7 @@ const {
 const { protect } = require("../middlewares/authMiddleware");
 
 // Public routes
+router.get("/companies", getCompanies);
 router.get("/", getAllJobs);
 router.get("/employer/my-jobs", protect, getMyJobs);
 router.get("/:id", getJobById);
