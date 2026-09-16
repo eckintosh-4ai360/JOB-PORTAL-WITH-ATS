@@ -1,5 +1,5 @@
-const SavedJob = require("../models/SavedJob");
-const Job = require("../models/Job");
+const prisma = require("../config/prisma");
+const { toClient } = require("../utils/prismaHelper");
 
 // @desc    Save a job
 // @route   POST /api/saved-jobs/:jobId
@@ -10,28 +10,36 @@ const saveJob = async (req, res) => {
             return res.status(403).json({ message: "Only jobseekers can save jobs" });
         }
 
-        const job = await Job.findById(req.params.jobId);
+        const job = await prisma.job.findUnique({
+            where: { id: req.params.jobId },
+        });
 
         if (!job) {
             return res.status(404).json({ message: "Job not found" });
         }
 
         // Prevent duplicate saves
-        const alreadySaved = await SavedJob.findOne({
-            jobSeeker: req.user._id,
-            job: req.params.jobId,
+        const alreadySaved = await prisma.savedJob.findUnique({
+            where: {
+                jobSeekerId_jobId: {
+                    jobSeekerId: req.user._id,
+                    jobId: req.params.jobId,
+                },
+            },
         });
 
         if (alreadySaved) {
             return res.status(400).json({ message: "You have already saved this job" });
         }
 
-        const savedJob = await SavedJob.create({
-            jobSeeker: req.user._id,
-            job: req.params.jobId,
+        const savedJob = await prisma.savedJob.create({
+            data: {
+                jobSeekerId: req.user._id,
+                jobId: req.params.jobId,
+            },
         });
 
-        res.status(201).json({ message: "Job saved successfully", savedJob });
+        res.status(201).json({ message: "Job saved successfully", savedJob: toClient(savedJob) });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error", error: error.message });
@@ -47,18 +55,35 @@ const getSavedJobs = async (req, res) => {
             return res.status(403).json({ message: "Only jobseekers can access saved jobs" });
         }
 
-        const savedJobs = await SavedJob.find({ jobSeeker: req.user._id })
-            .populate({
-                path: "job",
-                select: "title location type category salaryMin salaryMax isClosed",
-                populate: {
-                    path: "company",
-                    select: "name companyName companyLogo",
+        const savedJobs = await prisma.savedJob.findMany({
+            where: { jobSeekerId: req.user._id },
+            include: {
+                job: {
+                    select: {
+                        id: true,
+                        title: true,
+                        location: true,
+                        type: true,
+                        category: true,
+                        salaryMin: true,
+                        salaryMax: true,
+                        isClosed: true,
+                        companyLogo: true,
+                        company: {
+                            select: {
+                                id: true,
+                                name: true,
+                                companyName: true,
+                                companyLogo: true,
+                            },
+                        },
+                    },
                 },
-            })
-            .sort({ createdAt: -1 });
+            },
+            orderBy: { createdAt: "desc" },
+        });
 
-        res.status(200).json(savedJobs);
+        res.status(200).json(toClient(savedJobs));
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error", error: error.message });
@@ -74,9 +99,13 @@ const checkIfJobSaved = async (req, res) => {
             return res.status(403).json({ message: "Only jobseekers can access saved jobs" });
         }
 
-        const savedJob = await SavedJob.findOne({
-            jobSeeker: req.user._id,
-            job: req.params.jobId,
+        const savedJob = await prisma.savedJob.findUnique({
+            where: {
+                jobSeekerId_jobId: {
+                    jobSeekerId: req.user._id,
+                    jobId: req.params.jobId,
+                },
+            },
         });
 
         res.status(200).json({ isSaved: !!savedJob });
@@ -95,14 +124,27 @@ const unsaveJob = async (req, res) => {
             return res.status(403).json({ message: "Only jobseekers can unsave jobs" });
         }
 
-        const savedJob = await SavedJob.findOneAndDelete({
-            jobSeeker: req.user._id,
-            job: req.params.jobId,
+        const savedJob = await prisma.savedJob.findUnique({
+            where: {
+                jobSeekerId_jobId: {
+                    jobSeekerId: req.user._id,
+                    jobId: req.params.jobId,
+                },
+            },
         });
 
         if (!savedJob) {
             return res.status(404).json({ message: "Saved job not found" });
         }
+
+        await prisma.savedJob.delete({
+            where: {
+                jobSeekerId_jobId: {
+                    jobSeekerId: req.user._id,
+                    jobId: req.params.jobId,
+                },
+            },
+        });
 
         res.status(200).json({ message: "Job removed from saved list" });
     } catch (error) {
