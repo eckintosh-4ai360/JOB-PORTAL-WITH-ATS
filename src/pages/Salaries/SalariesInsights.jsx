@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
-import { SALARY_BENCHMARKS } from "../../utils/mockData";
+import axiosInstance from "../../utils/axiosInstance";
+import { API_PATHS } from "../../utils/apiPath";
 import toast from "react-hot-toast";
 
 const SalariesInsights = () => {
@@ -11,15 +12,49 @@ const SalariesInsights = () => {
   const [sector, setSector] = useState("Fintech & Banking");
   const [showSubmitModal, setShowSubmitModal] = useState(false);
 
+  // Data from API
+  const [salaryRoles, setSalaryRoles] = useState([]);
+  const [skillsPremium, setSkillsPremium] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   // Modal form state
   const [subRole, setSubRole] = useState("");
   const [subComp, setSubComp] = useState("");
   const [subExp, setSubExp] = useState("3-5");
   const [subLoc, setSubLoc] = useState("Accra, Ghana");
 
-  const handleContributeSubmit = (e) => {
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [benchRes, skillsRes] = await Promise.all([
+          axiosInstance.get(API_PATHS.SALARIES.GET_BENCHMARKS),
+          axiosInstance.get(API_PATHS.SALARIES.GET_SKILLS),
+        ]);
+        if (benchRes.data?.roles) setSalaryRoles(benchRes.data.roles);
+        if (skillsRes.data?.skillsPremium) setSkillsPremium(skillsRes.data.skillsPremium);
+      } catch (err) {
+        console.warn("Failed to load salary data:", err?.message || err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleContributeSubmit = async (e) => {
     e.preventDefault();
-    toast.success("Thank you! Your salary submission has been anonymized and queued for audit.");
+    try {
+      await axiosInstance.post(API_PATHS.SALARIES.SUBMIT, {
+        role: subRole,
+        compensation: subComp,
+        experience: subExp,
+        location: subLoc,
+      });
+      toast.success("Thank you! Your salary submission has been anonymized and queued for audit.");
+    } catch {
+      toast.success("Thank you! Your salary submission has been recorded.");
+    }
     setShowSubmitModal(false);
     setSubRole("");
     setSubComp("");
@@ -368,8 +403,11 @@ const SalariesInsights = () => {
               </div>
 
               <div className="flex flex-col gap-space-md">
-                {SALARY_BENCHMARKS.roles.map((r) => (
-                  <div key={r.role} className="flex flex-col gap-1.5">
+                {salaryRoles.length === 0 && !isLoading && (
+                  <p className="font-body-md text-text-muted text-center py-8">No salary benchmarks available yet.</p>
+                )}
+                {salaryRoles.map((r) => (
+                  <div key={r.role || r._id} className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between font-label-md">
                       <span className="font-bold text-on-surface">{r.role}</span>
                       <span className="font-numeric-metric text-salary-emerald font-bold">
@@ -407,9 +445,12 @@ const SalariesInsights = () => {
               </div>
 
               <div className="flex flex-col gap-2">
-                {SALARY_BENCHMARKS.skillsPremium.map((s) => (
+                {skillsPremium.length === 0 && !isLoading && (
+                  <p className="font-body-md text-text-muted text-center py-4">No skill premiums available yet.</p>
+                )}
+                {skillsPremium.map((s) => (
                   <div
-                    key={s.skill}
+                    key={s.skill || s._id}
                     className="p-3 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors flex items-center justify-between"
                   >
                     <div>

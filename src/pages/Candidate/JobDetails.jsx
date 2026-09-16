@@ -5,7 +5,7 @@ import Footer from "../../components/layout/Footer";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
-import { MOCK_JOBS } from "../../utils/mockData";
+
 import toast from "react-hot-toast";
 
 const JobDetails = () => {
@@ -29,19 +29,16 @@ const JobDetails = () => {
     const fetchJob = async () => {
       setIsLoading(true);
       try {
-        let foundJob = null;
         try {
           const res = await axiosInstance.get(API_PATHS.JOBS.GET_JOB_BY_ID(jobId));
-          if (res.data) foundJob = res.data;
+          if (res.data) {
+            setJob(res.data);
+          } else {
+            setJob(null);
+          }
         } catch {
-          // Backend call failed, fallback to mock list
+          setJob(null);
         }
-
-        if (!foundJob) {
-          foundJob = MOCK_JOBS.find((j) => (j._id || j.id) === jobId) || MOCK_JOBS[0];
-        }
-
-        setJob(foundJob);
 
         if (isAuthenticated) {
           try {

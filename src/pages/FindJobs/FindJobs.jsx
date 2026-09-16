@@ -5,7 +5,7 @@ import Footer from "../../components/layout/Footer";
 import { useAuth } from "../../context/AuthContext";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
-import { MOCK_JOBS } from "../../utils/mockData";
+
 import toast from "react-hot-toast";
 
 const FindJobs = () => {
@@ -39,21 +39,19 @@ const FindJobs = () => {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      let realJobs = [];
       try {
-        const res = await axiosInstance.get(API_PATHS.JOBS.GET_ALL_JOBS);
-        if (res.data?.jobs && Array.isArray(res.data.jobs) && res.data.jobs.length > 0) {
-          realJobs = res.data.jobs;
+        const res = await axiosInstance.get(API_PATHS.JOBS.GET_ALL_JOBS, {
+          params: { limit: 100 }
+        });
+        if (res.data?.jobs && Array.isArray(res.data.jobs)) {
+          setJobs(res.data.jobs);
+        } else {
+          setJobs([]);
         }
-      } catch {
-        // Backend offline or empty, fallback to rich mock data
+      } catch (err) {
+        console.warn("Failed to load jobs:", err?.message || err);
+        setJobs([]);
       }
-
-      // Merge real jobs with rich mock data ensuring full presentation
-      const combined = [...realJobs, ...MOCK_JOBS];
-      // Deduplicate by ID
-      const unique = Array.from(new Map(combined.map((item) => [item._id || item.id, item])).values());
-      setJobs(unique);
 
       if (isAuthenticated) {
         try {
@@ -686,10 +684,10 @@ const FindJobs = () => {
                           {/* Company Avatar & Role Header */}
                           <div className="flex items-start gap-space-md flex-1">
                             <div className="w-14 h-14 rounded-2xl bg-surface-container flex items-center justify-center overflow-hidden shrink-0 shadow-inner border border-border-default">
-                              {job.company?.companyLogo ? (
+                              {job.companyLogo || job.company?.companyLogo ? (
                                 <img
-                                  src={job.company.companyLogo}
-                                  alt={job.company?.companyName || "Logo"}
+                                  src={job.companyLogo || job.company?.companyLogo}
+                                  alt={job.companyName || job.company?.companyName || "Logo"}
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
@@ -702,7 +700,7 @@ const FindJobs = () => {
                             <div className="flex flex-col flex-1 min-w-0">
                               <div className="flex flex-wrap items-center gap-space-xs mb-1">
                                 <span className="font-label-lg font-bold text-text-primary hover:text-primary transition-colors cursor-pointer">
-                                  {job.company?.companyName || "Verified Employer"}
+                                  {job.companyName || job.company?.companyName || "Verified Employer"}
                                 </span>
                                 <span
                                   className="material-symbols-outlined text-verified-badge text-[18px]"

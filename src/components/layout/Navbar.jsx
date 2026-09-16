@@ -38,12 +38,12 @@ const Navbar = () => {
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-surface/90 backdrop-blur-xl border-b border-border-default shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-      <div className="h-20 max-w-[1280px] mx-auto px-margin-mobile md:px-margin flex items-center justify-between gap-space-md">
+      <div className="h-20 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3 xl:gap-6">
         {/* Brand & Nav */}
-        <div className="flex items-center gap-space-lg">
+        <div className="flex items-center gap-4 xl:gap-8 shrink-0">
           <Link
             to="/find-jobs"
-            className="flex items-center gap-space-sm group focus:outline-none"
+            className="flex items-center gap-2.5 shrink-0 group focus:outline-none"
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center shadow-[0_2px_8px_rgba(53,37,205,0.25)] group-hover:scale-105 transition-transform">
               <span className="material-symbols-outlined text-on-primary text-[22px]">
@@ -60,14 +60,14 @@ const Navbar = () => {
             </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-space-xs">
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 shrink-0">
             {navLinks.map((link) => {
               const active = isActive(link.path);
               return (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`transition-all font-label-lg px-space-md py-space-xs rounded-full ${
+                  className={`whitespace-nowrap shrink-0 transition-all text-[13px] xl:text-[14px] px-3 xl:px-4 py-2 rounded-full font-medium ${
                     active
                       ? "bg-brand-indigo-light text-primary font-bold shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
                       : "text-text-secondary hover:text-on-surface hover:bg-surface-container transition-colors"
@@ -81,13 +81,13 @@ const Navbar = () => {
         </div>
 
         {/* Action Cluster */}
-        <div className="flex items-center gap-space-xs sm:gap-space-sm">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
             type="button"
             aria-label="Toggle color mode"
-            className="w-10 h-10 rounded-full flex items-center justify-center text-text-secondary hover:text-on-surface hover:bg-surface-container transition-colors"
+            className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-text-secondary hover:text-on-surface hover:bg-surface-container transition-colors"
           >
             <span className="material-symbols-outlined text-[20px]">
               {isDark ? "light_mode" : "dark_mode"}
@@ -98,7 +98,7 @@ const Navbar = () => {
           <Link
             to="/saved-jobs"
             aria-label="Saved Jobs shortcut"
-            className="relative w-10 h-10 rounded-full flex items-center justify-center text-text-secondary hover:text-on-surface hover:bg-surface-container transition-colors"
+            className="relative w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-text-secondary hover:text-on-surface hover:bg-surface-container transition-colors"
           >
             <span className="material-symbols-outlined text-[20px]">
               bookmark
@@ -106,7 +106,7 @@ const Navbar = () => {
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-verified-badge animate-pulse" />
           </Link>
 
-          <div className="h-6 w-px bg-border-default hidden sm:block" />
+          <div className="h-6 w-px bg-border-default hidden sm:block shrink-0" />
 
           {/* User Auth or Sign In */}
           {isAuthenticated ? (
@@ -146,7 +146,7 @@ const Navbar = () => {
                     </p>
                   </div>
 
-                  {user?.role === "employer" ? (
+                  {user?.role === "employer" || user?.role === "admin" ? (
                     <>
                       <Link
                         to="/employer-dashboard"
@@ -156,7 +156,7 @@ const Navbar = () => {
                         <span className="material-symbols-outlined text-[18px]">
                           dashboard
                         </span>
-                        Employer Dashboard
+                        {user?.role === "admin" ? "Admin Dashboard" : "Employer Dashboard"}
                       </Link>
                       <Link
                         to="/manage-jobs"
@@ -169,6 +169,16 @@ const Navbar = () => {
                         Manage Jobs
                       </Link>
                       <Link
+                        to="/post-job"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 font-label-md text-text-secondary hover:text-primary hover:bg-surface-container-low transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          add_circle
+                        </span>
+                        Post a Job
+                      </Link>
+                      <Link
                         to="/applicants"
                         onClick={() => setUserDropdownOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2.5 font-label-md text-text-secondary hover:text-primary hover:bg-surface-container-low transition-colors"
@@ -177,6 +187,16 @@ const Navbar = () => {
                           groups
                         </span>
                         Applicants
+                      </Link>
+                      <Link
+                        to="/company-profile"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 font-label-md text-text-secondary hover:text-primary hover:bg-surface-container-low transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          business
+                        </span>
+                        Company Profile
                       </Link>
                     </>
                   ) : (
@@ -234,7 +254,7 @@ const Navbar = () => {
           ) : (
             <Link
               to="/login"
-              className="hidden sm:inline-flex items-center justify-center px-space-md py-space-xs rounded-xl font-label-lg text-text-secondary hover:text-on-surface hover:bg-surface-container transition-colors"
+              className="hidden sm:inline-flex items-center justify-center px-3.5 py-2 rounded-xl text-sm font-medium whitespace-nowrap shrink-0 text-text-secondary hover:text-on-surface hover:bg-surface-container transition-colors"
             >
               Sign In
             </Link>
@@ -244,10 +264,10 @@ const Navbar = () => {
           <button
             onClick={handlePostJob}
             type="button"
-            className="inline-flex items-center justify-center gap-1.5 px-space-md py-2.5 rounded-xl bg-primary-container text-on-primary font-label-lg hover:bg-brand-indigo-dark shadow-[0_2px_6px_rgba(79,70,229,0.25)] hover:shadow-md transition-all active:scale-[0.98]"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-primary-container text-on-primary text-sm font-semibold whitespace-nowrap shrink-0 hover:bg-brand-indigo-dark shadow-sm transition-all active:scale-[0.98]"
           >
             <span className="material-symbols-outlined text-[18px]">add_circle</span>
-            <span className="hidden sm:inline">Post a Job</span>
+            <span className="whitespace-nowrap">Post a Job</span>
           </button>
 
           {/* Mobile hamburger menu toggle */}

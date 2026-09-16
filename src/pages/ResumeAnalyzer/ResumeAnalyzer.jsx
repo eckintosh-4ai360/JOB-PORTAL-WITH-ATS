@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
-import { MOCK_JOBS } from "../../utils/mockData";
+import axiosInstance from "../../utils/axiosInstance";
+import { API_PATHS } from "../../utils/apiPath";
 import toast from "react-hot-toast";
 
 const ResumeAnalyzer = () => {
@@ -13,6 +14,29 @@ const ResumeAnalyzer = () => {
   const [atsScore, setAtsScore] = useState(94);
   const [showLinkedInModal, setShowLinkedInModal] = useState(false);
   const [linkedInUrl, setLinkedInUrl] = useState("");
+  const [jobs, setJobs] = useState([]);
+  const [loadingJobs, setLoadingJobs] = useState(true);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const res = await axiosInstance.get(API_PATHS.JOBS.GET_ALL_JOBS, {
+          params: { limit: 10 }
+        });
+        if (res.data?.jobs && Array.isArray(res.data.jobs)) {
+          setJobs(res.data.jobs);
+        } else {
+          setJobs([]);
+        }
+      } catch (err) {
+        console.warn("Failed to load jobs for analyzer:", err);
+        setJobs([]);
+      } finally {
+        setLoadingJobs(false);
+      }
+    };
+    fetchJobs();
+  }, []);
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
@@ -41,7 +65,13 @@ const ResumeAnalyzer = () => {
     }, 1200);
   };
 
-  const matchedRoles = MOCK_JOBS.slice(0, 4);
+  const matchedRoles = jobs.filter((role) => {
+    if (activeTab === "remote") {
+      return (role.location || "").toLowerCase().includes("remote") || 
+             (role.type || "").toLowerCase().includes("remote");
+    }
+    return true;
+  }).slice(0, 4);
 
   return (
     <div className="bg-surface min-h-screen text-on-surface flex flex-col pt-20">
@@ -357,94 +387,116 @@ const ResumeAnalyzer = () => {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-space-md">
-                    {matchedRoles.map((role, idx) => (
-                      <article
-                        key={role._id}
-                        className="bg-surface-card rounded-2xl p-space-md md:p-space-lg border border-border-default hover:border-primary/40 shadow-sm hover:shadow-md transition-all duration-200 relative group overflow-hidden"
-                      >
-                        {/* Top Match Gauge Pill */}
-                        <div className="flex items-center justify-between mb-space-sm">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-salary-surface text-salary-emerald font-label-md font-bold shadow-xs">
-                            <span className="material-symbols-outlined text-[16px]">
-                              auto_awesome
-                            </span>
-                            {96 - idx * 3}% Match • Direct Recruiter Line
-                          </span>
+                    {matchedRoles.length === 0 ? (
+                      <div className="text-center py-16 bg-surface-card rounded-2xl border border-border-default">
+                        <span className="material-symbols-outlined text-[48px] text-text-muted mb-2">work_off</span>
+                        <p className="font-body-md font-semibold text-text-primary">No matching open roles found</p>
+                        <p className="font-body-sm text-text-muted mt-1">Check back later or explore all open jobs.</p>
+                        <Link to="/find-jobs" className="mt-4 inline-block px-4 py-2 rounded-xl bg-primary text-on-primary font-label-md font-bold">
+                          Explore All Jobs
+                        </Link>
+                      </div>
+                    ) : (
+                      matchedRoles.map((role, idx) => {
+                        const tags = Array.isArray(role.tags) && role.tags.length > 0 
+                          ? role.tags 
+                          : [role.category, role.type].filter(Boolean);
+                        const compLogo = role.company?.companyLogo || role.companyLogo || "https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=120&auto=format&fit=crop&q=60";
+                        const compName = role.company?.companyName || role.companyName || "Verified Employer";
 
-                          <span className="font-body-sm text-text-muted">
-                            {role.workModel || "Hybrid"}
-                          </span>
-                        </div>
-
-                        <div className="flex items-start gap-space-md">
-                          <div className="w-14 h-14 rounded-2xl bg-surface-container overflow-hidden shrink-0 border border-border-default">
-                            <img
-                              src={role.company?.companyLogo}
-                              alt={role.company?.companyName}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-headline-md font-bold text-text-primary group-hover:text-primary transition-colors truncate">
-                              {role.title}
-                            </h4>
-                            <p className="font-body-sm text-text-muted mt-0.5">
-                              {role.company?.companyName} • {role.location}
-                            </p>
-                          </div>
-                        </div>
-
-                        <p className="font-body-md text-text-secondary line-clamp-2 mt-space-sm leading-relaxed">
-                          {role.description}
-                        </p>
-
-                        <div className="flex flex-wrap gap-1.5 my-space-sm">
-                          {role.tags.map((t) => (
-                            <span
-                              key={t}
-                              className="px-2.5 py-1 rounded-lg bg-surface-container font-label-md text-text-secondary"
-                            >
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-
-                        <div className="pt-space-sm border-t border-border-default flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
-                          <div>
-                            <span className="font-label-caps uppercase text-text-muted tracking-wider block">
-                              Compensation
-                            </span>
-                            <span className="font-headline-sm font-bold text-salary-emerald">
-                              GH₵ {Math.round(role.salaryMin / 1000)}k - GH₵{" "}
-                              {Math.round(role.salaryMax / 1000)}k / mo
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-space-sm">
-                            <button
-                              onClick={() => {
-                                toast.success(`1-Click application dispatched to ${role.company?.companyName}!`);
-                              }}
-                              type="button"
-                              className="px-space-md py-2.5 rounded-xl bg-primary-container hover:bg-brand-indigo-dark text-on-primary font-label-md font-bold shadow-sm transition-all flex items-center gap-1.5"
-                            >
-                              <span className="material-symbols-outlined text-[18px]">
-                                bolt
+                        return (
+                          <article
+                            key={role._id || role.id}
+                            className="bg-surface-card rounded-2xl p-space-md md:p-space-lg border border-border-default hover:border-primary/40 shadow-sm hover:shadow-md transition-all duration-200 relative group overflow-hidden"
+                          >
+                            {/* Top Match Gauge Pill */}
+                            <div className="flex items-center justify-between mb-space-sm">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-salary-surface text-salary-emerald font-label-md font-bold shadow-xs">
+                                <span className="material-symbols-outlined text-[16px]">
+                                  auto_awesome
+                                </span>
+                                {96 - idx * 3}% Match • Direct Recruiter Line
                               </span>
-                              <span>1-Click Apply</span>
-                            </button>
 
-                            <Link
-                              to={`/job/${role._id}`}
-                              className="px-space-md py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md font-semibold transition-colors"
-                            >
-                              Details
-                            </Link>
-                          </div>
-                        </div>
-                      </article>
-                    ))}
+                              <span className="font-body-sm text-text-muted">
+                                {role.workModel || role.type || "Full-Time"}
+                              </span>
+                            </div>
+
+                            <div className="flex items-start gap-space-md">
+                              <div className="w-14 h-14 rounded-2xl bg-surface-container overflow-hidden shrink-0 border border-border-default">
+                                <img
+                                  src={compLogo}
+                                  alt={compName}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-headline-md font-bold text-text-primary group-hover:text-primary transition-colors truncate">
+                                  {role.title}
+                                </h4>
+                                <p className="font-body-sm text-text-muted mt-0.5">
+                                  {compName} • {role.location || "Ghana"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <p className="font-body-md text-text-secondary line-clamp-2 mt-space-sm leading-relaxed">
+                              {role.description}
+                            </p>
+
+                            <div className="flex flex-wrap gap-1.5 my-space-sm">
+                              {tags.map((t) => (
+                                <span
+                                  key={t}
+                                  className="px-2.5 py-1 rounded-lg bg-surface-container font-label-md text-text-secondary"
+                                >
+                                  {t}
+                                </span>
+                              ))}
+                            </div>
+
+                            <div className="pt-space-sm border-t border-border-default flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+                              <div>
+                                <span className="font-label-caps uppercase text-text-muted tracking-wider block">
+                                  Compensation
+                                </span>
+                                <span className="font-headline-sm font-bold text-salary-emerald">
+                                  {role.salaryMin && role.salaryMax
+                                    ? `GH₵ ${Math.round(role.salaryMin / 1000)}k - GH₵ ${Math.round(role.salaryMax / 1000)}k / mo`
+                                    : role.salaryMin
+                                    ? `From GH₵ ${Math.round(role.salaryMin / 1000)}k / mo`
+                                    : "Competitive Compensation"}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-space-sm">
+                                <button
+                                  onClick={() => {
+                                    toast.success(`1-Click application dispatched to ${compName}!`);
+                                  }}
+                                  type="button"
+                                  className="px-space-md py-2.5 rounded-xl bg-primary-container hover:bg-brand-indigo-dark text-on-primary font-label-md font-bold shadow-sm transition-all flex items-center gap-1.5"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">
+                                    bolt
+                                  </span>
+                                  <span>1-Click Apply</span>
+                                </button>
+
+                                <Link
+                                  to={`/job/${role._id || role.id}`}
+                                  className="px-space-md py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md font-semibold transition-colors"
+                                >
+                                  Details
+                                </Link>
+                              </div>
+                            </div>
+                          </article>
+                        );
+                      })
+                    )}
                   </div>
                 )}
               </div>

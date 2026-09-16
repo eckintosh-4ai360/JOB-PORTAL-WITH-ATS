@@ -4,7 +4,7 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
-import { MOCK_JOBS } from "../../utils/mockData";
+
 import toast from "react-hot-toast";
 
 const SavedJobs = () => {
@@ -23,10 +23,10 @@ const SavedJobs = () => {
           const formatted = res.data.map((item) => item.job || item);
           setSavedJobs(formatted);
         } else {
-          setSavedJobs(MOCK_JOBS.slice(0, 4));
+          setSavedJobs([]);
         }
       } catch {
-        setSavedJobs(MOCK_JOBS.slice(0, 4));
+        setSavedJobs([]);
       } finally {
         setIsLoading(false);
       }

@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
-import { MOCK_COMPANIES, MOCK_JOBS } from "../../utils/mockData";
+import axiosInstance from "../../utils/axiosInstance";
+import { API_PATHS } from "../../utils/apiPath";
 
 const BrowseCompanies = () => {
   const [search, setSearch] = useState("");
@@ -10,23 +11,60 @@ const BrowseCompanies = () => {
   const [selectedStage, setSelectedStage] = useState("");
   const [selectedIndustry, setSelectedIndustry] = useState("");
   const [activeCompanyModal, setActiveCompanyModal] = useState(null);
+  const [allCompanies, setAllCompanies] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      setIsLoading(true);
+      try {
+        const res = await axiosInstance.get(API_PATHS.COMPANIES.GET_ALL);
+        if (res.data?.companies && Array.isArray(res.data.companies)) {
+          setAllCompanies(res.data.companies);
+        } else {
+          setAllCompanies([]);
+        }
+      } catch (err) {
+        console.warn("Could not load companies:", err?.message || err);
+        // Fallback: try old endpoint
+        try {
+          const fallback = await axiosInstance.get(API_PATHS.JOBS.GET_COMPANIES);
+          if (fallback.data?.companies && Array.isArray(fallback.data.companies)) {
+            setAllCompanies(fallback.data.companies);
+          }
+        } catch {
+          setAllCompanies([]);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCompanies();
+  }, []);
 
   const filteredCompanies = useMemo(() => {
-    return MOCK_COMPANIES.filter((c) => {
+    return allCompanies.filter((c) => {
+      const companyName = c.name || c.companyName || "";
+      const companyDesc = c.description || "";
+      const companyStack = Array.isArray(c.stack) ? c.stack : [];
+      const companyHq = c.hq || "";
+      const companyStage = c.stage || "";
+      const companyIndustry = c.industry || "";
+
       const matchSearch =
         !search ||
-        c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.stack.some((s) => s.toLowerCase().includes(search.toLowerCase())) ||
-        c.description.toLowerCase().includes(search.toLowerCase());
+        companyName.toLowerCase().includes(search.toLowerCase()) ||
+        companyStack.some((s) => s.toLowerCase().includes(search.toLowerCase())) ||
+        companyDesc.toLowerCase().includes(search.toLowerCase());
 
-      const matchHq = !selectedHq || c.hq.toLowerCase().includes(selectedHq.toLowerCase());
-      const matchStage = !selectedStage || c.stage.toLowerCase().includes(selectedStage.toLowerCase());
+      const matchHq = !selectedHq || companyHq.toLowerCase().includes(selectedHq.toLowerCase());
+      const matchStage = !selectedStage || companyStage.toLowerCase().includes(selectedStage.toLowerCase());
       const matchIndustry =
-        !selectedIndustry || c.industry.toLowerCase().includes(selectedIndustry.toLowerCase());
+        !selectedIndustry || companyIndustry.toLowerCase().includes(selectedIndustry.toLowerCase());
 
       return matchSearch && matchHq && matchStage && matchIndustry;
     });
-  }, [search, selectedHq, selectedStage, selectedIndustry]);
+  }, [allCompanies, search, selectedHq, selectedStage, selectedIndustry]);
 
   return (
     <div className="bg-surface min-h-screen text-on-surface flex flex-col pt-20">
@@ -181,11 +219,17 @@ const BrowseCompanies = () => {
                   <div className="flex items-start justify-between gap-space-sm mb-space-sm">
                     <div className="flex items-start gap-space-md">
                       <div className="w-14 h-14 rounded-2xl bg-surface-container p-1 shadow-sm border border-border-default overflow-hidden shrink-0 flex items-center justify-center">
-                        <img
-                          src={company.logo}
-                          alt={company.name}
-                          className="w-full h-full object-cover rounded-xl"
-                        />
+                        {company.logo || company.companyLogo ? (
+                          <img
+                            src={company.logo || company.companyLogo}
+                            alt={company.name}
+                            className="w-full h-full object-cover rounded-xl"
+                          />
+                        ) : (
+                          <span className="material-symbols-outlined text-primary text-[28px]">
+                            business
+                          </span>
+                        )}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
