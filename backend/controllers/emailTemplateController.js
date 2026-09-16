@@ -1,23 +1,33 @@
-const EmailTemplate = require("../models/EmailTemplate");
+const prisma = require("../config/prisma");
 const { DEFAULT_EMAIL_TEMPLATES } = require("../utils/emailService");
+const { toClient } = require("../utils/prismaHelper");
 
 const syncDefaultTemplates = async () => {
-    await Promise.all(DEFAULT_EMAIL_TEMPLATES.map((template) => (
-        EmailTemplate.findOneAndUpdate(
-            { key: template.key },
-            { $setOnInsert: template },
-            { upsert: true, new: true }
-        )
-    )));
+    for (const template of DEFAULT_EMAIL_TEMPLATES) {
+        await prisma.emailTemplate.upsert({
+            where: { key: template.key },
+            update: {}, // don't overwrite user edits on sync
+            create: {
+                key: template.key,
+                name: template.name,
+                description: template.description || "",
+                subject: template.subject,
+                html: template.html,
+                variables: template.variables || [],
+            }
+        });
+    }
 };
 
 const getEmailTemplates = async (req, res) => {
     try {
         await syncDefaultTemplates();
-        const templates = await EmailTemplate.find({}).sort({ createdAt: 1 }).lean();
+        const templates = await prisma.emailTemplate.findMany({
+            orderBy: { createdAt: "asc" },
+        });
         const order = new Map(DEFAULT_EMAIL_TEMPLATES.map((template, index) => [template.key, index]));
         templates.sort((a, b) => (order.get(a.key) ?? 999) - (order.get(b.key) ?? 999));
-        res.json({ templates });
+        res.json({ templates: toClient(templates) });
     } catch (error) {
         console.error("Failed to load email templates:", error);
         res.status(500).json({ message: "Unable to load email templates" });
@@ -36,21 +46,23 @@ const updateEmailTemplate = async (req, res) => {
             return res.status(400).json({ message: "Subject and message HTML are required" });
         }
 
-        const template = await EmailTemplate.findOneAndUpdate(
-            { key: defaultTemplate.key },
-            {
-                $set: { subject: subject.trim(), html: html.trim() },
-                $setOnInsert: {
-                    key: defaultTemplate.key,
-                    name: defaultTemplate.name,
-                    description: defaultTemplate.description,
-                    variables: defaultTemplate.variables,
-                },
+        const template = await prisma.emailTemplate.upsert({
+            where: { key: defaultTemplate.key },
+            update: {
+                subject: subject.trim(),
+                html: html.trim(),
             },
-            { upsert: true, new: true, runValidators: true }
-        );
+            create: {
+                key: defaultTemplate.key,
+                name: defaultTemplate.name,
+                description: defaultTemplate.description || "",
+                subject: subject.trim(),
+                html: html.trim(),
+                variables: defaultTemplate.variables || [],
+            }
+        });
 
-        res.json({ message: "Email template saved", template });
+        res.json({ message: "Email template saved", template: toClient(template) });
     } catch (error) {
         console.error("Failed to update email template:", error);
         res.status(500).json({ message: "Unable to save email template" });

@@ -1,5 +1,5 @@
 const { Resend } = require("resend");
-const EmailTemplate = require("../models/EmailTemplate");
+const prisma = require("../config/prisma");
 
 // Resend sends over HTTPS, unlike SMTP (port 587/465/25) which Render blocks outbound.
 const resend = process.env.RESEND_API_KEY
@@ -136,7 +136,7 @@ const getTemplate = async (key) => {
     if (!fallback) throw new Error(`Unknown email template: ${key}`);
 
     try {
-        const saved = await EmailTemplate.findOne({ key }).lean();
+        const saved = await prisma.emailTemplate.findUnique({ where: { key } });
         return saved || fallback;
     } catch (error) {
         console.warn(`Could not load saved email template ${key}; using the default`, error.message);
