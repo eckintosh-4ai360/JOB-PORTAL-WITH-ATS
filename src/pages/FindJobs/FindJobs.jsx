@@ -120,19 +120,18 @@ const FindJobs = () => {
 
     setIsSubmittingApply(true);
     try {
-      if (isAuthenticated) {
-        const formData = new FormData();
-        if (applyResume) formData.append("resume", applyResume);
-        formData.append("coverLetter", applyNote);
-        await axiosInstance.post(API_PATHS.APPLICATIONS.APPLY_FOR_JOB(quickApplyJob._id), formData);
-      }
-      toast.success(`Application sent to ${quickApplyJob.company?.companyName || "Employer"}!`);
+      const jobId = quickApplyJob._id || quickApplyJob.id;
+      const formData = new FormData();
+      if (applyResume) formData.append("resume", applyResume);
+      if (applyNote) formData.append("coverLetter", applyNote);
+
+      await axiosInstance.post(API_PATHS.APPLICATIONS.APPLY_FOR_JOB(jobId), formData);
+      toast.success(`Application sent to ${quickApplyJob.company?.companyName || quickApplyJob.companyName || "Employer"}!`);
       setQuickApplyJob(null);
       setApplyResume(null);
       setApplyNote("");
-    } catch {
-      toast.success("Application submitted successfully!");
-      setQuickApplyJob(null);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to submit quick application");
     } finally {
       setIsSubmittingApply(false);
     }
@@ -721,7 +720,7 @@ const FindJobs = () => {
                               </div>
 
                               <Link
-                                to={`/job/${job._id}`}
+                                to={`/job/${job._id || job.id}`}
                                 className="font-headline-md text-headline-md font-bold text-text-primary hover:text-primary transition-colors truncate block"
                               >
                                 {job.title}
@@ -755,7 +754,7 @@ const FindJobs = () => {
                           {/* Top Right Save Bookmark button */}
                           <div className="flex items-center gap-space-xs self-end md:self-start">
                             <button
-                              onClick={(e) => handleToggleSave(e, job._id)}
+                              onClick={(e) => handleToggleSave(e, job._id || job.id)}
                               type="button"
                               title={isSaved ? "Saved" : "Save Job"}
                               className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
@@ -772,7 +771,7 @@ const FindJobs = () => {
                         </div>
 
                         {/* Tech Stack Chips */}
-                        {job.tags && job.tags.length > 0 && (
+                        {Array.isArray(job.tags) && job.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 my-space-md">
                             {job.tags.map((tag) => (
                               <span
@@ -824,7 +823,7 @@ const FindJobs = () => {
                             </button>
 
                             <Link
-                              to={`/job/${job._id}`}
+                              to={`/job/${job._id || job.id}`}
                               className="inline-flex items-center justify-center gap-space-xs px-space-lg py-2.5 rounded-xl bg-primary-container hover:bg-brand-indigo-dark text-on-primary font-label-lg shadow-sm hover:shadow transition-all"
                             >
                               <span>View Details</span>

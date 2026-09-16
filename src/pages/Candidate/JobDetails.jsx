@@ -5,13 +5,48 @@ import Footer from "../../components/layout/Footer";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
-
 import toast from "react-hot-toast";
+
+const parseList = (val, defaultList = []) => {
+  if (!val) return defaultList;
+  if (Array.isArray(val)) return val.filter(Boolean);
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+    if (!trimmed) return defaultList;
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean);
+    } catch {}
+    if (trimmed.includes("\n") || trimmed.includes("•") || trimmed.includes("*")) {
+      const items = trimmed
+        .split(/\r?\n|•|\*/)
+        .map((s) => s.trim().replace(/^[-•*]\s*/, ""))
+        .filter(Boolean);
+      if (items.length > 0) return items;
+    }
+    if (trimmed.includes(";")) {
+      const items = trimmed.split(";").map((s) => s.trim()).filter(Boolean);
+      if (items.length > 0) return items;
+    }
+    return [trimmed];
+  }
+  return defaultList;
+};
+
+const parseTags = (tags, defaultList = ["React", "TypeScript", "Node.js", "PostgreSQL", "AWS"]) => {
+  if (!tags) return defaultList;
+  if (Array.isArray(tags)) return tags.filter(Boolean);
+  if (typeof tags === "string") {
+    const parts = tags.split(/[,|;]/).map((t) => t.trim()).filter(Boolean);
+    return parts.length > 0 ? parts : defaultList;
+  }
+  return defaultList;
+};
 
 const JobDetails = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const [job, setJob] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
@@ -36,7 +71,8 @@ const JobDetails = () => {
           } else {
             setJob(null);
           }
-        } catch {
+        } catch (err) {
+          console.error("Error fetching job details:", err);
           setJob(null);
         }
 
@@ -44,7 +80,7 @@ const JobDetails = () => {
           try {
             const savedRes = await axiosInstance.get(API_PATHS.JOBS.GET_SAVED_JOBS);
             if (Array.isArray(savedRes.data)) {
-              const ids = savedRes.data.map((item) => item.job?._id || item.job);
+              const ids = savedRes.data.map((item) => item.job?._id || item.job?.id || item.job);
               setIsSaved(ids.includes(jobId));
             }
           } catch {
@@ -56,7 +92,9 @@ const JobDetails = () => {
       }
     };
 
-    fetchJob();
+    if (jobId) {
+      fetchJob();
+    }
   }, [jobId, isAuthenticated]);
 
   const handleToggleSave = async () => {
@@ -76,18 +114,19 @@ const JobDetails = () => {
         setIsSaved(true);
         toast.success("Job saved to your Career Cockpit!");
       }
-    } catch {
-      setIsSaved(!isSaved);
-      toast.success(isSaved ? "Job removed from bookmarks" : "Job saved to your Career Cockpit!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not update bookmark");
     }
   };
 
   const handleShare = () => {
     if (navigator.share) {
-      navigator.share({
-        title: job?.title || "Tech Job Opportunity",
-        url: window.location.href,
-      }).catch(() => {});
+      navigator
+        .share({
+          title: job?.title || "Tech Job Opportunity",
+          url: window.location.href,
+        })
+        .catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
       toast.success("Job link copied to clipboard!");
@@ -98,23 +137,35 @@ const JobDetails = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      if (isAuthenticated) {
-        const formData = new FormData();
-        if (applyResume) formData.append("resume", applyResume);
-        formData.append("coverLetter", coverNote);
-        await axiosInstance.post(API_PATHS.APPLICATIONS.APPLY_FOR_JOB(jobId), formData);
+      const formData = new FormData();
+      if (applyResume) formData.append("resume", applyResume);
+      if (coverNote) formData.append("coverLetter", coverNote);
+
+      if (!isAuthenticated) {
+        if (!applicantName || !applicantEmail) {
+          toast.error("Please enter your name and email address.");
+          setIsSubmitting(false);
+          return;
+        }
+        formData.append("guestName", applicantName);
+        formData.append("guestEmail", applicantEmail);
       }
+
+      await axiosInstance.post(API_PATHS.APPLICATIONS.APPLY_FOR_JOB(jobId), formData);
       toast.success("Application successfully submitted!");
       setShowApplyModal(false);
-    } catch {
-      toast.success("Application successfully received by hiring team!");
-      setShowApplyModal(false);
+      setCoverNote("");
+      setApplyResume(null);
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message || "Failed to submit application. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (isLoading || !job) {
+  if (isLoading) {
     return (
       <div className="bg-surface min-h-screen flex flex-col pt-20">
         <Navbar />
@@ -126,6 +177,87 @@ const JobDetails = () => {
       </div>
     );
   }
+
+  if (!job) {
+    return (
+      <div className="bg-surface min-h-screen flex flex-col pt-20">
+        <Navbar />
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
+          <div className="w-16 h-16 rounded-2xl bg-surface-container flex items-center justify-center text-text-muted mb-4">
+            <span className="material-symbols-outlined text-[36px]">work_off</span>
+          </div>
+          <h2 className="font-headline-md font-bold text-text-primary mb-2">Job Not Found</h2>
+          <p className="font-body-md text-text-secondary max-w-md mb-6">
+            The opportunity you are looking for may have expired, been removed, or does not exist.
+          </p>
+          <Link
+            to="/find-jobs"
+            className="px-6 py-3 rounded-xl bg-primary text-white font-label-md font-bold hover:bg-brand-indigo-dark transition-colors"
+          >
+            Explore Active Jobs
+          </Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const companyName =
+    job.companyProfile?.name ||
+    job.company?.companyName ||
+    job.company?.name ||
+    job.companyName ||
+    "Verified Employer";
+
+  const companyLogo =
+    job.companyProfile?.logo ||
+    job.company?.companyLogo ||
+    job.companyLogo ||
+    "";
+
+  const companyHq = job.companyProfile?.hq || job.location || "Accra, Ghana";
+  const companyEmployees = job.companyProfile?.employees || "20 - 100";
+  const companyIndustry = job.companyProfile?.industry || job.category || "Technology";
+  const companyDesc =
+    job.companyProfile?.description ||
+    job.company?.companyDescription ||
+    `${companyName} is a verified tech enterprise building digital platforms across West Africa.`;
+
+  const responsibilitiesList = parseList(job.responsibilities, [
+    "Architect, develop, and maintain modular Next.js / TypeScript frontends and Node.js microservices.",
+    "Design highly indexed, ACID-compliant relational schemas on PostgreSQL ensuring health record encryption.",
+    "Implement localized mobile money rails (MTN MoMo, Telecel Cash) and national healthcare APIs.",
+    "Optimize core web vitals, state management, caching mechanisms (Redis), and event queues across low-bandwidth environments.",
+  ]);
+
+  const requirementsList = parseList(job.requirements, [
+    "4+ years designing high-throughput relational schemas and shipping production React/Node applications.",
+    "Deep understanding of distributed state management and asynchronous queues.",
+    "Familiarity with containerized Kubernetes or Docker deployments on AWS/GCP.",
+  ]);
+
+  const perksList = parseList(job.perks || job.companyProfile?.perks, [
+    "Full family private medical cover (including optical & dental)",
+    "Annual GH₵ 15,000 professional hardware & desk stipend",
+    "Flexible hybrid model with 2 days remote weekly",
+    "Tier-1 Tier-3 pension matching contribution",
+  ]);
+
+  const tagsList = parseTags(job.tags || job.companyProfile?.stack, [
+    "React",
+    "TypeScript",
+    "Node.js",
+    "PostgreSQL",
+    "AWS",
+  ]);
+
+  const formatSalary = (val, fallback) => {
+    if (!val) return fallback;
+    const num = Number(val);
+    if (isNaN(num)) return fallback;
+    if (num >= 1000) return `${Math.round(num / 1000)}k`;
+    return `${num}`;
+  };
 
   return (
     <div className="bg-surface min-h-screen text-on-surface flex flex-col pt-20">
@@ -142,7 +274,7 @@ const JobDetails = () => {
               </Link>
               <span className="material-symbols-outlined text-[14px]">chevron_right</span>
               <Link to="/find-jobs" className="hover:text-primary transition-colors">
-                Engineering
+                {job.category || "Engineering"}
               </Link>
               <span className="material-symbols-outlined text-[14px]">chevron_right</span>
               <span className="text-primary font-bold truncate max-w-[200px]">
@@ -153,11 +285,11 @@ const JobDetails = () => {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
               {/* Left Title & Employer Info */}
               <div className="flex items-start gap-space-md">
-                <div className="w-16 h-16 rounded-2xl bg-surface-card p-1 shadow-md border border-border-default overflow-hidden shrink-0">
-                  {job.company?.companyLogo ? (
+                <div className="w-16 h-16 rounded-2xl bg-surface-card p-1 shadow-md border border-border-default overflow-hidden shrink-0 flex items-center justify-center">
+                  {companyLogo ? (
                     <img
-                      src={job.company.companyLogo}
-                      alt="Company"
+                      src={companyLogo}
+                      alt={companyName}
                       className="w-full h-full object-cover rounded-xl"
                     />
                   ) : (
@@ -169,12 +301,12 @@ const JobDetails = () => {
 
                 <div className="flex flex-col gap-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-space-xs">
-                    <span className="px-2.5 py-0.5 rounded-full bg-error-container text-on-error-container font-label-caps flex items-center gap-1">
+                    <span className="px-2.5 py-0.5 rounded-full bg-error-container text-on-error-container font-label-caps flex items-center gap-1 font-semibold">
                       <span className="w-1.5 h-1.5 rounded-full bg-error animate-ping" />
-                      Urgent Hiring
+                      Active Opportunity
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-brand-indigo-light text-primary font-label-caps">
-                      Engineering Dept
+                    <span className="px-2.5 py-0.5 rounded-full bg-brand-indigo-light text-primary font-label-caps font-semibold">
+                      {job.category || "Engineering Dept"}
                     </span>
                   </div>
 
@@ -184,7 +316,7 @@ const JobDetails = () => {
 
                   <div className="flex flex-wrap items-center gap-x-space-md gap-y-1 text-text-secondary font-body-md pt-0.5">
                     <span className="font-semibold text-text-primary flex items-center gap-1">
-                      {job.company?.companyName || "Verified Employer"}
+                      {companyName}
                       <span className="material-symbols-outlined text-verified-badge text-[18px]">
                         verified
                       </span>
@@ -193,13 +325,13 @@ const JobDetails = () => {
                       <span className="material-symbols-outlined text-[18px] text-text-muted">
                         location_on
                       </span>
-                      {job.location}
+                      {job.location || "Accra, Ghana"}
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <span className="material-symbols-outlined text-[18px] text-text-muted">
                         schedule
                       </span>
-                      Posted recently
+                      {job.type || job.jobType || "Full-Time"}
                     </span>
                   </div>
 
@@ -207,7 +339,7 @@ const JobDetails = () => {
                   <div className="flex flex-wrap items-center gap-2 pt-space-xs">
                     <span className="px-3 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-md flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-[16px]">work</span>
-                      {job.type || "Full-Time"}
+                      {job.type || job.jobType || "Full-Time"}
                     </span>
                     <span className="px-3 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-md flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-[16px]">home_work</span>
@@ -215,8 +347,7 @@ const JobDetails = () => {
                     </span>
                     <span className="px-3.5 py-1 rounded-full bg-salary-surface text-salary-emerald font-numeric-metric flex items-center gap-1.5 shadow-xs">
                       <span className="material-symbols-outlined text-[16px]">payments</span>
-                      GH₵ {job.salaryMin ? `${Math.round(job.salaryMin / 1000)}k` : "50k"} - GH₵{" "}
-                      {job.salaryMax ? `${Math.round(job.salaryMax / 1000)}k` : "85k"} / mo
+                      GH₵ {formatSalary(job.salaryMin, "50k")} - GH₵ {formatSalary(job.salaryMax, "85k")} / mo
                     </span>
                   </div>
                 </div>
@@ -227,7 +358,7 @@ const JobDetails = () => {
                 <button
                   onClick={() => setShowApplyModal(true)}
                   type="button"
-                  className="w-full h-12 px-6 rounded-xl bg-primary-container text-on-primary font-label-lg font-bold flex items-center justify-center gap-2 shadow-md hover:bg-brand-indigo-dark transition-all transform active:scale-98"
+                  className="w-full h-12 px-6 rounded-xl bg-primary-container text-on-primary font-label-lg font-bold flex items-center justify-center gap-2 shadow-md hover:bg-brand-indigo-dark transition-all transform active:scale-98 cursor-pointer"
                 >
                   <span>Apply Now</span>
                   <span className="material-symbols-outlined text-[20px]">
@@ -238,7 +369,7 @@ const JobDetails = () => {
                 <button
                   onClick={() => setShowApplyModal(true)}
                   type="button"
-                  className="w-full h-11 px-5 rounded-xl bg-brand-indigo-light text-primary font-label-lg font-bold flex items-center justify-center gap-2 hover:bg-brand-indigo-subtle transition-colors"
+                  className="w-full h-11 px-5 rounded-xl bg-brand-indigo-light text-primary font-label-lg font-bold flex items-center justify-center gap-2 hover:bg-brand-indigo-subtle transition-colors cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[18px]">bolt</span>
                   <span>Quick Apply with CV</span>
@@ -248,7 +379,7 @@ const JobDetails = () => {
                   <button
                     onClick={handleToggleSave}
                     type="button"
-                    className={`h-10 px-3 rounded-xl border border-border-default flex items-center justify-center gap-1 font-label-md transition-colors ${
+                    className={`h-10 px-3 rounded-xl border border-border-default flex items-center justify-center gap-1 font-label-md transition-colors cursor-pointer ${
                       isSaved
                         ? "bg-brand-indigo-light text-primary font-bold"
                         : "bg-surface-card hover:bg-surface-container text-text-secondary"
@@ -263,7 +394,7 @@ const JobDetails = () => {
                   <button
                     onClick={handleShare}
                     type="button"
-                    className="h-10 px-3 rounded-xl bg-surface-card hover:bg-surface-container border border-border-default text-text-secondary flex items-center justify-center gap-1 font-label-md transition-colors"
+                    className="h-10 px-3 rounded-xl bg-surface-card hover:bg-surface-container border border-border-default text-text-secondary flex items-center justify-center gap-1 font-label-md transition-colors cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[18px]">share</span>
                     <span>Share</span>
@@ -288,9 +419,9 @@ const JobDetails = () => {
                 <h2 className="font-headline-lg text-headline-lg text-text-primary tracking-tight">
                   Role Overview
                 </h2>
-                <p className="font-body-lg text-body-lg text-text-secondary leading-relaxed">
+                <p className="font-body-lg text-body-lg text-text-secondary leading-relaxed whitespace-pre-line">
                   {job.description ||
-                    "Spagad Technologies is seeking an exceptional, high-velocity developer to spearhead the next evolutionary tier of our healthtech and enterprise fintech platforms across West Africa."}
+                    `${companyName} is seeking an exceptional developer to join our growing engineering team.`}
                 </p>
 
                 {/* Impact Metrics Mini Bento */}
@@ -306,7 +437,7 @@ const JobDetails = () => {
                       99.98%
                     </span>
                     <span className="font-body-sm text-text-secondary">
-                      Uptime requirement across hospitals
+                      Uptime SLA standard target
                     </span>
                   </div>
                   <div className="p-space-md rounded-xl bg-surface-container-low border border-border-default flex flex-col gap-1">
@@ -314,7 +445,7 @@ const JobDetails = () => {
                       120ms
                     </span>
                     <span className="font-body-sm text-text-secondary">
-                      Sub-second transaction response target
+                      Sub-second latency target
                     </span>
                   </div>
                 </div>
@@ -330,14 +461,7 @@ const JobDetails = () => {
                   Key Responsibilities
                 </h2>
                 <ul className="flex flex-col gap-space-sm font-body-md text-text-secondary">
-                  {(
-                    job.responsibilities || [
-                      "Architect, develop, and maintain modular Next.js / TypeScript frontends and Node.js microservices.",
-                      "Design highly indexed, ACID-compliant relational schemas on PostgreSQL ensuring health record encryption.",
-                      "Implement localized mobile money rails (MTN MoMo, Telecel Cash) and national healthcare APIs.",
-                      "Optimize core web vitals, state management, caching mechanisms (Redis), and event queues across low-bandwidth environments."
-                    ]
-                  ).map((item, idx) => (
+                  {responsibilitiesList.map((item, idx) => (
                     <li key={idx} className="flex items-start gap-3">
                       <div className="w-6 h-6 rounded-full bg-brand-indigo-light text-primary flex items-center justify-center shrink-0 mt-0.5">
                         <span className="material-symbols-outlined text-[15px]">check</span>
@@ -359,26 +483,18 @@ const JobDetails = () => {
                 </h2>
 
                 <div className="flex flex-wrap gap-2 my-1">
-                  {(job.tags || ["React", "TypeScript", "Node.js", "PostgreSQL", "AWS"]).map(
-                    (t) => (
-                      <span
-                        key={t}
-                        className="px-3 py-1.5 rounded-xl bg-surface-container font-label-md text-on-surface font-semibold"
-                      >
-                        {t}
-                      </span>
-                    )
-                  )}
+                  {tagsList.map((t, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1.5 rounded-xl bg-surface-container font-label-md text-on-surface font-semibold"
+                    >
+                      {t}
+                    </span>
+                  ))}
                 </div>
 
                 <ul className="flex flex-col gap-space-sm font-body-md text-text-secondary mt-2">
-                  {(
-                    job.requirements || [
-                      "4+ years designing high-throughput relational schemas and shipping production React/Node applications.",
-                      "Deep understanding of distributed state management and asynchronous queues.",
-                      "Familiarity with containerized Kubernetes or Docker deployments on AWS/GCP."
-                    ]
-                  ).map((r, i) => (
+                  {requirementsList.map((r, i) => (
                     <li key={i} className="flex items-start gap-3">
                       <div className="w-6 h-6 rounded-full bg-salary-surface text-salary-emerald flex items-center justify-center shrink-0 mt-0.5">
                         <span className="material-symbols-outlined text-[15px]">check</span>
@@ -400,14 +516,7 @@ const JobDetails = () => {
                 </h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
-                  {(
-                    job.perks || [
-                      "Full family private medical cover (including optical & dental)",
-                      "Annual GH₵ 15,000 professional hardware & desk stipend",
-                      "Flexible hybrid model with 2 days remote weekly",
-                      "Tier-1 Tier-3 pension matching contribution"
-                    ]
-                  ).map((p, i) => (
+                  {perksList.map((p, i) => (
                     <div
                       key={i}
                       className="p-3 rounded-xl bg-surface-container-low border border-border-default flex items-center gap-2.5 font-body-sm text-text-secondary"
@@ -440,13 +549,13 @@ const JobDetails = () => {
                 </div>
 
                 <p className="font-body-sm text-text-secondary mt-1">
-                  Your profile matches 9 out of 10 primary criteria requested by {job.company?.companyName || "the hiring team"}.
+                  Your profile matches primary criteria requested by {companyName}.
                 </p>
 
                 <button
                   onClick={() => navigate("/resume-analyzer")}
                   type="button"
-                  className="mt-1 w-full py-2.5 rounded-xl bg-brand-indigo-light text-primary hover:bg-brand-indigo-subtle font-label-md font-bold transition-colors flex items-center justify-center gap-1.5"
+                  className="mt-1 w-full py-2.5 rounded-xl bg-brand-indigo-light text-primary hover:bg-brand-indigo-subtle font-label-md font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[16px]">
                     auto_awesome
@@ -457,21 +566,40 @@ const JobDetails = () => {
 
               {/* Company Profile Card */}
               <div className="bg-surface-card rounded-2xl p-space-md md:p-space-lg border border-border-default shadow-sm flex flex-col gap-space-sm">
-                <h3 className="font-headline-sm font-bold text-on-surface">
-                  About {job.company?.companyName || "The Company"}
-                </h3>
-                <p className="font-body-sm text-text-secondary leading-relaxed">
-                  A high-growth technology enterprise building scalable fintech and healthtech digital infrastructure for West Africa.
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center overflow-hidden border border-border-default shrink-0">
+                    {companyLogo ? (
+                      <img
+                        src={companyLogo}
+                        alt={companyName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="material-symbols-outlined text-primary text-[24px]">
+                        business
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-headline-sm font-bold text-on-surface">
+                      About {companyName}
+                    </h3>
+                    <span className="font-body-sm text-text-muted">{companyIndustry}</span>
+                  </div>
+                </div>
+
+                <p className="font-body-sm text-text-secondary leading-relaxed mt-2">
+                  {companyDesc}
                 </p>
 
                 <div className="flex flex-col gap-2 pt-2 border-t border-border-default text-body-sm text-text-secondary">
                   <div className="flex items-center justify-between">
                     <span className="text-text-muted">Headquarters</span>
-                    <span className="font-semibold text-text-primary">Accra, Ghana</span>
+                    <span className="font-semibold text-text-primary">{companyHq}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-text-muted">Organization Size</span>
-                    <span className="font-semibold text-text-primary">250 - 500</span>
+                    <span className="font-semibold text-text-primary">{companyEmployees}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-text-muted">Verification Status</span>
@@ -501,7 +629,7 @@ const JobDetails = () => {
             <button
               onClick={() => setShowApplyModal(false)}
               type="button"
-              className="absolute top-4 right-4 text-text-muted hover:text-on-surface p-1 rounded-lg"
+              className="absolute top-4 right-4 text-text-muted hover:text-on-surface p-1 rounded-lg cursor-pointer"
             >
               <span className="material-symbols-outlined text-[24px]">close</span>
             </button>
@@ -515,7 +643,7 @@ const JobDetails = () => {
                   Apply for {job.title}
                 </h3>
                 <p className="font-body-sm text-text-secondary">
-                  {job.company?.companyName}
+                  {companyName}
                 </p>
               </div>
             </div>
@@ -525,7 +653,7 @@ const JobDetails = () => {
                 <>
                   <div className="flex flex-col gap-1">
                     <label className="font-label-caps uppercase text-text-muted">
-                      Full Name
+                      Full Name *
                     </label>
                     <input
                       type="text"
@@ -539,7 +667,7 @@ const JobDetails = () => {
 
                   <div className="flex flex-col gap-1">
                     <label className="font-label-caps uppercase text-text-muted">
-                      Email Address
+                      Email Address *
                     </label>
                     <input
                       type="email"
@@ -555,7 +683,7 @@ const JobDetails = () => {
 
               <div className="flex flex-col gap-1">
                 <label className="font-label-caps uppercase text-text-muted">
-                  Attach Resume / CV (PDF, DOCX)
+                  Attach Resume / CV (PDF, DOCX) *
                 </label>
                 <input
                   type="file"
@@ -574,7 +702,7 @@ const JobDetails = () => {
                   rows="3"
                   value={coverNote}
                   onChange={(e) => setCoverNote(e.target.value)}
-                  placeholder="Summarize your relevant architecture and distributed systems experience..."
+                  placeholder="Summarize your relevant skills, tools, and background..."
                   className="w-full p-3 rounded-xl bg-surface-container-low border border-border-default font-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
@@ -583,14 +711,14 @@ const JobDetails = () => {
                 <button
                   type="button"
                   onClick={() => setShowApplyModal(false)}
-                  className="px-4 py-2.5 rounded-xl font-label-md text-text-secondary hover:bg-surface-container"
+                  className="px-4 py-2.5 rounded-xl font-label-md text-text-secondary hover:bg-surface-container cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-space-lg py-2.5 rounded-xl bg-primary-container text-on-primary font-label-md font-bold hover:bg-brand-indigo-dark shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-space-lg py-2.5 rounded-xl bg-primary-container text-on-primary font-label-md font-bold hover:bg-brand-indigo-dark shadow-sm flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? "Submitting..." : "Submit Application"}
                   <span className="material-symbols-outlined text-[16px]">send</span>
