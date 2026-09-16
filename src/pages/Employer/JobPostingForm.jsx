@@ -58,12 +58,26 @@ const JobPostingForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!user) {
+      toast.error("Please sign in or create an employer account to post a job.");
+      navigate("/login", { state: { from: { pathname: "/post-job" } } });
+      return;
+    }
+
+    if (user.role !== "employer" && user.role !== "admin") {
+      toast.error("You need an employer account to publish job listings. Please register or sign in as an employer.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload = {
         title,
+        companyName,
         location,
-        category: "engineering",
+        category: department || "Engineering",
+        type: jobType,
         jobType,
         description,
         requirements,
@@ -73,14 +87,17 @@ const JobPostingForm = () => {
         workModel,
       };
 
-      try {
-        await axiosInstance.post(API_PATHS.JOBS.POST_JOB, payload);
-      } catch {
-        // Optimistic fallback for frontend
-      }
-
+      const res = await axiosInstance.post(API_PATHS.JOBS.POST_JOB, payload);
       toast.success("Job successfully published to SPG Talent Network!");
-      navigate("/find-jobs");
+      const newJobId = res.data?.job?.id || res.data?.job?._id;
+      if (newJobId) {
+        navigate(`/job/${newJobId}`);
+      } else {
+        navigate("/find-jobs");
+      }
+    } catch (err) {
+      console.error("Failed to post job:", err);
+      toast.error(err.response?.data?.message || "Failed to post job. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

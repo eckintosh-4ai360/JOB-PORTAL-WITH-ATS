@@ -175,9 +175,20 @@ const EmployerProfilePage = () => {
         companyLogo: form.companyLogo,
       });
 
+      // Also sync dedicated Company profile in DB
+      try {
+        await axiosInstance.put(API_PATHS.COMPANIES.UPDATE_MY_PROFILE, {
+          name: form.companyName,
+          description: form.companyDescription,
+          logo: form.companyLogo,
+        });
+      } catch (cErr) {
+        console.warn("Could not sync company profile:", cErr);
+      }
+
       updateUser(res.data);
       toast.dismiss(id);
-      toast.success("Profile saved successfully!");
+      toast.success("Profile and company details saved successfully!");
       setIsEditing(false);
       setErrors({});
     } catch (err) {

@@ -10,7 +10,6 @@ import DashboardLayout from "../../components/layout/dashboardLayout";
 import JobDashboardCard from "../../components/cards/JobDashboardCard";
 import ApplicantDashboardCard from "../../components/cards/ApplicantDashboardCard";
 import { useAuth } from "../../context/AuthContext";
-import { RECENT_JOBS, RECENT_APPLICATIONS } from "../../utils/data";
 
 //  Stat Card 
 const StatCard = ({ title, value, icon: Icon, trendValue, trendUp, color = "blue", delay = 0 }) => {
@@ -124,13 +123,8 @@ export const EmployerDashboard = () => {
   }, []);
 
   const counts = dashboardData?.counts ?? {};
-  // Fall back to static data so the dashboard is always populated
-  const recentJobs = dashboardData?.recentJobs?.length
-    ? dashboardData.recentJobs
-    : RECENT_JOBS;
-  const recentApplications = dashboardData?.recentApplications?.length
-    ? dashboardData.recentApplications
-    : RECENT_APPLICATIONS;
+  const recentJobs = dashboardData?.recentJobs || [];
+  const recentApplications = dashboardData?.recentApplications || [];
 
   const firstName = user?.name?.split(" ")[0] ?? "there";
   const greeting =
