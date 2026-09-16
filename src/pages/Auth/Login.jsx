@@ -1,0 +1,456 @@
+import React, { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  Mail, 
+  Lock,
+  Eye,
+  EyeOff,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  Briefcase,
+  Users,
+  Building2,
+  ChevronRight,
+  Sparkles
+} from "lucide-react"
+import { Link, useNavigate, useLocation } from "react-router-dom"
+import { toast } from "react-hot-toast"
+import axiosInstance from "../../utils/axiosInstance"
+import { API_PATHS } from "../../utils/apiPath"
+import { useAuth } from "../../context/AuthContext"
+import GoogleSignInButton from "../../components/GoogleSignInButton"
+
+const Login = () => {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { login } = useAuth()
+
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    rememberMe: false
+  })
+
+  const [formState, setFormState] = useState({
+    loading: false,
+    errors: {},
+    showPassword: false,
+    success: false,
+  })
+
+  // Focus states for input fields to animate borders/icons nicely
+  const [activeField, setActiveField] = useState(null)
+
+  // Validation functions
+  const validateEmail = (email) => {
+    if (!email) return "Email address is required"
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) return "Please enter a valid email address"
+    return ""
+  }
+
+  const validatePassword = (password) => {
+    if (!password) return "Password is required"
+    if (password.length < 6) return "Password must be at least 6 characters long"
+    return ""
+  }
+
+  // Handle Input Changes
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target
+    const val = type === "checkbox" ? checked : value
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: val
+    }))
+
+    // Real-time validation clearance/check
+    if (formState.errors[name]) {
+      let error = ""
+      if (name === "email") error = validateEmail(val)
+      if (name === "password") error = validatePassword(val)
+      
+      setFormState(prev => ({
+        ...prev,
+        errors: {
+          ...prev.errors,
+          [name]: error
+        }
+      }))
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    const emailErr = validateEmail(formData.email)
+    const passwordErr = validatePassword(formData.password)
+
+    if (emailErr || passwordErr) {
+      setFormState(prev => ({
+        ...prev,
+        errors: {
+          email: emailErr,
+          password: passwordErr
+        }
+      }))
+      toast.error("Please correct the errors in the form")
+      return
+    }
+
+    // Reset errors & start loading
+    setFormState(prev => ({
+      ...prev,
+      errors: {},
+      success: false,
+      loading: true,
+    }))
+
+    try {
+      const response = await axiosInstance.post(API_PATHS.AUTH.LOGIN, {
+        email: formData.email,
+        password: formData.password,
+      })
+
+      const { token, user } = response.data
+
+      // Persist token + user in context & localStorage
+      login(user, token)
+
+      setFormState(prev => ({ ...prev, loading: false, success: true }))
+      toast.success(`Welcome back, ${user.name || "User"}!`)
+
+      // Navigate: go back to where the user came from, or default by role
+      const from = location.state?.from?.pathname
+      setTimeout(() => {
+        if (from && from !== "/login") {
+          navigate(from, { replace: true })
+        } else if (user.role === "admin") {
+          navigate("/admin-email-templates")
+        } else if (user.role === "employer") {
+          navigate("/employer-dashboard")
+        } else {
+          navigate("/find-jobs")
+        }
+      }, 1200)
+
+    } catch (error) {
+      const message =
+        error.response?.data?.message || "Login failed. Please try again."
+
+      setFormState(prev => ({
+        ...prev,
+        loading: false,
+        success: false,
+        errors: { api: message },
+      }))
+      toast.error(message)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex font-display text-secondary overflow-hidden">
+      
+      {/* LEFT SIDE: Brand Showcase (Hidden on Mobile) */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-secondary overflow-hidden flex-col justify-between p-12">
+        {/* Background Decorative Mesh Gradients */}
+        <div className="absolute inset-0 bg-radial-to-br from-primary/20 via-transparent to-transparent opacity-60 pointer-events-none" />
+        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-primary/10 blur-3xl pointer-events-none animate-pulse duration-10000" />
+        <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-primary/20 blur-3xl pointer-events-none" />
+
+        {/* Logo Header */}
+        <div className="relative z-10 flex items-center space-x-3 cursor-pointer" onClick={() => navigate("/")}>
+          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center border border-primary/40 shadow-lg shadow-primary/20">
+            <img src="/spg-logo.png" alt="logo" className="w-full h-full object-cover rounded-full" />
+          </div>
+          <span className="text-2xl font-bold text-white tracking-wide">
+            SPG <span className="text-primary">JobPortal</span>
+          </span>
+        </div>
+
+        {/* Brand Core Value Section */}
+        <div className="relative z-10 my-auto max-w-lg space-y-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="space-y-4"
+          >
+            <div className="inline-flex items-center space-x-2 bg-primary/10 border border-primary/20 text-primary px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
+              <span>Next-Gen Job Matching</span>
+            </div>
+            <h1 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight">
+              Connect with <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-orange-400">Opportunities</span> built for your skills.
+            </h1>
+            <p className="text-gray-400 text-lg leading-relaxed">
+              Log in to access tailored recommendations, apply to top tier firms, and keep track of your career progression in real time.
+            </p>
+          </motion.div>
+
+          {/* Stats Visual Cards */}
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="grid grid-cols-3 gap-4"
+          >
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4 hover:border-primary/40 transition-colors group">
+              <div className="p-2 w-fit rounded-lg bg-primary/10 text-primary mb-2 group-hover:scale-110 transition-transform">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <div className="text-2xl font-bold text-white">12k+</div>
+              <div className="text-xs text-gray-400">Active Jobs</div>
+            </div>
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4 hover:border-primary/40 transition-colors group">
+              <div className="p-2 w-fit rounded-lg bg-primary/10 text-primary mb-2 group-hover:scale-110 transition-transform">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div className="text-2xl font-bold text-white">500+</div>
+              <div className="text-xs text-gray-400">Companies</div>
+            </div>
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4 hover:border-primary/40 transition-colors group">
+              <div className="p-2 w-fit rounded-lg bg-primary/10 text-primary mb-2 group-hover:scale-110 transition-transform">
+                <Users className="w-5 h-5" />
+              </div>
+              <div className="text-2xl font-bold text-white">98%</div>
+              <div className="text-xs text-gray-400">Match Rate</div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Footer info */}
+        <div className="relative z-10 text-sm text-gray-500 flex justify-between items-center">
+          <span>&copy; {new Date().getFullYear()} SPG JobPortal.</span>
+          <div className="flex space-x-4">
+            <a href="#" className="hover:text-white transition-colors">Privacy</a>
+            <a href="#" className="hover:text-white transition-colors">Terms</a>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT SIDE: Interactive Login Form Container */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative bg-white">
+        
+        {/* Subtle decorative lights for mobile */}
+        <div className="lg:hidden absolute top-0 right-0 w-64 h-64 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
+        
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md space-y-8"
+        >
+          {/* Form Header */}
+          <div className="space-y-3">
+            <h2 className="text-3xl font-extrabold text-secondary tracking-tight">
+              Welcome Back
+            </h2>
+            <p className="text-gray-500 font-medium">
+              Sign in to your account to continue your search
+            </p>
+          </div>
+
+          {/* Google Sign-In */}
+          <GoogleSignInButton label="Continue with Google" />
+
+          <div className="relative flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <span className="relative px-4 bg-white text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              Or continue with
+            </span>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            
+            {/* Email Address */}
+            <div className="space-y-1.5">
+              <label className="block text-sm font-bold text-gray-700">
+                Email Address
+              </label>
+              <div 
+                className={`relative border rounded-xl transition-all flex items-center ${
+                  formState.errors.email 
+                    ? "border-red-500 bg-red-50/10 focus-within:ring-2 focus-within:ring-red-500/20" 
+                    : activeField === "email"
+                      ? "border-primary ring-2 ring-primary/20" 
+                      : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className="pl-3.5 flex items-center pointer-events-none">
+                  <Mail className={`w-5 h-5 transition-colors ${
+                    formState.errors.email 
+                      ? "text-red-400" 
+                      : activeField === "email" 
+                        ? "text-primary" 
+                        : "text-gray-400"
+                  }`} />
+                </div>
+                <input 
+                  type="email" 
+                  name="email"
+                  placeholder="name@example.com"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  onFocus={() => setActiveField("email")}
+                  onBlur={() => setActiveField(null)}
+                  className="w-full pl-3 pr-4 py-3 bg-transparent text-secondary placeholder-gray-400 outline-none text-[15px] font-medium"
+                />
+              </div>
+              <AnimatePresence>
+                {formState.errors.email && (
+                  <motion.p 
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="text-red-500 text-xs font-semibold mt-1 flex items-center space-x-1"
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{formState.errors.email}</span>
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Password */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label className="block text-sm font-bold text-gray-700">
+                  Password
+                </label>
+                <Link 
+                  to="/auth/forgot-password" 
+                  className="text-xs font-bold text-primary hover:text-orange-600 transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              <div 
+                className={`relative border rounded-xl transition-all flex items-center ${
+                  formState.errors.password 
+                    ? "border-red-500 bg-red-50/10 focus-within:ring-2 focus-within:ring-red-500/20" 
+                    : activeField === "password"
+                      ? "border-primary ring-2 ring-primary/20" 
+                      : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className="pl-3.5 flex items-center pointer-events-none">
+                  <Lock className={`w-5 h-5 transition-colors ${
+                    formState.errors.password 
+                      ? "text-red-400" 
+                      : activeField === "password" 
+                        ? "text-primary" 
+                        : "text-gray-400"
+                  }`} />
+                </div>
+                <input 
+                  type={formState.showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  onFocus={() => setActiveField("password")}
+                  onBlur={() => setActiveField(null)}
+                  className="w-full pl-3 pr-11 py-3 bg-transparent text-secondary placeholder-gray-400 outline-none text-[15px] font-medium"
+                />
+                <button
+                  type="button"
+                  onClick={() => setFormState(prev => ({
+                    ...prev,
+                    showPassword: !prev.showPassword
+                  }))}
+                  className="absolute right-3.5 text-gray-400 hover:text-gray-600 transition-colors p-1"
+                >
+                  {formState.showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+              <AnimatePresence>
+                {formState.errors.password && (
+                  <motion.p 
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="text-red-500 text-xs font-semibold mt-1 flex items-center space-x-1"
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{formState.errors.password}</span>
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Remember Me */}
+            <div className="flex items-center">
+              <label className="relative flex items-center cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  name="rememberMe"
+                  checked={formData.rememberMe}
+                  onChange={handleInputChange}
+                  className="sr-only peer"
+                />
+                <div className="w-5 h-5 border border-gray-200 peer-checked:border-primary peer-checked:bg-primary rounded-md flex items-center justify-center transition-all mr-2.5 bg-white shadow-xs">
+                  <svg className="w-3.5 h-3.5 text-white scale-0 peer-checked:scale-100 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span className="text-sm font-semibold text-gray-600">Remember me for 30 days</span>
+              </label>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={formState.loading || formState.success}
+              className={`w-full py-3.5 rounded-xl font-bold text-[15px] text-white transition-all transform active:scale-[0.98] shadow-md shadow-primary/20 flex items-center justify-center space-x-2 cursor-pointer ${
+                formState.success
+                  ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
+                  : "bg-primary hover:bg-orange-600"
+              }`}
+            >
+              {formState.loading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Signing In...</span>
+                </>
+              ) : formState.success ? (
+                <>
+                  <CheckCircle className="h-5 w-5" />
+                  <span>Success! Redirecting...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <ChevronRight className="h-4.5 w-4.5" />
+                </>
+              )}
+            </button>
+
+            {/* Link to Register */}
+            <div className="text-center pt-3 text-sm text-gray-500 font-semibold">
+              New to SPG JobPortal?{" "}
+              <Link 
+                to="/signup" 
+                className="text-primary hover:text-orange-600 transition-colors font-bold underline decoration-wavy decoration-orange-200 hover:decoration-primary"
+              >
+                Create an account
+              </Link>
+            </div>
+
+          </form>
+        </motion.div>
+      </div>
+
+    </div>
+  )
+}
+
+export default Login
