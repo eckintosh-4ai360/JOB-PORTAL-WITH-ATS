@@ -17,6 +17,7 @@ export const API_PATHS = {
 
   JOBS: {
     GET_ALL_JOBS: "/api/jobs",
+    GET_COMPANIES: "/api/jobs/companies",
     GET_JOB_BY_ID: (id) => `/api/jobs/${id}`,
     POST_JOB: "/api/jobs",
     GET_JOBS_EMPLOYER: "/api/jobs/employer/my-jobs",
@@ -45,6 +46,20 @@ export const API_PATHS = {
     GET_DOCUMENTS: "/api/user/documents",
     UPLOAD_DOCUMENT: "/api/user/documents",
     DELETE_DOCUMENT: (id) => `/api/user/documents/${id}`,
+  },
+
+  COMPANIES: {
+    GET_ALL: "/api/companies",
+    GET_BY_ID: (id) => `/api/companies/${id}`,
+    GET_MY_PROFILE: "/api/companies/me/profile",
+    UPDATE_MY_PROFILE: "/api/companies/me/profile",
+  },
+
+  SALARIES: {
+    GET_BENCHMARKS: "/api/salaries/benchmarks",
+    GET_SKILLS: "/api/salaries/skills",
+    GET_SUBMISSIONS: "/api/salaries/submissions",
+    SUBMIT: "/api/salaries/submit",
   },
 
   EMAIL_TEMPLATES: {
