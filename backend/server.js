@@ -3,7 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const connectDB = require("./config/db");
+const prisma = require("./config/prisma");
 
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
@@ -24,10 +24,6 @@ app.use(
         allowedHeaders: ["Content-Type", "Authorization"],
     })
 );
-
-// Connect Database
-connectDB();
-
 
 // Middleware to handle json data
 app.use(express.json());
@@ -53,6 +49,18 @@ app.use((err, req, res, next) => {
 // start Server
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-    console.log(`server is running on port ${PORT}`)
-});
+async function main() {
+    try {
+        await prisma.$connect();
+        console.log("Connected to Neon PostgreSQL via Prisma successfully");
+    } catch (error) {
+        console.error("Failed to connect to database:", error.message);
+        process.exit(1);
+    }
+
+    app.listen(PORT, () => {
+        console.log(`server is running on port ${PORT}`)
+    });
+}
+
+main();
