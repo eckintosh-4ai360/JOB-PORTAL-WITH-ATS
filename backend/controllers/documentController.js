@@ -1,16 +1,19 @@
 const fs = require("fs");
 const path = require("path");
 const cloudinary = require("cloudinary").v2;
-const User = require("../models/User");
+const prisma = require("../config/prisma");
+const { toClient } = require("../utils/prismaHelper");
 const { uploadToCloudinary, uploadToLocalDisk } = require("../middlewares/uploadMiddleware");
 
 // @desc Get all documents for the logged-in user
 exports.getDocuments = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
-        if (!user) return res.status(404).json({ message: "User not found" });
+        const documents = await prisma.document.findMany({
+            where: { userId: req.user._id },
+            orderBy: { uploadedAt: "desc" },
+        });
 
-        res.json({ documents: user.documents || [] });
+        res.json({ documents: toClient(documents) });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
@@ -44,30 +47,39 @@ exports.uploadDocument = async (req, res) => {
             publicId = null;
         }
 
-        const user = await User.findById(req.user._id);
-        if (!user) return res.status(404).json({ message: "User not found" });
+        await prisma.document.create({
+            data: {
+                userId: req.user._id,
+                name: name || req.file.originalname,
+                url,
+                category: docCategory,
+                fileType: req.file.mimetype,
+                size: req.file.size,
+                publicId,
+                resourceType,
+                uploadedAt: new Date(),
+            },
+        });
 
-        const newDocument = {
-            name: name || req.file.originalname,
-            url,
-            category: docCategory,
-            fileType: req.file.mimetype,
-            size: req.file.size,
-            publicId,
-            resourceType,
-            uploadedAt: new Date(),
-        };
-
-        user.documents.push(newDocument);
-
-        // Keep the profile resume field (used for 1-click apply) in sync
+        // Keep the profile resume field in sync
         if (docCategory === "Resume") {
-            user.resume = url;
+            await prisma.user.update({
+                where: { id: req.user._id },
+                data: { resume: url },
+            });
         }
 
-        await user.save();
+        const documents = await prisma.document.findMany({
+            where: { userId: req.user._id },
+            orderBy: { uploadedAt: "desc" },
+        });
 
-        res.status(201).json({ documents: user.documents, resume: user.resume || "" });
+        const user = await prisma.user.findUnique({
+            where: { id: req.user._id },
+            select: { resume: true },
+        });
+
+        res.status(201).json({ documents: toClient(documents), resume: user?.resume || "" });
     } catch (error) {
         console.error("Document upload error:", error);
         res.status(500).json({ message: "Document upload failed", error: error.message });
@@ -79,11 +91,13 @@ exports.deleteDocument = async (req, res) => {
     try {
         const { docId } = req.params;
 
-        const user = await User.findById(req.user._id);
-        if (!user) return res.status(404).json({ message: "User not found" });
+        const document = await prisma.document.findUnique({
+            where: { id: docId },
+        });
 
-        const document = user.documents.id(docId);
-        if (!document) return res.status(404).json({ message: "Document not found" });
+        if (!document || document.userId !== req.user._id) {
+            return res.status(404).json({ message: "Document not found" });
+        }
 
         // Delete the underlying file
         if (document.publicId) {
@@ -98,23 +112,44 @@ exports.deleteDocument = async (req, res) => {
             const fileName = document.url.split("/").pop();
             const filePath = path.join(__dirname, "..", "uploads", fileName);
             if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
+                try {
+                    fs.unlinkSync(filePath);
+                } catch (unlinkErr) {
+                    console.warn("Local file unlink failed:", unlinkErr.message);
+                }
             }
         }
 
-        const wasProfileResume = user.resume && document.url === user.resume;
-        document.deleteOne();
+        await prisma.document.delete({
+            where: { id: docId },
+        });
+
+        const user = await prisma.user.findUnique({
+            where: { id: req.user._id },
+            select: { resume: true },
+        });
+
+        let updatedResume = user?.resume || "";
+        const wasProfileResume = user?.resume && document.url === user.resume;
 
         if (wasProfileResume) {
-            const remainingResumes = user.documents
-                .filter((d) => d.category === "Resume")
-                .sort((a, b) => b.uploadedAt - a.uploadedAt);
-            user.resume = remainingResumes[0]?.url || "";
+            const remainingResumes = await prisma.document.findMany({
+                where: { userId: req.user._id, category: "Resume" },
+                orderBy: { uploadedAt: "desc" },
+            });
+            updatedResume = remainingResumes[0]?.url || "";
+            await prisma.user.update({
+                where: { id: req.user._id },
+                data: { resume: updatedResume },
+            });
         }
 
-        await user.save();
+        const documents = await prisma.document.findMany({
+            where: { userId: req.user._id },
+            orderBy: { uploadedAt: "desc" },
+        });
 
-        res.json({ documents: user.documents, resume: user.resume || "" });
+        res.json({ documents: toClient(documents), resume: updatedResume });
     } catch (error) {
         console.error("Document delete error:", error);
         res.status(500).json({ message: error.message });
