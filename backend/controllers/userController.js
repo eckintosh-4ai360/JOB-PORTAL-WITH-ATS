@@ -1,39 +1,46 @@
 const fs = require("fs");
 const path = require("path");
-const User = require("../models/User");
+const prisma = require("../config/prisma");
+const { toClient } = require("../utils/prismaHelper");
 
 // @desc Update User profile
 exports.updateProfile = async (req, res) => {
     try {
         const {name, avatar, resume, companyName, companyDescription, companyLogo} = req.body;
-        const user = await User.findById(req.user._id);
-        if(!user) res.status(404).json({message: "User not found"});
+        const user = await prisma.user.findUnique({ where: { id: req.user._id } });
+        if(!user) return res.status(404).json({message: "User not found"});
         
-        user.name = name || user.name;
-        user.avatar  = avatar || user.avatar;  
-        user.resume = resume || user.resume;  
+        const updateData = {};
+        if (name) updateData.name = name;
+        if (avatar) updateData.avatar = avatar;
+        if (resume) updateData.resume = resume;
 
         if(user.role === "jobseeker"){
-            user.resume = resume || user.resume;
+            if (resume) updateData.resume = resume;
         }
         //! if emplyer, allow updating company info
         if(user.role === "employer"){
-            user.companyName = companyName || user.companyName;
-            user.companyDescription = companyDescription || user.companyDescription;
-            user.companyLogo = companyLogo || user.companyLogo;
+            if (companyName) updateData.companyName = companyName;
+            if (companyDescription) updateData.companyDescription = companyDescription;
+            if (companyLogo) updateData.companyLogo = companyLogo;
         }
-        await user.save();
-        res.json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            avatar: user.avatar,
-            role: user.role,
-            resume: user.resume || '',
-            companyName: user.companyName,
-            companyDescription: user.companyDescription,
-            companyLogo: user.companyLogo,}
-        );
+
+        const updatedUser = await prisma.user.update({
+            where: { id: req.user._id },
+            data: updateData,
+        });
+
+        res.json(toClient({
+            _id: updatedUser.id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            avatar: updatedUser.avatar,
+            role: updatedUser.role,
+            resume: updatedUser.resume || '',
+            companyName: updatedUser.companyName,
+            companyDescription: updatedUser.companyDescription,
+            companyLogo: updatedUser.companyLogo,
+        }));
         
     } catch (error) {
         console.error(error);
@@ -49,10 +56,10 @@ exports.deleteResume = async (req, res) => {
         //! extract file name fromm the url
         const fileName = resumeUrl?.split("/")?.pop();
 
-        const user = await User.findById(req.user._id);
-        if(!user) res.status(404).json({message: "User not found"});
+        const user = await prisma.user.findUnique({ where: { id: req.user._id } });
+        if(!user) return res.status(404).json({message: "User not found"});
 
-        if(user.role == "jobseeker"){
+        if(user.role !== "jobseeker"){
             return res.status(403).json({message: "only candidate can delete resume"});
         }
 
@@ -68,8 +75,10 @@ exports.deleteResume = async (req, res) => {
         fs.unlinkSync(filePath);
 
         //Update user model
-        user.resume = '';
-        await user.save();
+        await prisma.user.update({
+            where: { id: req.user._id },
+            data: { resume: '' }
+        });
 
         res.json({message: "Resume deleted successfully"});
        
@@ -82,12 +91,19 @@ exports.deleteResume = async (req, res) => {
 // @desc Get user public profile
 exports.getPublicProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id).select("-password");
-        if(!user) res.status(404).json({message: "User not found"});
-        res.json(user);
+        const user = await prisma.user.findUnique({
+            where: { id: req.params.id },
+            select: {
+                id: true, name: true, email: true, role: true,
+                avatar: true, resume: true, clerkId: true,
+                companyName: true, companyDescription: true, companyLogo: true,
+                createdAt: true, updatedAt: true,
+            }
+        });
+        if(!user) return res.status(404).json({message: "User not found"});
+        res.json(toClient(user));
     } catch (error) {
         console.error(error);
         res.status(500).json({message: error.message});
     }
 }
-
