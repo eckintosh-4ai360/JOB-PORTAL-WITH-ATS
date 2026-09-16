@@ -1,6 +1,5 @@
-const Analytics = require("../models/Analytics");
-const Job = require("../models/Job");
-const Application = require("../models/Application");
+const prisma = require("../config/prisma");
+const { toClient } = require("../utils/prismaHelper");
 
 // @desc    Get or generate analytics for the logged-in employer
 // @route   GET /api/analytics
@@ -14,15 +13,25 @@ const getEmployerAnalytics = async (req, res) => {
         const employerId = req.user._id;
 
         // Live counts 
-        const totalActiveJobs = await Job.countDocuments({ company: employerId, isClosed: false });
+        const totalActiveJobs = await prisma.job.count({
+            where: { companyId: employerId, isClosed: false },
+        });
 
-        const allJobs     = await Job.find({ company: employerId }).select("_id");
-        const jobIds      = allJobs.map((j) => j._id);
+        const allJobs = await prisma.job.findMany({
+            where: { companyId: employerId },
+            select: { id: true },
+        });
+        const jobIds = allJobs.map((j) => j.id);
 
-        const totalApplicants = await Application.countDocuments({ job: { $in: jobIds } });
-        const totalHired      = await Application.countDocuments({
-            job: { $in: jobIds },
-            status: "Offered",
+        const totalApplicants = await prisma.application.count({
+            where: { jobId: { in: jobIds } },
+        });
+
+        const totalHired = await prisma.application.count({
+            where: {
+                jobId: { in: jobIds },
+                status: "Offered",
+            },
         });
 
         const hiringRate = totalApplicants > 0
@@ -30,37 +39,48 @@ const getEmployerAnalytics = async (req, res) => {
             : 0;
 
         // Recent jobs (last 5, newest first) 
-        const recentJobs = await Job.find({ company: employerId })
-            .sort({ createdAt: -1 })
-            .limit(5)
-            .select("title location createdAt isClosed");
+        const recentJobs = await prisma.job.findMany({
+            where: { companyId: employerId },
+            orderBy: { createdAt: "desc" },
+            take: 5,
+            select: {
+                id: true,
+                title: true,
+                location: true,
+                createdAt: true,
+                isClosed: true,
+                _count: {
+                    select: { applications: true },
+                },
+            },
+        });
 
-        // Count applicants per job and attach
-        const recentJobsWithCount = await Promise.all(
-            recentJobs.map(async (job) => {
-                const applicantCount = await Application.countDocuments({ job: job._id });
-                return {
-                    _id:            job._id,
-                    title:          job.title,
-                    location:       job.location,
-                    createdAt:      job.createdAt,
-                    isActive:       !job.isClosed,
-                    isClosed:       job.isClosed,
-                    applicantCount,
-                };
-            })
-        );
+        const recentJobsWithCount = recentJobs.map((job) => ({
+            _id:            job.id,
+            id:             job.id,
+            title:          job.title,
+            location:       job.location,
+            createdAt:      job.createdAt,
+            isActive:       !job.isClosed,
+            isClosed:       job.isClosed,
+            applicantCount: job._count.applications,
+        }));
 
         // Recent applications (last 5)
-        const recentApplications = await Application.find({ job: { $in: jobIds } })
-            .sort({ updatedAt: -1 })
-            .limit(5)
-            .populate("applicant", "name")   // applicant = User ref
-            .populate("job", "title");
+        const recentApplications = await prisma.application.findMany({
+            where: { jobId: { in: jobIds } },
+            orderBy: { updatedAt: "desc" },
+            take: 5,
+            include: {
+                applicant: { select: { name: true } },
+                job: { select: { title: true } },
+            },
+        });
 
         const recentApplicationsMapped = recentApplications.map((app) => ({
-            _id:       app._id,
-            applicant: app.applicant?.name || "Unknown",
+            _id:       app.id,
+            id:        app.id,
+            applicant: app.applicant?.name || app.guestName || "Unknown",
             job:       { title: app.job?.title || "" },
             status:    app.status,
             updatedAt: app.updatedAt,
@@ -71,7 +91,7 @@ const getEmployerAnalytics = async (req, res) => {
                 totalActiveJobs,
                 totalApplicants,
                 hiringRate,
-                trends: { activeJobs: 0, applicants: 0, hiringRate: 0 }, // extend later
+                trends: { activeJobs: 0, applicants: 0, hiringRate: 0 },
             },
             recentJobs:         recentJobsWithCount,
             recentApplications: recentApplicationsMapped,
@@ -82,7 +102,6 @@ const getEmployerAnalytics = async (req, res) => {
     }
 };
 
-
 // @desc    Get application status breakdown for a specific job
 // @route   GET /api/analytics/job/:jobId
 // @access  Private (Employer only — must own the job)
@@ -92,26 +111,36 @@ const getJobAnalytics = async (req, res) => {
             return res.status(403).json({ message: "Only employers can access analytics" });
         }
 
-        const job = await Job.findById(req.params.jobId);
+        const job = await prisma.job.findUnique({
+            where: { id: req.params.jobId },
+        });
 
         if (!job) {
             return res.status(404).json({ message: "Job not found" });
         }
 
-        if (job.company.toString() !== req.user._id.toString()) {
+        if (job.companyId !== req.user._id) {
             return res.status(403).json({ message: "Not authorized to view analytics for this job" });
         }
 
         // Count applications per status
-        const statusBreakdown = await Application.aggregate([
-            { $match: { job: job._id } },
-            { $group: { _id: "$status", count: { $sum: 1 } } },
-        ]);
+        const statusGroups = await prisma.application.groupBy({
+            by: ["status"],
+            where: { jobId: job.id },
+            _count: { _all: true },
+        });
 
-        const totalApplications = await Application.countDocuments({ job: job._id });
+        const statusBreakdown = statusGroups.map((g) => ({
+            _id:   g.status,
+            count: g._count._all,
+        }));
+
+        const totalApplications = await prisma.application.count({
+            where: { jobId: job.id },
+        });
 
         res.status(200).json({
-            job: { id: job._id, title: job.title },
+            job: { id: job.id, _id: job.id, title: job.title },
             totalApplications,
             statusBreakdown,
         });
@@ -126,9 +155,12 @@ const getJobAnalytics = async (req, res) => {
 // @access  Public
 const getPlatformSummary = async (req, res) => {
     try {
-        const totalJobs = await Job.countDocuments({ isClosed: false });
-        const totalApplications = await Application.countDocuments();
-        const totalEmployers = await Job.distinct("company").then((ids) => ids.length);
+        const totalJobs = await prisma.job.count({ where: { isClosed: false } });
+        const totalApplications = await prisma.application.count();
+        const companies = await prisma.job.groupBy({
+            by: ["companyId"],
+        });
+        const totalEmployers = companies.length;
 
         res.status(200).json({
             totalActiveJobs: totalJobs,
