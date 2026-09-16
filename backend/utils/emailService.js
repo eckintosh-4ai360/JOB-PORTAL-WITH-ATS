@@ -1,0 +1,225 @@
+const { Resend } = require("resend");
+const EmailTemplate = require("../models/EmailTemplate");
+
+// Resend sends over HTTPS, unlike SMTP (port 587/465/25) which Render blocks outbound.
+const resend = process.env.RESEND_API_KEY
+    ? new Resend(process.env.RESEND_API_KEY)
+    : null;
+
+const emailShell = (content) => `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #f9f9f9; border-radius: 8px;">
+        ${content}
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+        <p style="color: #6b7280; font-size: 14px;">This is an automated message from Job Portal. Please do not reply to this email.</p>
+    </div>
+`;
+
+// These defaults seed the database the first time an admin opens the templates
+// screen. Existing saved templates are never overwritten.
+const DEFAULT_EMAIL_TEMPLATES = [
+    {
+        key: "account-created",
+        name: "Account created",
+        description: "Sent when a new candidate or employer account is created.",
+        subject: "Welcome to Job Portal",
+        variables: ["name", "role"],
+        html: emailShell(`
+            <h2 style="color: #2563eb;">Welcome to Job Portal!</h2>
+            <p>Hi <strong>{{name}}</strong>,</p>
+            <p>Your account has been created successfully.</p>
+            <p>You are signed up as a <strong>{{role}}</strong>.</p>
+            <p>You can now browse roles, manage your profile, and keep track of your activity on the platform.</p>
+        `),
+    },
+    {
+        key: "application-submitted",
+        name: "Application received",
+        description: "Sent to an applicant after they submit an application.",
+        subject: "Application Received — {{jobTitle}}",
+        variables: ["applicantName", "jobTitle"],
+        html: emailShell(`
+            <h2 style="color: #2563eb;">Application Received!</h2>
+            <p>Hi <strong>{{applicantName}}</strong>,</p>
+            <p>We've successfully received your application for the position of <strong>{{jobTitle}}</strong>.</p>
+            <p>The employer will review your application and get back to you. You can expect an update on your application status.</p>
+        `),
+    },
+    {
+        key: "application-status-updated",
+        name: "Application status updated",
+        description: "Sent for application status changes without a dedicated message.",
+        subject: "Application Status Updated - {{jobTitle}}",
+        variables: ["applicantName", "jobTitle", "status"],
+        html: emailShell(`
+            <h2 style="color: #2563eb;">Application Status Updated</h2>
+            <p>Hi <strong>{{applicantName}}</strong>,</p>
+            <p>Your application for <strong>{{jobTitle}}</strong> has been updated.</p>
+            <p>Current status: <strong>{{status}}</strong></p>
+        `),
+    },
+    {
+        key: "application-under-review",
+        name: "Application under review",
+        description: "Sent when an employer starts reviewing an application.",
+        subject: "Your Application Is Under Review — {{jobTitle}}",
+        variables: ["applicantName", "jobTitle"],
+        html: emailShell(`
+            <h2 style="color: #d97706;">Application Under Review</h2>
+            <p>Hi <strong>{{applicantName}}</strong>,</p>
+            <p>Great news! The employer is currently reviewing your application for <strong>{{jobTitle}}</strong>.</p>
+            <p>We'll notify you as soon as there's a further update.</p>
+        `),
+    },
+    {
+        key: "interview-scheduled",
+        name: "Interview scheduled",
+        description: "Sent when an employer schedules an interview.",
+        subject: "Interview Scheduled — {{jobTitle}}",
+        variables: ["applicantName", "jobTitle", "interviewDate", "interviewTime", "interviewLocation", "interviewNotes"],
+        html: emailShell(`
+            <h2 style="color: #059669;">Interview Scheduled!</h2>
+            <p>Hi <strong>{{applicantName}}</strong>,</p>
+            <p>Congratulations! You've been shortlisted for an interview for the position of <strong>{{jobTitle}}</strong>.</p>
+            <div style="background: #ecfdf5; border-left: 4px solid #059669; padding: 16px; border-radius: 4px; margin: 16px 0;">
+                <p style="margin: 0 0 8px 0;"><strong>📅 Date:</strong> {{interviewDate}}</p>
+                <p style="margin: 0 0 8px 0;"><strong>⏰ Time:</strong> {{interviewTime}}</p>
+                <p style="margin: 0 0 8px 0;"><strong>📍 Location / Link:</strong> {{interviewLocation}}</p>
+                <p style="margin: 0;"><strong>📝 Notes:</strong> {{interviewNotes}}</p>
+            </div>
+            <p>Please confirm your availability or reach out if you need to reschedule.</p>
+        `),
+    },
+    {
+        key: "job-offer",
+        name: "Job offer",
+        description: "Sent when an employer marks an application as offered.",
+        subject: "You've Received a Job Offer — {{jobTitle}}",
+        variables: ["applicantName", "jobTitle"],
+        html: emailShell(`
+            <h2 style="color: #7c3aed;">Congratulations — You Got the Offer!</h2>
+            <p>Hi <strong>{{applicantName}}</strong>,</p>
+            <p>We're thrilled to inform you that you've received a <strong>job offer</strong> for the position of <strong>{{jobTitle}}</strong>!</p>
+            <p>The employer will be in touch with you shortly with further details about the offer.</p>
+            <p>Wishing you all the best in this exciting new chapter! 🎊</p>
+        `),
+    },
+    {
+        key: "application-rejected",
+        name: "Application update",
+        description: "Sent when an employer rejects an application.",
+        subject: "Application Update — {{jobTitle}}",
+        variables: ["applicantName", "jobTitle"],
+        html: emailShell(`
+            <h2 style="color: #dc2626;">Application Update</h2>
+            <p>Hi <strong>{{applicantName}}</strong>,</p>
+            <p>Thank you for your interest in the <strong>{{jobTitle}}</strong> position and for taking the time to apply.</p>
+            <p>After careful consideration, the employer has decided to move forward with other candidates at this time.</p>
+            <p>We encourage you to keep exploring other opportunities on our platform. Don't be discouraged — the right role is out there!</p>
+        `),
+    },
+];
+
+const escapeHtml = (value) => String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+const replaceVariables = (value, data, escapeValues = false) => value.replace(
+    /{{\s*([a-zA-Z0-9_]+)\s*}}/g,
+    (_, key) => escapeValues ? escapeHtml(data[key]) : String(data[key] ?? "")
+);
+
+const getTemplate = async (key) => {
+    const fallback = DEFAULT_EMAIL_TEMPLATES.find((template) => template.key === key);
+    if (!fallback) throw new Error(`Unknown email template: ${key}`);
+
+    try {
+        const saved = await EmailTemplate.findOne({ key }).lean();
+        return saved || fallback;
+    } catch (error) {
+        console.warn(`Could not load saved email template ${key}; using the default`, error.message);
+        return fallback;
+    }
+};
+
+const sendEmail = async ({ to, subject, html }) => {
+    try {
+        if (!resend) {
+            console.warn("RESEND_API_KEY is not configured; skipping email notification");
+            return;
+        }
+
+        const { error } = await resend.emails.send({
+            from: process.env.EMAIL_FROM || "Job Portal <onboarding@resend.dev>",
+            to,
+            subject,
+            html,
+        });
+        if (error) throw new Error(error.message);
+        console.log(`📧 Email sent to ${to}: ${subject}`);
+    } catch (error) {
+        console.error("Failed to send email:", error.message);
+    }
+};
+
+const sendTemplatedEmail = async ({ key, to, data }) => {
+    const template = await getTemplate(key);
+    await sendEmail({
+        to,
+        subject: replaceVariables(template.subject, data),
+        html: replaceVariables(template.html, data, true),
+    });
+};
+
+const sendAccountCreatedEmail = async ({ to, name, role }) => sendTemplatedEmail({
+    key: "account-created", to, data: { name: name || "there", role: role || "user" },
+});
+
+const sendApplicationSubmittedEmail = async ({ to, applicantName, jobTitle }) => sendTemplatedEmail({
+    key: "application-submitted", to, data: { applicantName, jobTitle },
+});
+
+const sendApplicationStatusUpdatedEmail = async ({ to, applicantName, jobTitle, status }) => sendTemplatedEmail({
+    key: "application-status-updated", to, data: { applicantName, jobTitle, status },
+});
+
+const sendUnderReviewEmail = async ({ to, applicantName, jobTitle }) => sendTemplatedEmail({
+    key: "application-under-review", to, data: { applicantName, jobTitle },
+});
+
+const sendInterviewScheduledEmail = async ({ to, applicantName, jobTitle, interview }) => sendTemplatedEmail({
+    key: "interview-scheduled",
+    to,
+    data: {
+        applicantName,
+        jobTitle,
+        interviewDate: new Date(interview.date).toLocaleDateString("en-GB", {
+            weekday: "long", year: "numeric", month: "long", day: "numeric",
+        }),
+        interviewTime: interview.time,
+        interviewLocation: interview.location,
+        interviewNotes: interview.notes || "",
+    },
+});
+
+const sendOfferEmail = async ({ to, applicantName, jobTitle }) => sendTemplatedEmail({
+    key: "job-offer", to, data: { applicantName, jobTitle },
+});
+
+const sendRejectionEmail = async ({ to, applicantName, jobTitle }) => sendTemplatedEmail({
+    key: "application-rejected", to, data: { applicantName, jobTitle },
+});
+
+module.exports = {
+    DEFAULT_EMAIL_TEMPLATES,
+    sendEmail,
+    sendAccountCreatedEmail,
+    sendApplicationSubmittedEmail,
+    sendApplicationStatusUpdatedEmail,
+    sendUnderReviewEmail,
+    sendInterviewScheduledEmail,
+    sendOfferEmail,
+    sendRejectionEmail,
+};
