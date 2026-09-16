@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+const prisma = require("../config/prisma");
 
 // Middleware to protect route 
 const protect = async (req, res, next) => {
@@ -10,7 +10,20 @@ const protect = async (req, res, next) => {
             token = token.split(" ")[1];          //Exttract the token
 
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = await User.findById(decoded.id).select("-password");
+            const user = await prisma.user.findUnique({
+                where: { id: decoded.id },
+                select: {
+                    id: true, name: true, email: true, role: true,
+                    avatar: true, resume: true, clerkId: true,
+                    companyName: true, companyDescription: true, companyLogo: true,
+                    createdAt: true, updatedAt: true,
+                }
+            });
+            if (!user) {
+                return res.status(401).json({message: "Not authorized, user not found"});
+            }
+            // Add _id alias for backward compatibility
+            req.user = { ...user, _id: user.id };
             next();
         } else {
             return res.status(401).json({message: "Not authorized, no token"});
@@ -30,7 +43,18 @@ const optionalAuth = async (req, res, next) => {
         if (token && token.startsWith("Bearer")) {
             token = token.split(" ")[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = await User.findById(decoded.id).select("-password");
+            const user = await prisma.user.findUnique({
+                where: { id: decoded.id },
+                select: {
+                    id: true, name: true, email: true, role: true,
+                    avatar: true, resume: true, clerkId: true,
+                    companyName: true, companyDescription: true, companyLogo: true,
+                    createdAt: true, updatedAt: true,
+                }
+            });
+            if (user) {
+                req.user = { ...user, _id: user.id };
+            }
         }
         // If no token or invalid token, req.user stays undefined
     } catch (error) {
