@@ -76,7 +76,7 @@ const SalariesInsights = () => {
                   TRANSPARENT TALENT INTELLIGENCE
                 </div>
 
-                <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight">
+                <h1 className="font-headline-lg text-headline-xl text-on-surface tracking-tight">
                   Real Ghana Salary Insights,{" "}
                   <span className="bg-primary bg-clip-text text-transparent">
                     Verified &amp; Open.
@@ -84,7 +84,7 @@ const SalariesInsights = () => {
                 </h1>
 
                 <p className="font-body-lg text-body-lg text-text-secondary leading-relaxed">
-                  Explore compensation benchmarks and role insights for Ghanaian professionals across every industry.
+                  Explore salary insights across Ghana's industries.
                 </p>
               </div>
 

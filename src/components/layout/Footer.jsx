@@ -22,8 +22,8 @@ const Footer = () => {
       <div className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#7235c4]/40 blur-3xl" />
       <div className="pointer-events-none absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-[#d27cf0]/20 blur-3xl" />
 
-      <div className="relative mx-auto max-w-[1280px] px-margin-mobile md:px-margin">
-        <div className="mb-space-xl grid grid-cols-1 gap-space-lg lg:grid-cols-12 lg:items-stretch">
+      <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-space-xl grid grid-cols-1 gap-space-lg lg:gap-10 lg:grid-cols-12 lg:items-stretch">
           <div className="flex flex-col justify-between rounded-3xl border border-white/10 bg-white/[0.07] p-space-lg backdrop-blur-sm lg:col-span-5">
             <div>
               <Link to="/find-jobs" className="group flex w-fit items-center gap-3 focus:outline-none">

@@ -12,7 +12,7 @@ const CareerBanner = () => {
         alt="Professional interview meeting"
         className="absolute inset-0 h-full w-full object-cover opacity-35"
       />
-      <div className="absolute inset-0 bg-primary/85" />
+      <div className="absolute inset-0 bg-secondary/50" />
 
       <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
