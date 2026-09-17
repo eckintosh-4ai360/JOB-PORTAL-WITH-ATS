@@ -104,7 +104,7 @@ const ResumeAnalyzer = () => {
               </h1>
 
               <p className="font-body-lg text-body-lg text-text-secondary leading-relaxed">
-                Upload your CV or portfolio to get ATS compatibility feedback, skill highlights, salary insights, and role matches across verified employers in every industry.
+                Upload your CV or portfolio to get ATS compatibility feedback, skill highlights, salary insights, and role matches across employers in every industry.
               </p>
 
               {/* Trust Stats Badges */}
@@ -382,7 +382,7 @@ const ResumeAnalyzer = () => {
                   <div className="flex flex-col items-center justify-center py-24 bg-surface-card rounded-2xl border border-border-default">
                     <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3" />
                     <p className="font-body-md font-bold text-text-primary">
-                      Matching resume against verified employers...
+                      Matching resume against live opportunities...
                     </p>
                   </div>
                 ) : (
@@ -402,7 +402,7 @@ const ResumeAnalyzer = () => {
                           ? role.tags 
                           : [role.category, role.type].filter(Boolean);
                         const compLogo = role.company?.companyLogo || role.companyLogo || "https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=120&auto=format&fit=crop&q=60";
-                        const compName = role.company?.companyName || role.companyName || "Verified Employer";
+                        const compName = role.company?.companyName || role.companyName || "Hiring Company";
 
                         return (
                           <article

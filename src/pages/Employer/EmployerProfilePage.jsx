@@ -327,7 +327,7 @@ const EmployerProfilePage = () => {
               <div className="mt-4 flex flex-wrap gap-2 justify-center sm:justify-start">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur-sm">
                   <Shield className="h-3 w-3" />
-                  Verified Employer
+                  Employer Account
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur-sm">
                   <Briefcase className="h-3 w-3" />
@@ -637,10 +637,10 @@ const EmployerProfilePage = () => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Email Verified</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Account Email</span>
                   <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2.5 py-0.5 rounded-full">
                     <Check className="h-3 w-3" />
-                    Verified
+                    On File
                   </span>
                 </div>
               </div>

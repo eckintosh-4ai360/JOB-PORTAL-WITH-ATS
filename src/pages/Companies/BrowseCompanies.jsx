@@ -88,7 +88,7 @@ const BrowseCompanies = () => {
               <div className="max-w-3xl">
                 <div className="inline-flex items-center gap-space-xs px-3 py-1 rounded-full bg-brand-indigo-light text-primary font-label-caps uppercase tracking-wider mb-space-sm">
                   <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  Verified Employer Directory
+                  Employer Directory
                 </div>
                 <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight">
                   Discover Employers Across Ghana
@@ -104,7 +104,7 @@ const BrowseCompanies = () => {
                   <span className="font-numeric-metric text-[26px] text-primary">
                     340+
                   </span>
-                  <span className="font-label-md text-text-muted">Verified Firms</span>
+                  <span className="font-label-md text-text-muted">Listed Employers</span>
                 </div>
                 <div className="px-space-md py-space-sm rounded-2xl bg-salary-surface border border-salary-emerald/20 shadow-xs flex flex-col">
                   <span className="font-numeric-metric text-[26px] text-salary-emerald">
@@ -202,10 +202,10 @@ const BrowseCompanies = () => {
         <section className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin mt-space-lg w-full">
           <div className="flex items-center justify-between mb-space-md">
             <span className="font-headline-sm font-bold text-on-surface">
-              Verified Organizations ({filteredCompanies.length})
+              Employers ({filteredCompanies.length})
             </span>
             <span className="font-body-sm text-text-muted">
-              Audited by SPG Talent Intelligence
+              Company profiles on SPG Talent Network
             </span>
           </div>          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
             {filteredCompanies.map((company) => (
@@ -238,12 +238,14 @@ const BrowseCompanies = () => {
                           <h3 className="font-headline-sm font-bold text-on-surface group-hover:text-primary transition-colors">
                             {company.name}
                           </h3>
-                          <span
-                            className="material-symbols-outlined text-verified-badge text-[18px]"
-                            title="Audited & Verified Employer"
-                          >
-                            verified
-                          </span>
+                          {company.verified && (
+                            <span
+                              className="material-symbols-outlined text-verified-badge text-[18px]"
+                              title="Verified employer"
+                            >
+                              verified
+                            </span>
+                          )}
                         </div>
                         <p className="font-body-sm text-text-muted mt-0.5 truncate">
                           {company.industry}

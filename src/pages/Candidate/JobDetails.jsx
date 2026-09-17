@@ -207,7 +207,7 @@ const JobDetails = () => {
     job.company?.companyName ||
     job.company?.name ||
     job.companyName ||
-    "Verified Employer";
+    "Hiring Company";
 
   const companyLogo =
     job.companyProfile?.logo ||
@@ -221,7 +221,7 @@ const JobDetails = () => {
   const companyDesc =
     job.companyProfile?.description ||
     job.company?.companyDescription ||
-    `${companyName} is a verified employer with opportunities for qualified candidates.`;
+    `${companyName} has opportunities for qualified candidates.`;
 
   const responsibilitiesList = parseList(job.responsibilities, [
     "Deliver high-quality work that supports the team and the organisation's goals.",

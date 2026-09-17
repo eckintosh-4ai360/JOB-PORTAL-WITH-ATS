@@ -732,14 +732,16 @@ const FindJobs = () => {
                             <div className="flex flex-col flex-1 min-w-0">
                               <div className="flex flex-wrap items-center gap-space-xs mb-1">
                                 <span className="font-label-lg font-bold text-text-primary hover:text-primary transition-colors cursor-pointer">
-                                  {job.companyName || job.company?.companyName || "Verified Employer"}
+                                  {job.companyName || job.company?.companyName || "Hiring Company"}
                                 </span>
-                                <span
-                                  className="material-symbols-outlined text-verified-badge text-[18px]"
-                                  title="Verified Employer"
-                                >
-                                  verified
-                                </span>
+                                {job.companyProfile?.verified && (
+                                  <span
+                                    className="material-symbols-outlined text-verified-badge text-[18px]"
+                                    title="Verified employer"
+                                  >
+                                    verified
+                                  </span>
+                                )}
                                 <span className="text-text-muted">•</span>
                                 <span className="font-body-sm text-text-muted">
                                   {job.workModel || "Hybrid"}
