@@ -77,14 +77,14 @@ const SalariesInsights = () => {
                 </div>
 
                 <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight">
-                  Real African Salary Insights,{" "}
-                  <span className="bg-gradient-to-r from-primary via-primary-container to-secondary bg-clip-text text-transparent">
+                  Real Ghana Salary Insights,{" "}
+                  <span className="bg-primary bg-clip-text text-transparent">
                     Verified &amp; Open.
                   </span>
                 </h1>
 
                 <p className="font-body-lg text-body-lg text-text-secondary leading-relaxed">
-                  Explore market compensation benchmarks and role insights across industries in Ghana, Nigeria, Kenya, and remote teams.
+                  Explore compensation benchmarks and role insights for Ghanaian professionals across every industry.
                 </p>
               </div>
 
@@ -160,10 +160,12 @@ const SalariesInsights = () => {
                       onChange={(e) => setTargetLocation(e.target.value)}
                       className="w-full bg-transparent font-label-lg text-on-surface focus:outline-none cursor-pointer"
                     >
-                      <option>Accra, Ghana (HQ Hub)</option>
-                      <option>Lagos, Nigeria</option>
-                      <option>Nairobi, Kenya</option>
-                      <option>Pan-African Remote</option>
+                      <option>Accra, Ghana</option>
+                      <option>Kumasi, Ghana</option>
+                      <option>Tema, Ghana</option>
+                      <option>Takoradi, Ghana</option>
+                      <option>Tamale, Ghana</option>
+                      <option>Remote (Ghana)</option>
                     </select>
                   </div>
                 </div>
@@ -263,12 +265,12 @@ const SalariesInsights = () => {
           <div className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
               {/* Card 1 */}
-              <div className="bg-surface-card p-space-md rounded-2xl border border-border-default shadow-xs flex flex-col justify-between gap-space-sm relative overflow-hidden group">
+              <div className="group relative flex min-h-48 flex-col justify-between gap-4 overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-surface-card to-surface-card p-5 shadow-[0_10px_26px_rgba(16,185,129,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_34px_rgba(16,185,129,0.16)]">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps uppercase text-text-muted tracking-wider">
                     Median Role Pay
                   </span>
-                  <span className="p-2 rounded-xl bg-salary-surface text-salary-emerald flex items-center justify-center">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-[0_8px_16px_rgba(16,185,129,0.28)]">
                     <span className="material-symbols-outlined text-[18px]">
                       payments
                     </span>
@@ -289,18 +291,18 @@ const SalariesInsights = () => {
                     <span className="text-text-muted font-normal text-xs ml-1">in Accra</span>
                   </div>
                 </div>
-                <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-salary-emerald h-full w-[72%] rounded-full" />
+                <div className="h-2 w-full overflow-hidden rounded-full bg-emerald-100">
+                  <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600" />
                 </div>
               </div>
 
               {/* Card 2 */}
-              <div className="bg-surface-card p-space-md rounded-2xl border border-border-default shadow-xs flex flex-col justify-between gap-space-sm relative overflow-hidden group">
+              <div className="group relative flex min-h-48 flex-col justify-between gap-4 overflow-hidden rounded-3xl border border-violet-100 bg-gradient-to-br from-violet-50 via-surface-card to-surface-card p-5 shadow-[0_10px_26px_rgba(109,40,217,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_34px_rgba(109,40,217,0.16)]">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps uppercase text-text-muted tracking-wider">
                     90th Percentile Ceiling
                   </span>
-                  <span className="p-2 rounded-xl bg-brand-indigo-light text-primary flex items-center justify-center">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-white shadow-[0_8px_16px_rgba(89,47,174,0.28)]">
                     <span className="material-symbols-outlined text-[18px]">
                       workspace_premium
                     </span>
@@ -317,18 +319,18 @@ const SalariesInsights = () => {
                     Experienced professionals across industries
                   </p>
                 </div>
-                <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-primary h-full w-[90%] rounded-full" />
+                <div className="h-2 w-full overflow-hidden rounded-full bg-violet-100">
+                  <div className="h-full w-[90%] rounded-full bg-gradient-to-r from-primary to-secondary" />
                 </div>
               </div>
 
               {/* Card 3 */}
-              <div className="bg-surface-card p-space-md rounded-2xl border border-border-default shadow-xs flex flex-col justify-between gap-space-sm relative overflow-hidden group">
+              <div className="group relative flex min-h-48 flex-col justify-between gap-4 overflow-hidden rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 via-surface-card to-surface-card p-5 shadow-[0_10px_26px_rgba(14,165,233,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_34px_rgba(14,165,233,0.16)]">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps uppercase text-text-muted tracking-wider">
                     Work Flexibility Index
                   </span>
-                  <span className="p-2 rounded-xl bg-secondary-fixed text-secondary flex items-center justify-center">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-500 text-white shadow-[0_8px_16px_rgba(14,165,233,0.28)]">
                     <span className="material-symbols-outlined text-[18px]">
                       home_work
                     </span>
@@ -345,18 +347,18 @@ const SalariesInsights = () => {
                     Some roles offer remote flexibility
                   </p>
                 </div>
-                <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-secondary h-full w-[74%] rounded-full" />
+                <div className="h-2 w-full overflow-hidden rounded-full bg-sky-100">
+                  <div className="h-full w-[74%] rounded-full bg-gradient-to-r from-sky-400 to-sky-600" />
                 </div>
               </div>
 
               {/* Card 4 */}
-              <div className="bg-surface-card p-space-md rounded-2xl border border-border-default shadow-xs flex flex-col justify-between gap-space-sm relative overflow-hidden group">
+              <div className="group relative flex min-h-48 flex-col justify-between gap-4 overflow-hidden rounded-3xl border border-amber-100 bg-gradient-to-br from-amber-50 via-surface-card to-surface-card p-5 shadow-[0_10px_26px_rgba(245,158,11,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_34px_rgba(245,158,11,0.16)]">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps uppercase text-text-muted tracking-wider">
-                    Remote Comp Premium
+                    Ghana Remote Opportunity
                   </span>
-                  <span className="p-2 rounded-xl bg-surface-container text-text-secondary flex items-center justify-center">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-[0_8px_16px_rgba(245,158,11,0.28)]">
                     <span className="material-symbols-outlined text-[18px]">
                       public
                     </span>
@@ -370,11 +372,11 @@ const SalariesInsights = () => {
                     <span className="font-label-md text-text-muted">vs Local Avg</span>
                   </div>
                   <p className="font-body-sm text-text-secondary mt-1">
-                    Paid by US &amp; EU firms hiring African talent
+                    Flexible roles open to Ghana-based professionals
                   </p>
                 </div>
-                <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-secondary-container h-full w-[85%] rounded-full" />
+                <div className="h-2 w-full overflow-hidden rounded-full bg-amber-100">
+                  <div className="h-full w-[85%] rounded-full bg-gradient-to-r from-amber-400 to-orange-500" />
                 </div>
               </div>
             </div>
@@ -385,7 +387,7 @@ const SalariesInsights = () => {
         <section className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
             {/* Left: Role Benchmark Visualizer (col-span-7) */}
-            <div className="lg:col-span-7 bg-surface-card rounded-2xl p-space-md md:p-space-lg border border-border-default shadow-sm flex flex-col gap-space-md">
+            <div className="lg:col-span-7 rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_16px_36px_rgba(40,34,86,0.08)] md:p-space-lg flex flex-col gap-space-md">
               <div className="flex items-center justify-between pb-2 border-b border-border-default">
                 <div>
                   <h3 className="font-headline-md font-bold text-on-surface">
@@ -410,7 +412,7 @@ const SalariesInsights = () => {
                   <p className="font-body-md text-text-muted text-center py-8">No salary benchmarks available yet.</p>
                 )}
                 {salaryRoles.map((r) => (
-                  <div key={r.role || r._id} className="flex flex-col gap-1.5">
+                  <div key={r.role || r._id} className="group rounded-2xl border border-border-default bg-surface-container-low p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-surface-card hover:shadow-sm flex flex-col gap-2">
                     <div className="flex items-center justify-between font-label-md">
                       <span className="font-bold text-on-surface">{r.role}</span>
                       <span className="font-numeric-metric text-salary-emerald font-bold">
@@ -419,9 +421,9 @@ const SalariesInsights = () => {
                     </div>
 
                     {/* Visual Bar */}
-                    <div className="w-full bg-surface-container-low h-3 rounded-full overflow-hidden relative border border-border-default">
+                    <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-surface-container">
                       <div
-                        className="bg-primary-container h-full rounded-full"
+                        className="h-full rounded-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
                         style={{ width: `${(r.median / 160000) * 100}%` }}
                       />
                     </div>
@@ -437,7 +439,7 @@ const SalariesInsights = () => {
             </div>
 
             {/* Right: Skill Premium Compensation Matrix (col-span-5) */}
-            <div className="lg:col-span-5 bg-surface-card rounded-2xl p-space-md md:p-space-lg border border-border-default shadow-sm flex flex-col gap-space-md">
+            <div className="lg:col-span-5 rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_16px_36px_rgba(40,34,86,0.08)] md:p-space-lg flex flex-col gap-space-md">
               <div className="pb-2 border-b border-border-default">
                 <h3 className="font-headline-md font-bold text-on-surface">
                   High-Demand Skill Premiums
@@ -454,7 +456,7 @@ const SalariesInsights = () => {
                 {skillsPremium.map((s) => (
                   <div
                     key={s.skill || s._id}
-                    className="p-3 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors flex items-center justify-between"
+                    className="group flex items-center justify-between rounded-2xl border border-border-default bg-surface-container-low p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-salary-emerald/30 hover:bg-salary-surface hover:shadow-sm"
                   >
                     <div>
                       <h4 className="font-label-md font-bold text-on-surface">
@@ -526,7 +528,7 @@ const SalariesInsights = () => {
 
               <div className="flex flex-col gap-1">
                 <label className="font-label-caps uppercase text-text-muted">
-                  Monthly Base Compensation (GH₵ or USD)
+                  Monthly Base Compensation (GH₵)
                 </label>
                 <input
                   type="text"
@@ -563,7 +565,7 @@ const SalariesInsights = () => {
                     type="text"
                     value={subLoc}
                     onChange={(e) => setSubLoc(e.target.value)}
-                    placeholder="Accra, Remote..."
+                    placeholder="e.g. Accra, Kumasi, or Tamale"
                     className="p-2.5 rounded-xl bg-surface-container-low border border-border-default font-body-sm text-on-surface focus:outline-none"
                   />
                 </div>

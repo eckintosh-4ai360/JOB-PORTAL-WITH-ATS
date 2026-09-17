@@ -403,9 +403,6 @@ const JobPostingForm = () => {
                           className="h-12 px-4 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface focus:outline-none cursor-pointer"
                         >
                           <option value="GH₵">Ghana Cedi (GH₵)</option>
-                          <option value="$">US Dollars ($)</option>
-                          <option value="₦">Nigerian Naira (₦)</option>
-                          <option value="KSh">Kenyan Shilling (KSh)</option>
                         </select>
                       </div>
 

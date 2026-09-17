@@ -109,7 +109,7 @@ const ResumeAnalyzer = () => {
 
               {/* Trust Stats Badges */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-md pt-space-md">
-                <div className="flex items-center gap-space-sm bg-surface-card p-space-sm rounded-2xl border border-border-default shadow-xs">
+                <div className="flex items-center gap-space-sm rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-surface-card p-3 shadow-[0_10px_24px_rgba(109,40,217,0.09)] transition-transform duration-200 hover:-translate-y-0.5">
                   <div className="w-10 h-10 rounded-xl bg-brand-indigo-light flex items-center justify-center text-primary shrink-0">
                     <span className="material-symbols-outlined text-[22px]">description</span>
                   </div>
@@ -119,7 +119,7 @@ const ResumeAnalyzer = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-space-sm bg-surface-card p-space-sm rounded-2xl border border-border-default shadow-xs">
+                <div className="flex items-center gap-space-sm rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-surface-card p-3 shadow-[0_10px_24px_rgba(16,185,129,0.09)] transition-transform duration-200 hover:-translate-y-0.5">
                   <div className="w-10 h-10 rounded-xl bg-salary-surface flex items-center justify-center text-salary-emerald shrink-0">
                     <span className="material-symbols-outlined text-[22px]">trending_up</span>
                   </div>
@@ -129,7 +129,7 @@ const ResumeAnalyzer = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-space-sm bg-surface-card p-space-sm rounded-2xl border border-border-default shadow-xs">
+                <div className="flex items-center gap-space-sm rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-surface-card p-3 shadow-[0_10px_24px_rgba(14,165,233,0.09)] transition-transform duration-200 hover:-translate-y-0.5">
                   <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-secondary shrink-0">
                     <span className="material-symbols-outlined text-[22px]">verified_user</span>
                   </div>
@@ -150,7 +150,7 @@ const ResumeAnalyzer = () => {
               {/* ================= LEFT COLUMN: RESUME ANALYSIS (col-span-5) ================= */}
               <div className="lg:col-span-5 flex flex-col gap-space-md">
                 {/* Document Status Card */}
-                <div className="bg-surface-card rounded-2xl p-space-md shadow-sm border border-border-default flex flex-col gap-space-sm">
+                <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-br from-brand-indigo-light via-surface-card to-surface-card p-space-md shadow-[0_16px_34px_rgba(89,47,174,0.10)] flex flex-col gap-space-sm">
                   <div className="flex items-center justify-between">
                     <span className="font-label-caps uppercase text-text-muted tracking-wider">
                       Active Document
@@ -161,7 +161,7 @@ const ResumeAnalyzer = () => {
                     </span>
                   </div>
 
-                  <div className="flex items-start gap-space-sm bg-surface-container-low p-space-sm rounded-xl border border-border-default">
+                  <div className="flex items-start gap-space-sm rounded-2xl border border-white/70 bg-white/65 p-space-sm shadow-sm">
                     <div className="w-12 h-12 rounded-xl bg-brand-indigo-light text-primary flex items-center justify-center shrink-0">
                       <span className="material-symbols-outlined text-[28px]">picture_as_pdf</span>
                     </div>
@@ -201,7 +201,7 @@ const ResumeAnalyzer = () => {
                 </div>
 
                 {/* Overall ATS Scorecard */}
-                <div className="bg-surface-card rounded-2xl p-space-lg shadow-sm border border-border-default flex flex-col gap-space-md">
+                <div className="rounded-3xl border border-border-default bg-surface-card p-space-lg shadow-[0_16px_34px_rgba(40,34,86,0.08)] flex flex-col gap-space-md">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-headline-md font-bold text-text-primary">
@@ -217,7 +217,7 @@ const ResumeAnalyzer = () => {
                   </div>
 
                   {/* Score Gauge Block */}
-                  <div className="flex flex-col sm:flex-row items-center gap-space-md bg-surface-container-low p-space-md rounded-2xl border border-border-default">
+                  <div className="flex flex-col items-center gap-space-md rounded-3xl border border-primary/10 bg-gradient-to-br from-brand-indigo-light/70 to-surface-container-low p-space-md sm:flex-row">
                     {/* Radial Progress Gauge */}
                     <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
                       <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
@@ -230,7 +230,7 @@ const ResumeAnalyzer = () => {
                           strokeWidth="8"
                         />
                         <circle
-                          className="text-primary fill-none transition-all duration-1000 ease-out"
+                          className="text-primary fill-none transition-all duration-1000 ease-out drop-shadow-sm"
                           cx="50"
                           cy="50"
                           r="40"
@@ -256,9 +256,9 @@ const ResumeAnalyzer = () => {
                         <span>Resume Strength</span>
                         <span className="font-bold text-salary-emerald">Tier 1 (Top 6%)</span>
                       </div>
-                      <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+                      <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/80 shadow-inner">
                         <div
-                          className="bg-salary-emerald h-full rounded-full transition-all duration-700"
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-salary-emerald transition-all duration-700"
                           style={{ width: `${atsScore}%` }}
                         />
                       </div>
@@ -274,12 +274,12 @@ const ResumeAnalyzer = () => {
                   </div>
 
                   {/* Estimated Live Market Value */}
-                  <div className="p-space-md rounded-2xl bg-gradient-to-br from-salary-surface to-surface-container-low border border-salary-emerald/20 flex flex-col gap-1">
+                  <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-salary-surface to-surface-container-low p-space-md shadow-sm flex flex-col gap-1">
                     <div className="flex items-center justify-between">
                       <span className="font-label-caps uppercase text-salary-emerald font-bold tracking-wider">
                         Estimated Live Market Value
                       </span>
-                      <span className="font-body-sm text-text-muted">Accra &amp; Regional Remote</span>
+                      <span className="font-body-sm text-text-muted">Ghana job market</span>
                     </div>
                     <p className="font-headline-lg font-bold text-text-primary">
                       GH₵ 48,000 <span className="text-text-muted font-normal">–</span> GH₵ 75,000{" "}
@@ -292,7 +292,7 @@ const ResumeAnalyzer = () => {
                 </div>
 
                 {/* Skills & Proficiency Breakdown */}
-                <div className="bg-surface-card rounded-2xl p-space-md border border-border-default shadow-sm flex flex-col gap-space-md">
+                <div className="rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_16px_34px_rgba(40,34,86,0.08)] flex flex-col gap-space-md">
                   <div>
                     <h4 className="font-headline-sm font-bold text-text-primary">
                       Verified Skills &amp; Qualifications
@@ -350,7 +350,7 @@ const ResumeAnalyzer = () => {
 
               {/* ================= RIGHT COLUMN: MATCHED ROLES (col-span-7) ================= */}
               <div className="lg:col-span-7 flex flex-col gap-space-md">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm bg-surface-card p-space-md rounded-2xl border border-border-default shadow-xs">
+                <div className="flex flex-col justify-between gap-space-sm rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_14px_30px_rgba(40,34,86,0.07)] sm:flex-row sm:items-center">
                   <div>
                     <h3 className="font-headline-sm font-bold text-on-surface">
                       Algorithmic Job Matches ({matchedRoles.length})
@@ -407,7 +407,7 @@ const ResumeAnalyzer = () => {
                         return (
                           <article
                             key={role._id || role.id}
-                            className="bg-surface-card rounded-2xl p-space-md md:p-space-lg border border-border-default hover:border-primary/40 shadow-sm hover:shadow-md transition-all duration-200 relative group overflow-hidden"
+                            className="group relative overflow-hidden rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_12px_28px_rgba(40,34,86,0.07)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/35 hover:shadow-[0_20px_40px_rgba(89,47,174,0.15)] md:p-space-lg"
                           >
                             {/* Top Match Gauge Pill */}
                             <div className="flex items-center justify-between mb-space-sm">

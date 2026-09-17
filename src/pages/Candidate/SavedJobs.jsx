@@ -89,7 +89,7 @@ const SavedJobs = () => {
               <div>
                 <div className="inline-flex items-center gap-space-xs px-3 py-1 rounded-full bg-brand-indigo-light text-primary font-label-caps uppercase tracking-wider mb-space-xs shadow-xs">
                   <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  Career Cockpit • West Africa Executive Hub
+                  Career Cockpit • Ghana Job Hub
                 </div>
                 <h1 className="font-headline-xl text-headline-xl text-text-primary tracking-tight">
                   Saved Jobs &amp; Applications
@@ -122,10 +122,10 @@ const SavedJobs = () => {
 
             {/* 4 Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-space-sm md:gap-space-md">
-              <div className="bg-surface-card rounded-2xl p-space-md shadow-xs border border-border-default">
+              <div className="rounded-3xl border border-violet-100 bg-gradient-to-br from-violet-50 via-surface-card to-surface-card p-space-md shadow-[0_10px_24px_rgba(109,40,217,0.10)] transition-transform duration-200 hover:-translate-y-1">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps uppercase text-text-muted">Total Saved</span>
-                  <div className="w-8 h-8 rounded-xl bg-brand-indigo-light flex items-center justify-center text-primary">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white shadow-[0_6px_14px_rgba(89,47,174,0.25)]">
                     <span className="material-symbols-outlined text-[18px]">bookmark</span>
                   </div>
                 </div>
@@ -141,10 +141,10 @@ const SavedJobs = () => {
                 </div>
               </div>
 
-              <div className="bg-surface-card rounded-2xl p-space-md shadow-xs border border-border-default">
+              <div className="rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 via-surface-card to-surface-card p-space-md shadow-[0_10px_24px_rgba(14,165,233,0.10)] transition-transform duration-200 hover:-translate-y-1">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps uppercase text-text-muted">Active Applications</span>
-                  <div className="w-8 h-8 rounded-xl bg-secondary-fixed flex items-center justify-center text-secondary">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-500 text-white shadow-[0_6px_14px_rgba(14,165,233,0.25)]">
                     <span className="material-symbols-outlined text-[18px]">outgoing_mail</span>
                   </div>
                 </div>
@@ -158,10 +158,10 @@ const SavedJobs = () => {
                 </div>
               </div>
 
-              <div className="bg-surface-card rounded-2xl p-space-md shadow-xs border border-border-default">
+              <div className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-surface-card to-surface-card p-space-md shadow-[0_10px_24px_rgba(16,185,129,0.10)] transition-transform duration-200 hover:-translate-y-1">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps uppercase text-text-muted">Interviews</span>
-                  <div className="w-8 h-8 rounded-xl bg-salary-surface flex items-center justify-center text-salary-emerald">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-[0_6px_14px_rgba(16,185,129,0.25)]">
                     <span className="material-symbols-outlined text-[18px]">event_available</span>
                   </div>
                 </div>
@@ -175,10 +175,10 @@ const SavedJobs = () => {
                 </div>
               </div>
 
-              <div className="bg-surface-card rounded-2xl p-space-md shadow-xs border border-border-default">
+              <div className="rounded-3xl border border-amber-100 bg-gradient-to-br from-amber-50 via-surface-card to-surface-card p-space-md shadow-[0_10px_24px_rgba(245,158,11,0.10)] transition-transform duration-200 hover:-translate-y-1">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps uppercase text-text-muted">Avg Response</span>
-                  <div className="w-8 h-8 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-[0_6px_14px_rgba(245,158,11,0.25)]">
                     <span className="material-symbols-outlined text-[18px]">speed</span>
                   </div>
                 </div>
@@ -228,7 +228,7 @@ const SavedJobs = () => {
             {/* LEFT COLUMN: Saved Cards List */}
             <div className="lg:col-span-8 flex flex-col gap-space-md">
               {/* Search filter in saved */}
-              <div className="bg-surface-card rounded-2xl p-space-md shadow-xs border border-border-default flex flex-col sm:flex-row items-center justify-between gap-space-sm">
+              <div className="flex flex-col items-center justify-between gap-space-sm rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_12px_26px_rgba(40,34,86,0.06)] sm:flex-row">
                 <div className="relative flex-1 w-full">
                   <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[20px]">
                     search
@@ -269,11 +269,11 @@ const SavedJobs = () => {
                 filteredList.map((job) => (
                   <article
                     key={job._id || job.id}
-                    className="bg-surface-card rounded-2xl p-space-md md:p-space-lg shadow-sm hover:shadow-md border border-border-default transition-all duration-200 relative group overflow-hidden"
+                    className="group relative overflow-hidden rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_12px_28px_rgba(40,34,86,0.07)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_20px_40px_rgba(89,47,174,0.14)] md:p-space-lg"
                   >
                     <div className="flex flex-col md:flex-row items-start justify-between gap-space-md">
                       <div className="flex items-start gap-space-md flex-1">
-                        <div className="w-14 h-14 rounded-2xl bg-brand-indigo-light flex items-center justify-center shrink-0 border border-border-default overflow-hidden">
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/10 bg-gradient-to-br from-brand-indigo-light to-secondary-fixed shadow-sm">
                           {job.company?.companyLogo ? (
                             <img
                               src={job.company.companyLogo}
@@ -341,7 +341,7 @@ const SavedJobs = () => {
                         {job.tags.map((t) => (
                           <span
                             key={t}
-                            className="px-2.5 py-1 rounded-lg bg-surface-container font-label-md text-on-surface-variant"
+                            className="rounded-xl border border-primary/10 bg-brand-indigo-light px-2.5 py-1 font-label-md text-primary"
                           >
                             {t}
                           </span>
@@ -350,7 +350,7 @@ const SavedJobs = () => {
                     )}
 
                     {/* Bottom Row */}
-                    <div className="pt-space-sm border-t border-border-default flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+                    <div className="flex flex-col justify-between gap-space-sm border-t border-border-default pt-space-sm sm:flex-row sm:items-center">
                       <div>
                         <span className="font-label-caps uppercase text-text-muted tracking-wider block">
                           Compensation
@@ -384,7 +384,7 @@ const SavedJobs = () => {
             {/* RIGHT COLUMN: Upcoming Interview & Application Pipeline */}
             <div className="lg:col-span-4 flex flex-col gap-space-md">
               {/* Upcoming Interview Card */}
-              <div className="bg-surface-card rounded-2xl p-space-md md:p-space-lg shadow-sm border border-border-default border-l-4 border-l-primary relative overflow-hidden">
+              <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-br from-brand-indigo-light via-surface-card to-surface-card p-space-md shadow-[0_16px_34px_rgba(89,47,174,0.12)] md:p-space-lg">
                 <div className="flex items-center justify-between mb-space-sm">
                   <span className="inline-flex items-center gap-1.5 font-label-caps uppercase tracking-wider text-primary font-bold">
                     <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
@@ -396,22 +396,22 @@ const SavedJobs = () => {
                 </div>
 
                 <div className="flex items-start gap-space-sm">
-                  <div className="w-12 h-12 rounded-xl bg-secondary-fixed flex items-center justify-center shrink-0 text-secondary">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-[0_8px_16px_rgba(89,47,174,0.25)]">
                     <span className="material-symbols-outlined text-[24px]">
                       video_camera_front
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-headline-sm font-bold text-text-primary truncate">
-                      Hubtel • Architecture Round
+                      Accra Health Centre • Interview
                     </h3>
                     <p className="font-body-sm text-text-secondary mt-0.5">
-                      High-Scale Go Systems Evaluation
+                      Registered Nurse — Care Team
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-space-md space-y-2 text-body-sm bg-surface-container-low p-space-sm rounded-xl border border-border-default">
+                <div className="mt-space-md space-y-2 rounded-2xl border border-white/80 bg-white/70 p-space-sm text-body-sm shadow-sm">
                   <div className="flex items-center gap-space-xs text-text-primary font-semibold">
                     <span className="material-symbols-outlined text-primary text-[18px]">
                       calendar_today
@@ -428,7 +428,7 @@ const SavedJobs = () => {
                     <span className="material-symbols-outlined text-text-muted text-[18px]">
                       person
                     </span>
-                    <span>Interviewer: Nana Osei (Eng. Director)</span>
+                    <span>Interviewer: Nana Osei (Hiring Manager)</span>
                   </div>
                 </div>
 
@@ -454,7 +454,7 @@ const SavedJobs = () => {
               </div>
 
               {/* Application Pipeline Card */}
-              <div className="bg-surface-card rounded-2xl p-space-md md:p-space-lg shadow-sm border border-border-default">
+              <div className="rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_16px_34px_rgba(40,34,86,0.08)] md:p-space-lg">
                 <div className="flex items-center justify-between mb-space-md">
                   <div>
                     <h3 className="font-headline-sm font-bold text-text-primary">
@@ -469,7 +469,7 @@ const SavedJobs = () => {
 
                 <div className="space-y-space-md">
                   {/* Flow 1 */}
-                  <div className="p-space-sm rounded-xl bg-surface-container-low border border-border-default">
+                  <div className="rounded-2xl border border-primary/10 bg-brand-indigo-light/45 p-space-sm">
                     <div className="flex items-center justify-between">
                       <span className="font-label-lg font-bold text-text-primary">
                         BrightPath Academy
@@ -479,7 +479,7 @@ const SavedJobs = () => {
                       </span>
                     </div>
                     <span className="font-body-sm text-text-secondary block mt-0.5">
-                      Lead Systems Architect
+                      Mathematics Teacher
                     </span>
                     <div className="mt-2 flex items-center justify-between text-body-sm">
                       <span className="text-primary font-medium flex items-center gap-1">
@@ -494,10 +494,10 @@ const SavedJobs = () => {
                   </div>
 
                   {/* Flow 2 */}
-                  <div className="p-space-sm rounded-xl bg-surface-container-low border border-border-default">
+                  <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-space-sm">
                     <div className="flex items-center justify-between">
                       <span className="font-label-lg font-bold text-text-primary">
-                        Zeepay Ghana
+                        MarketSquare Stores
                       </span>
                       <span className="px-2 py-0.5 rounded-full bg-brand-indigo-light text-primary font-label-md font-semibold">
                         Stage 2 of 4
@@ -521,17 +521,17 @@ const SavedJobs = () => {
                   </div>
 
                   {/* Flow 3 */}
-                  <div className="p-space-sm rounded-xl bg-surface-container-low border border-border-default">
+                  <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-space-sm">
                     <div className="flex items-center justify-between">
                       <span className="font-label-lg font-bold text-text-primary">
-                        Turaco
+                        SwiftRoute Logistics
                       </span>
                       <span className="px-2 py-0.5 rounded-full bg-salary-surface text-salary-emerald font-label-md font-semibold">
                         Stage 3 of 4
                       </span>
                     </div>
                     <span className="font-body-sm text-text-secondary block mt-0.5">
-                      Customer Service Manager
+                      Logistics Coordinator
                     </span>
                     <div className="mt-2 flex items-center justify-between text-body-sm">
                       <span className="text-salary-emerald font-medium flex items-center gap-1">

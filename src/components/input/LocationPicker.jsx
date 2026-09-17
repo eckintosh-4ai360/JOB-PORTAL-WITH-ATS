@@ -4,6 +4,7 @@ import { MapPin, Navigation, Search, Map, X, Check, Loader2, ExternalLink, Locat
 // Nominatim's usage policy allows roughly one request per second, so every
 // keystroke-driven search is debounced by this much before it hits the network.
 const SEARCH_DEBOUNCE_MS = 600;
+const GHANA_BOUNDS = [[4.5, -3.3], [11.2, 1.3]];
 
 export const LocationPicker = ({
   label = "Location",
@@ -13,7 +14,7 @@ export const LocationPicker = ({
   longitude = null,
   onChange,
   error = "",
-  placeholder = "Search or select business location...",
+  placeholder = "Search Ghana locations...",
 }) => {
   const [query, setQuery] = useState(value || "");
   const [suggestions, setSuggestions] = useState([]);
@@ -76,7 +77,7 @@ export const LocationPicker = ({
       setIsSearching(true);
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+          `https://nominatim.openstreetmap.org/search?format=json&countrycodes=gh&q=${encodeURIComponent(query)}&limit=5`
         );
         const data = await response.json();
         setSuggestions(data || []);
@@ -199,7 +200,10 @@ export const LocationPicker = ({
       const initialLat = modalCoords?.lat || 5.6037;
       const initialLng = modalCoords?.lng || -0.1870;
 
-      const map = window.L.map(mapRef.current).setView([initialLat, initialLng], 14);
+      const map = window.L.map(mapRef.current, {
+        maxBounds: GHANA_BOUNDS,
+        maxBoundsViscosity: 1.0,
+      }).setView([initialLat, initialLng], 14);
       leafletMapInstance.current = map;
 
       // Add OpenStreetMap tile layer (Clean & crisp look)
@@ -292,7 +296,7 @@ export const LocationPicker = ({
       setIsModalSearching(true);
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(modalQuery)}&limit=5`
+          `https://nominatim.openstreetmap.org/search?format=json&countrycodes=gh&q=${encodeURIComponent(modalQuery)}&limit=5`
         );
         const data = await response.json();
         setModalSuggestions(data || []);

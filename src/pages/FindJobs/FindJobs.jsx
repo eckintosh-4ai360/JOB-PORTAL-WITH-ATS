@@ -412,7 +412,7 @@ const FindJobs = () => {
 
                 <p className="max-w-3xl font-body-lg leading-relaxed text-[#53627d]">
                   Our intelligent parser matches your skills to high-paying roles
-                  and salary estimates across Africa and global remote teams.
+                  and salary estimates from Ghanaian employers and Ghana-based remote teams.
                 </p>
 
                 <div className="flex flex-wrap items-center gap-x-7 gap-y-3 pt-3 font-label-lg text-[#526078]">

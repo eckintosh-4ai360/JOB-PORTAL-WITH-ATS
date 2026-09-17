@@ -49,7 +49,7 @@ const Footer = () => {
                 <span className="h-1.5 w-1.5 rounded-full bg-[#74f0bd] animate-pulse" />
                 Verified roles only
               </span>
-              <span className="font-body-sm text-white/50">Accra · Lagos · Nairobi · Remote</span>
+              <span className="font-body-sm text-white/50">Accra · Kumasi · Tamale · Remote</span>
             </div>
           </div>
 

@@ -91,10 +91,10 @@ const BrowseCompanies = () => {
                   Verified Employer Directory
                 </div>
                 <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight">
-                  Discover Employers Across Africa
+                  Discover Employers Across Ghana
                 </h1>
                 <p className="font-body-lg text-body-lg text-text-secondary mt-2">
-                  Explore workplace cultures, employee benefits, areas of expertise, and active vacancies across Ghana, Nigeria, Kenya, and global remote hubs.
+                  Explore workplace cultures, employee benefits, areas of expertise, and active vacancies across Ghana.
                 </p>
               </div>
 
@@ -151,10 +151,12 @@ const BrowseCompanies = () => {
                     className="w-full bg-transparent font-body-md text-on-surface focus:outline-none cursor-pointer"
                   >
                     <option value="">All Locations</option>
-                    <option value="Accra">Accra, Ghana</option>
-                    <option value="Lagos">Lagos, Nigeria</option>
-                    <option value="Nairobi">Nairobi, Kenya</option>
-                    <option value="Remote">Pan-African Remote</option>
+                    <option value="Accra">Accra</option>
+                    <option value="Kumasi">Kumasi</option>
+                    <option value="Tema">Tema</option>
+                    <option value="Takoradi">Takoradi</option>
+                    <option value="Tamale">Tamale</option>
+                    <option value="Remote">Remote (Ghana)</option>
                   </select>
                 </div>
 
