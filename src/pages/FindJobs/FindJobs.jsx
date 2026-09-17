@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
@@ -234,32 +234,43 @@ const FindJobs = () => {
 
       <main className="flex-1 w-full pb-space-xl">
         {/* ================= HERO SEARCH DOCK SECTION ================= */}
-        <section className="w-full bg-gradient-to-b from-surface-container-low via-surface to-surface pt-space-lg pb-space-lg">
+        <section className="w-full bg-gradient-to-b from-[#f4f0ff] via-surface to-surface pt-space-lg pb-space-xl">
           <div className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin">
-            {/* Verified Badge Header */}
-            <div className="flex items-center gap-space-xs mb-space-sm">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-salary-surface text-salary-emerald font-label-caps uppercase tracking-wider font-bold shadow-xs">
-                <span className="material-symbols-outlined text-[16px]">verified</span>
-                <span>100% Manually Verified African Tech Roles</span>
-              </div>
-            </div>
-
             {/* Search Hero Card Dock */}
-            <div className="bg-surface-card rounded-2xl p-space-md md:p-space-lg shadow-md relative overflow-hidden border border-border-default">
-              <div className="absolute -right-16 -top-16 w-72 h-72 bg-brand-indigo-light/70 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative isolate overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#5927c7] via-[#8c4ed8] to-[#b982e8] px-space-md py-space-lg shadow-[0_24px_60px_rgba(99,52,180,0.28)] md:px-10 md:py-10">
+              {/* Decorative forms inspired by the reference card */}
+              <div className="absolute -right-14 -top-20 h-72 w-72 rounded-full border-[28px] border-[#d6a6f5]/60 shadow-[-18px_18px_0_0_rgba(116,46,190,0.25)] pointer-events-none" />
+              <div className="absolute right-20 top-[-8rem] h-56 w-56 rounded-full bg-[#7e3ed1]/70 blur-sm pointer-events-none" />
+              <div className="absolute -bottom-20 left-[45%] h-36 w-36 rotate-45 rounded-[2rem] bg-[#d090ee]/40 pointer-events-none" />
+              <div className="absolute bottom-[-3.5rem] right-[15%] h-40 w-20 -rotate-6 rounded-t-xl bg-gradient-to-b from-[#ffd99f] to-[#ed8a89]/80 opacity-90 pointer-events-none" />
+              <div className="absolute bottom-[-3.5rem] right-[28%] h-32 w-20 rotate-2 rounded-t-xl bg-gradient-to-b from-[#a8f0dc] to-[#80bde1]/80 opacity-90 pointer-events-none" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_25%,rgba(255,255,255,0.17),transparent_26%)] pointer-events-none" />
 
               <div className="relative z-10">
-                <div className="max-w-3xl mb-space-md">
-                  <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight">
-                    Find Your{" "}
-                    <span className="bg-gradient-to-r from-primary via-primary-container to-secondary bg-clip-text text-transparent">
-                      Dream Tech Role
-                    </span>
-                  </h1>
-                  <p className="font-body-lg text-body-lg text-text-secondary mt-1">
-                    Discover verified opportunities matching your background and
-                    career goals across Ghana, West Africa &amp; Worldwide Remote.
-                  </p>
+                <div className="flex flex-col gap-space-md lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-3xl">
+                    <div className="mb-space-sm inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 py-1.5 font-label-caps font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+                      <span className="material-symbols-outlined text-[16px]">verified</span>
+                      100% verified tech roles
+                    </div>
+                    <h1 className="font-headline-xl text-headline-xl tracking-tight text-white">
+                      Find Your Dream Tech Role
+                    </h1>
+                    <p className="mt-2 max-w-2xl font-body-lg text-body-lg leading-relaxed text-white/85">
+                      Discover handpicked opportunities that match your skills, ambition, and preferred way of working.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-white backdrop-blur-sm">
+                    <div className="flex -space-x-2">
+                      {["A", "K", "M"].map((initial, index) => (
+                        <span key={initial} className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#a963df] text-[11px] font-bold ${index === 0 ? "bg-[#ffd89e] text-[#6331b9]" : index === 1 ? "bg-[#99e7d5] text-[#4a1d8d]" : "bg-white text-[#6430b6]"}`}>
+                          {initial}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="font-label-md font-semibold leading-tight">Join 10k+<br />tech talent</span>
+                  </div>
                 </div>
 
                 {/* Advanced Search Bar Form */}
@@ -268,11 +279,11 @@ const FindJobs = () => {
                     e.preventDefault();
                     setPage(1);
                   }}
-                  className="bg-surface-container-low p-2 rounded-2xl shadow-inner flex flex-col lg:flex-row gap-2 items-stretch"
+                  className="mt-space-lg flex flex-col items-stretch gap-2 rounded-2xl border border-white/20 bg-white/15 p-2.5 shadow-[0_12px_30px_rgba(55,20,120,0.22)] backdrop-blur-md lg:flex-row"
                 >
                   {/* Keyword input */}
-                  <div className="flex-1 flex items-center bg-surface-card rounded-xl px-space-md py-3 gap-space-sm shadow-sm focus-within:ring-2 focus-within:ring-primary/20">
-                    <span className="material-symbols-outlined text-text-muted text-[22px]">
+                  <div className="flex flex-1 items-center gap-space-sm rounded-xl bg-white px-space-md py-3 shadow-sm ring-1 ring-white/40 transition focus-within:ring-2 focus-within:ring-[#efe1ff]">
+                    <span className="material-symbols-outlined text-primary text-[22px]">
                       search
                     </span>
                     <input
@@ -285,8 +296,8 @@ const FindJobs = () => {
                   </div>
 
                   {/* Location input */}
-                  <div className="flex-1 flex items-center bg-surface-card rounded-xl px-space-md py-3 gap-space-sm shadow-sm focus-within:ring-2 focus-within:ring-primary/20">
-                    <span className="material-symbols-outlined text-text-muted text-[22px]">
+                  <div className="flex flex-1 items-center gap-space-sm rounded-xl bg-white px-space-md py-3 shadow-sm ring-1 ring-white/40 transition focus-within:ring-2 focus-within:ring-[#efe1ff]">
+                    <span className="material-symbols-outlined text-primary text-[22px]">
                       location_on
                     </span>
                     <input
@@ -299,8 +310,8 @@ const FindJobs = () => {
                   </div>
 
                   {/* Category Select */}
-                  <div className="w-full lg:w-56 flex items-center bg-surface-card rounded-xl px-space-md py-3 gap-space-xs shadow-sm focus-within:ring-2 focus-within:ring-primary/20">
-                    <span className="material-symbols-outlined text-text-muted text-[20px]">
+                  <div className="flex w-full items-center gap-space-xs rounded-xl bg-white px-space-md py-3 shadow-sm ring-1 ring-white/40 transition focus-within:ring-2 focus-within:ring-[#efe1ff] lg:w-56">
+                    <span className="material-symbols-outlined text-primary text-[20px]">
                       category
                     </span>
                     <select
@@ -323,7 +334,7 @@ const FindJobs = () => {
                   {/* Search CTA */}
                   <button
                     type="submit"
-                    className="px-space-xl py-3 bg-primary-container text-on-primary font-label-lg rounded-xl hover:bg-brand-indigo-dark shadow-md flex items-center justify-center gap-space-xs transition-all active:scale-[0.98] shrink-0"
+                    className="flex shrink-0 items-center justify-center gap-space-xs rounded-xl bg-[#2e136a] px-space-xl py-3 font-label-lg text-white shadow-md transition-all hover:bg-[#220c56] active:scale-[0.98]"
                   >
                     <span>Search Jobs</span>
                     <span className="material-symbols-outlined text-[18px]">
@@ -333,9 +344,9 @@ const FindJobs = () => {
                 </form>
 
                 {/* Trending Tags Row */}
-                <div className="flex flex-wrap items-center gap-space-xs mt-space-md text-text-secondary">
-                  <span className="font-label-caps uppercase text-text-muted flex items-center gap-1 mr-1">
-                    <span className="material-symbols-outlined text-[16px] text-primary">
+                <div className="mt-space-md flex flex-wrap items-center gap-space-xs text-white/90">
+                  <span className="mr-1 flex items-center gap-1 font-label-caps uppercase text-white/75">
+                    <span className="material-symbols-outlined text-[16px] text-white">
                       trending_up
                     </span>
                     Trending:
@@ -355,7 +366,7 @@ const FindJobs = () => {
                         setKeyword(tag);
                         setPage(1);
                       }}
-                      className="px-space-sm py-1 rounded-full bg-surface-container hover:bg-brand-indigo-light hover:text-primary font-label-md text-text-secondary transition-colors"
+                      className="rounded-full border border-white/20 bg-white/12 px-space-sm py-1 font-label-md text-white transition-colors hover:bg-white hover:text-[#5927c7]"
                     >
                       {tag}
                     </button>
@@ -368,19 +379,20 @@ const FindJobs = () => {
 
         {/* ================= RESUME MATCHER BANNER CALLOUT ================= */}
         <section className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin mb-space-lg w-full">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-indigo-light via-surface-card to-brand-indigo-subtle border border-border-default p-space-md md:p-space-lg shadow-sm">
-            <div className="absolute -right-10 -top-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative overflow-hidden rounded-[1.75rem] border border-[#dfe5f7] bg-gradient-to-r from-[#f9faff] via-[#f4f6ff] to-[#dee6ff] p-space-md shadow-[0_10px_28px_rgba(50,71,125,0.10)] md:p-10">
+            <div className="pointer-events-none absolute -right-10 -top-12 h-56 w-56 rounded-full bg-[#a6b8ff]/25 blur-3xl" />
+            <div className="pointer-events-none absolute bottom-[-7rem] left-[36%] h-40 w-40 rounded-full bg-[#d9c6ff]/25 blur-3xl" />
 
             <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-space-lg">
-              <div className="flex flex-col gap-space-xs max-w-2xl">
-                <div className="flex flex-wrap items-center gap-space-xs">
-                  <span className="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-primary text-on-primary font-label-caps uppercase tracking-wider shadow-xs">
+              <div className="flex max-w-3xl flex-col gap-space-xs">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#2e1bc5] to-[#4d29d5] px-3 py-1.5 font-label-caps uppercase tracking-wider text-white shadow-[0_4px_10px_rgba(54,37,205,0.18)]">
                     <span className="material-symbols-outlined text-[14px]">
                       auto_awesome
                     </span>
                     Powered by SPG AI Talent Matcher
                   </span>
-                  <span className="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-salary-surface text-salary-emerald font-label-caps font-bold">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e9fbf4] px-3 py-1.5 font-label-caps font-bold text-[#009c70]">
                     <span className="material-symbols-outlined text-[14px]">
                       verified
                     </span>
@@ -388,31 +400,31 @@ const FindJobs = () => {
                   </span>
                 </div>
 
-                <h2 className="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight mt-1">
+                <h2 className="mt-2 font-headline-lg text-headline-lg font-bold tracking-tight text-[#14233c] md:text-[2rem] md:leading-[1.28]">
                   Upload your Resume and let us find your perfect job for you
                 </h2>
 
-                <p className="font-body-md text-text-secondary leading-relaxed">
+                <p className="max-w-3xl font-body-lg leading-relaxed text-[#53627d]">
                   Skip manual filtering. Our intelligent parser analyzes your tech
                   stack, identifies skill gaps, and unlocks tailored high-paying
                   roles with personalized salary estimates across Africa &amp;
                   global remote teams.
                 </p>
 
-                <div className="flex flex-wrap items-center gap-space-md pt-1 text-text-secondary font-label-md">
-                  <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-x-7 gap-y-3 pt-3 font-label-lg text-[#526078]">
+                  <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px] text-primary">
                       insights
                     </span>
                     <span>Skill Gap Analysis &amp; Salary Estimation</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px] text-salary-emerald">
                       lock
                     </span>
                     <span>Private &amp; Confidential</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px] text-verified-badge">
                       bolt
                     </span>
@@ -422,27 +434,27 @@ const FindJobs = () => {
               </div>
 
               {/* Upload Dropzone Widget */}
-              <div className="w-full lg:w-auto shrink-0 flex flex-col items-center sm:items-end gap-1">
+              <div className="flex w-full shrink-0 flex-col items-center gap-2 lg:w-auto lg:items-end">
                 <div
                   onClick={() => navigate("/resume-analyzer")}
-                  className="w-full sm:w-80 border-2 border-dashed border-primary/30 hover:border-primary bg-surface-card rounded-2xl p-space-md text-center flex flex-col items-center justify-center gap-space-xs transition-all cursor-pointer group shadow-sm hover:shadow-md"
+                  className="group flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-[1.6rem] border-2 border-dashed border-[#b5abf4] bg-white/90 p-5 text-center shadow-[0_8px_20px_rgba(63,52,144,0.10)] transition-all hover:border-primary hover:bg-white hover:shadow-[0_12px_28px_rgba(63,52,144,0.16)] sm:w-[31.5rem]"
                 >
-                  <div className="w-12 h-12 rounded-full bg-brand-indigo-light text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#eef1ff] text-primary transition-transform group-hover:scale-110">
                     <span className="material-symbols-outlined text-[26px]">
                       upload_file
                     </span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-label-lg font-bold text-on-surface group-hover:text-primary transition-colors">
+                    <span className="font-headline-sm font-bold text-[#14233c] transition-colors group-hover:text-primary">
                       Upload Resume (PDF, DOCX)
                     </span>
-                    <span className="font-body-sm text-text-muted">
+                    <span className="font-body-md text-[#8b9ab5]">
                       Drag &amp; drop or click to scan
                     </span>
                   </div>
                   <button
                     type="button"
-                    className="mt-1 w-full py-2 bg-primary hover:bg-brand-indigo-dark text-on-primary font-label-md font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1"
+                    className="mt-1 flex w-full items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-[#2f1bc9] to-[#4430db] py-3 font-label-lg font-bold text-white shadow-[0_5px_12px_rgba(52,37,205,0.24)] transition hover:brightness-110"
                   >
                     <span>Analyze with AI</span>
                     <span className="material-symbols-outlined text-[16px]">
@@ -462,44 +474,52 @@ const FindJobs = () => {
         <section className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
             {/* ================= SIDEBAR: FILTERS (col-span-3) ================= */}
-            <aside className="lg:col-span-4 xl:col-span-3 flex flex-col gap-space-md">
-              <div className="bg-surface-card rounded-2xl p-space-lg shadow-sm border border-border-default flex flex-col gap-space-md">
+            <aside className="lg:col-span-4 xl:col-span-3 flex flex-col gap-space-md lg:sticky lg:top-24">
+              <div className="overflow-hidden rounded-3xl border border-[#e9ddfb] bg-surface-card shadow-[0_16px_38px_rgba(79,43,139,0.10)]">
                 {/* Filter Header */}
-                <div className="flex items-center justify-between pb-2 border-b border-border-default">
+                <div className="relative overflow-hidden bg-gradient-to-br from-[#5120ae] to-[#9c55dc] p-space-md text-white">
+                  <div className="absolute -right-7 -top-9 h-24 w-24 rounded-full border-[14px] border-white/20" />
                   <div className="flex items-center gap-space-xs">
-                    <span className="material-symbols-outlined text-primary text-[20px]">
+                    <span className="relative material-symbols-outlined text-[21px]">
                       tune
                     </span>
-                    <h2 className="font-headline-sm font-bold text-on-surface">
+                    <h2 className="relative font-headline-sm font-bold">
                       Filter Jobs
                     </h2>
                     {activeFiltersCount > 0 && (
-                      <span className="px-2 py-0.5 rounded-full bg-brand-indigo-light text-primary font-label-caps font-bold">
+                      <span className="relative rounded-full bg-white/20 px-2 py-0.5 font-label-caps font-bold text-white">
                         {activeFiltersCount} active
                       </span>
                     )}
                   </div>
+                  <p className="relative mt-1 font-body-sm text-white/75">Fine-tune the roles that fit your next move.</p>
+                </div>
+                <div className="flex flex-col gap-space-md p-space-md">
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-md text-text-secondary">Your preferences</span>
                   <button
                     onClick={clearAllFilters}
                     type="button"
-                    className="text-primary hover:text-brand-indigo-dark font-label-md underline underline-offset-4"
+                    className="rounded-lg px-2 py-1 font-label-md text-primary transition hover:bg-brand-indigo-light hover:text-brand-indigo-dark"
                   >
-                    Clear All
+                    Reset all
                   </button>
                 </div>
 
                 {/* Job Type Checkboxes */}
-                <div className="flex flex-col gap-space-xs">
-                  <span className="font-label-caps uppercase text-text-muted tracking-wider">
-                    Job Type
+                <div className="rounded-2xl bg-[#faf8ff] p-3">
+                  <span className="mb-2 flex items-center gap-1.5 font-label-caps uppercase tracking-wider text-text-muted">
+                    <span className="material-symbols-outlined text-[16px] text-primary">work</span>
+                    Job type
                   </span>
+                  <div className="flex flex-wrap gap-2">
                   {["Full-Time", "Part-Time", "Contract", "Internship", "Remote"].map(
                     (type) => (
                       <label
                         key={type}
-                        className="flex items-center justify-between cursor-pointer p-1.5 rounded-xl hover:bg-surface-container-low transition-colors group"
+                        className={`cursor-pointer rounded-xl border px-2.5 py-2 transition-all ${selectedTypes.includes(type) ? "border-primary bg-brand-indigo-light text-primary shadow-sm" : "border-transparent bg-white text-text-secondary hover:border-[#dfd0f7]"}`}
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <input
                             type="checkbox"
                             checked={selectedTypes.includes(type)}
@@ -511,28 +531,31 @@ const FindJobs = () => {
                               );
                               setPage(1);
                             }}
-                            className="w-4 h-4 rounded accent-primary text-primary focus:ring-0 cursor-pointer"
+                            className="sr-only"
                           />
-                          <span className="font-body-md text-on-surface group-hover:text-primary transition-colors">
+                          <span className="font-label-md font-semibold">
                             {type}
                           </span>
                         </div>
                       </label>
                     )
                   )}
+                  </div>
                 </div>
 
                 {/* Work Model Checkboxes */}
-                <div className="flex flex-col gap-space-xs pt-2 border-t border-border-default">
-                  <span className="font-label-caps uppercase text-text-muted tracking-wider">
-                    Work Model
+                <div className="border-t border-border-default pt-space-md">
+                  <span className="mb-2 flex items-center gap-1.5 font-label-caps uppercase tracking-wider text-text-muted">
+                    <span className="material-symbols-outlined text-[16px] text-primary">home_work</span>
+                    Work model
                   </span>
+                  <div className="grid grid-cols-3 gap-2">
                   {["Hybrid", "On-site", "Remote"].map((model) => (
                     <label
                       key={model}
-                      className="flex items-center justify-between cursor-pointer p-1.5 rounded-xl hover:bg-surface-container-low transition-colors group"
+                      className={`cursor-pointer rounded-xl border px-1.5 py-2 text-center transition-all ${selectedWorkModels.includes(model) ? "border-primary bg-primary text-white shadow-sm" : "border-border-default bg-white text-text-secondary hover:border-primary/40"}`}
                     >
-                      <div className="flex items-center gap-2">
+                      <div>
                         <input
                           type="checkbox"
                           checked={selectedWorkModels.includes(model)}
@@ -544,28 +567,31 @@ const FindJobs = () => {
                             );
                             setPage(1);
                           }}
-                          className="w-4 h-4 rounded accent-primary text-primary focus:ring-0 cursor-pointer"
+                          className="sr-only"
                         />
-                        <span className="font-body-md text-on-surface group-hover:text-primary transition-colors">
+                        <span className="font-label-md font-semibold">
                           {model}
                         </span>
                       </div>
                     </label>
                   ))}
+                  </div>
                 </div>
 
                 {/* Experience Level */}
-                <div className="flex flex-col gap-space-xs pt-2 border-t border-border-default">
-                  <span className="font-label-caps uppercase text-text-muted tracking-wider">
-                    Experience Level
+                <div className="border-t border-border-default pt-space-md">
+                  <span className="mb-2 flex items-center gap-1.5 font-label-caps uppercase tracking-wider text-text-muted">
+                    <span className="material-symbols-outlined text-[16px] text-primary">military_tech</span>
+                    Experience level
                   </span>
+                  <div className="grid grid-cols-2 gap-2">
                   {["Entry-Level", "Mid-Level", "Senior", "Lead / Staff"].map(
                     (level) => (
                       <label
                         key={level}
-                        className="flex items-center justify-between cursor-pointer p-1.5 rounded-xl hover:bg-surface-container-low transition-colors group"
+                        className={`cursor-pointer rounded-xl border px-2.5 py-2 transition-all ${selectedExperience.includes(level) ? "border-primary bg-brand-indigo-light text-primary shadow-sm" : "border-border-default bg-white text-text-secondary hover:border-primary/40"}`}
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <input
                             type="checkbox"
                             checked={selectedExperience.includes(level)}
@@ -577,22 +603,24 @@ const FindJobs = () => {
                               );
                               setPage(1);
                             }}
-                            className="w-4 h-4 rounded accent-primary text-primary focus:ring-0 cursor-pointer"
+                            className="sr-only"
                           />
-                          <span className="font-body-md text-on-surface group-hover:text-primary transition-colors">
+                          <span className="font-label-md font-semibold">
                             {level}
                           </span>
                         </div>
                       </label>
                     )
                   )}
+                  </div>
                 </div>
 
                 {/* Salary Floor Slider */}
-                <div className="flex flex-col gap-space-xs pt-2 border-t border-border-default">
+                <div className="rounded-2xl bg-[#effaf5] p-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-label-caps uppercase text-text-muted tracking-wider">
-                      Minimum Salary Floor
+                    <span className="flex items-center gap-1.5 font-label-caps uppercase tracking-wider text-text-muted">
+                      <span className="material-symbols-outlined text-[16px] text-salary-emerald">payments</span>
+                      Salary floor
                     </span>
                     <span className="font-numeric-metric text-salary-emerald text-sm">
                       GH₵ {(salaryFloor / 1000).toFixed(0)}k/mo
@@ -608,13 +636,14 @@ const FindJobs = () => {
                       setSalaryFloor(Number(e.target.value));
                       setPage(1);
                     }}
-                    className="w-full accent-primary cursor-pointer"
+                    className="mt-3 w-full cursor-pointer accent-[#6933c5]"
                   />
                   <div className="flex justify-between text-text-muted font-body-sm text-[11px]">
                     <span>GH₵ 0</span>
                     <span>GH₵ 100k+</span>
                   </div>
                 </div>
+              </div>
               </div>
             </aside>
 
