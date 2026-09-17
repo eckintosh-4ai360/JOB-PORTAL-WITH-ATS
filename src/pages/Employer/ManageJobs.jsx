@@ -15,14 +15,19 @@ import { LocationPicker } from "../../components/input/LocationPicker";
 
 // ─ Static option lists for editor 
 const CATEGORY_OPTIONS = [
-  { value: "technology",    label: "Technology & Software" },
+  { value: "technology",    label: "Technology & Engineering" },
   { value: "design",        label: "Design & Creative" },
   { value: "marketing",     label: "Marketing & Sales" },
+  { value: "business",      label: "Business & Professional Services" },
   { value: "finance",       label: "Finance & Accounting" },
   { value: "healthcare",    label: "Healthcare & Medical" },
   { value: "education",     label: "Education & Training" },
   { value: "engineering",   label: "Engineering" },
   { value: "operations",    label: "Operations & Logistics" },
+  { value: "construction",  label: "Construction, Manufacturing & Trades" },
+  { value: "hospitality",   label: "Hospitality, Retail & Tourism" },
+  { value: "transport",     label: "Transport & Supply Chain" },
+  { value: "government",    label: "Government, Nonprofit & Community" },
   { value: "hr",            label: "Human Resources" },
   { value: "other",         label: "Other" },
 ];
@@ -596,7 +601,7 @@ const ManageJobs = () => {
                 name="title"
                 required
                 icon={Briefcase}
-                placeholder="e.g. Lead Developer"
+                placeholder="e.g. Operations Manager"
                 value={editForm.title}
                 onChange={handleEditChange}
                 error={editErrors.title}

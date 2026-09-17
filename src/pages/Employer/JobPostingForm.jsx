@@ -15,22 +15,18 @@ const JobPostingForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form State
-  const [companyName, setCompanyName] = useState(user?.companyName || "Spagad Technologies Ltd");
-  const [department, setDepartment] = useState("Engineering & Technology");
+  const [companyName, setCompanyName] = useState(user?.companyName || "");
+  const [department, setDepartment] = useState("Business & Professional Services");
   const [workModel, setWorkModel] = useState("Hybrid");
-  const [title, setTitle] = useState("Senior Software Developer");
-  const [location, setLocation] = useState("Accra, Ghana (Hybrid)");
+  const [title, setTitle] = useState("");
+  const [location, setLocation] = useState("");
   const [jobType, setJobType] = useState("Full-Time");
-  const [experienceLevel, setExperienceLevel] = useState("Senior");
+  const [experienceLevel, setExperienceLevel] = useState("Mid-level");
 
   // Step 2
-  const [tagsInput, setTagsInput] = useState("React, Node.js, PostgreSQL, AWS, TypeScript");
-  const [description, setDescription] = useState(
-    "Architect, develop, and maintain modular Next.js frontends and Node.js microservices handling localized payment integrations and healthcare records."
-  );
-  const [requirements, setRequirements] = useState(
-    "4+ years designing high-throughput relational schemas and shipping production React/Node applications."
-  );
+  const [tagsInput, setTagsInput] = useState("");
+  const [description, setDescription] = useState("");
+  const [requirements, setRequirements] = useState("");
 
   // Step 3
   const [currency, setCurrency] = useState("GH₵");
@@ -76,7 +72,7 @@ const JobPostingForm = () => {
         title,
         companyName,
         location,
-        category: department || "Engineering",
+        category: department || "Other",
         type: jobType,
         jobType,
         description,
@@ -115,19 +111,19 @@ const JobPostingForm = () => {
               <div className="max-w-3xl flex flex-col gap-space-xs">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary w-fit font-label-md font-semibold">
                   <span className="material-symbols-outlined text-[18px]">verified</span>
-                  West Africa's Premier Executive &amp; Engineering Talent Network
+                  A trusted hiring platform for every industry
                 </div>
 
                 <h1 className="font-headline-xl text-headline-xl text-text-primary tracking-tight font-extrabold leading-tight">
-                  Post a Tech Vacancy &amp; Reach{" "}
+                  Post a Job &amp; Reach{" "}
                   <span className="bg-gradient-to-r from-primary via-primary-container to-secondary bg-clip-text text-transparent">
                     45,000+ Verified
                   </span>{" "}
-                  African Engineers
+                  Qualified Candidates
                 </h1>
 
                 <p className="font-body-lg text-body-lg text-text-secondary">
-                  Target pre-vetted senior software engineers, DevOps leads, and tech executives across Ghana, Nigeria, Kenya, and Pan-African remote engineering hubs.
+                  Connect with people across business, healthcare, education, construction, hospitality, technology, public service, and more.
                 </p>
               </div>
 
@@ -153,7 +149,7 @@ const JobPostingForm = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
                 {[
                   { num: 1, label: "Job Details & Role" },
-                  { num: 2, label: "Requirements & Stack" },
+                  { num: 2, label: "Requirements & Skills" },
                   { num: 3, label: "Compensation & Perks" },
                   { num: 4, label: "Review & Publish" },
                 ].map((s) => (
@@ -228,7 +224,7 @@ const JobPostingForm = () => {
                           required
                           value={companyName}
                           onChange={(e) => setCompanyName(e.target.value)}
-                          placeholder="e.g. Spagad Technologies Ltd"
+                          placeholder="e.g. Acme Services Ltd"
                           className="h-12 px-4 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface focus:outline-none"
                         />
                       </div>
@@ -242,10 +238,18 @@ const JobPostingForm = () => {
                           onChange={(e) => setDepartment(e.target.value)}
                           className="h-12 px-4 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface focus:outline-none cursor-pointer"
                         >
-                          <option>Engineering &amp; Technology</option>
-                          <option>Architecture &amp; Cloud Infrastructure</option>
-                          <option>Product, UX &amp; User Research</option>
-                          <option>Data Science &amp; Applied AI</option>
+                          <option>Business &amp; Professional Services</option>
+                          <option>Technology &amp; Engineering</option>
+                          <option>Healthcare &amp; Social Care</option>
+                          <option>Education &amp; Training</option>
+                          <option>Sales, Marketing &amp; Customer Service</option>
+                          <option>Finance, Legal &amp; Administration</option>
+                          <option>Construction, Manufacturing &amp; Trades</option>
+                          <option>Hospitality, Retail &amp; Tourism</option>
+                          <option>Transport, Logistics &amp; Supply Chain</option>
+                          <option>Government, Nonprofit &amp; Community</option>
+                          <option>Creative &amp; Media</option>
+                          <option>Other</option>
                         </select>
                       </div>
                     </div>
@@ -289,7 +293,7 @@ const JobPostingForm = () => {
                           required
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
-                          placeholder="e.g. Senior Full-Stack Engineer"
+                          placeholder="e.g. Registered Nurse, Sales Manager, or Electrician"
                           className="h-12 px-4 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface focus:outline-none"
                         />
                       </div>
@@ -311,13 +315,13 @@ const JobPostingForm = () => {
                   </div>
                 )}
 
-                {/* STEP 2: Requirements & Tech Stack */}
+                {/* STEP 2: Requirements & Skills */}
                 {step === 2 && (
                   <div className="flex flex-col gap-space-md animate-fadeIn">
                     <div className="flex items-center justify-between pb-2 border-b border-border-default">
                       <h3 className="font-headline-sm font-bold text-on-surface flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">code</span>
-                        2. Requirements &amp; Target Stack
+                        <span className="material-symbols-outlined text-primary">checklist</span>
+                        2. Requirements &amp; Key Skills
                       </h3>
                       <span className="px-2 py-0.5 rounded bg-surface-container font-label-caps text-text-muted">
                         Step 2 of 4
@@ -326,13 +330,13 @@ const JobPostingForm = () => {
 
                     <div className="flex flex-col gap-1">
                       <label className="font-label-lg font-semibold text-text-primary">
-                        Required Tech Stack Tags (comma separated)
+                        Key Skills, Licences, or Certifications (comma separated)
                       </label>
                       <input
                         type="text"
                         value={tagsInput}
                         onChange={(e) => setTagsInput(e.target.value)}
-                        placeholder="React, Node.js, PostgreSQL, AWS, Go"
+                        placeholder="Customer service, Excel, First Aid, Driving licence"
                         className="h-12 px-4 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface focus:outline-none"
                       />
                       <div className="flex flex-wrap gap-1 mt-1">
@@ -507,7 +511,7 @@ const JobPostingForm = () => {
                           id: "spotlight",
                           title: "Executive Spotlight",
                           price: "GH₵ 3,500",
-                          desc: "Dedicated newsletter blast to 45k engineers + guaranteed recruiter leads.",
+                          desc: "Dedicated newsletter placement and increased visibility for qualified candidates.",
                         },
                       ].map((tier) => (
                         <div
@@ -666,7 +670,7 @@ const JobPostingForm = () => {
                   Recruiter Tip
                 </p>
                 <span>
-                  Adding realistic compensation ranges increases qualified African tech submissions by 3.4x.
+                  Adding realistic compensation ranges helps attract more qualified applicants.
                 </span>
               </div>
             </div>
