@@ -195,7 +195,10 @@ const SignUp = () => {
 
       // Navigate based on role
       setTimeout(() => {
-        if (user.role === "employer") {
+        if (user.role === "employer" && user.employerOnboardingComplete === false) {
+          toast.success("Finish your company setup to start hiring.")
+          navigate("/company-setup")
+        } else if (user.role === "employer") {
           navigate("/employer-dashboard")
         } else {
           navigate("/find-jobs")

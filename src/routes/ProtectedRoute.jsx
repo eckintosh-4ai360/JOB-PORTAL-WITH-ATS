@@ -20,7 +20,9 @@ const ProtectedRoute = ({ requiredRole, redirectTo = "/login" }) => {
       user?.role === "admin"
         ? "/admin-email-templates"
         : user?.role === "employer"
-          ? "/employer-dashboard"
+          ? user?.employerOnboardingComplete === false
+            ? "/company-setup"
+            : "/employer-dashboard"
           : "/find-jobs";
     return <Navigate to={fallback} replace />;
   }

@@ -125,7 +125,10 @@ const Login = () => {
       // Navigate: go back to where the user came from, or default by role
       const from = location.state?.from?.pathname
       setTimeout(() => {
-        if (from && from !== "/login") {
+        if (user.role === "employer" && user.employerOnboardingComplete === false) {
+          toast.success("Finish your company setup to access hiring tools.")
+          navigate("/company-setup", { replace: true })
+        } else if (from && from !== "/login") {
           navigate(from, { replace: true })
         } else if (user.role === "admin") {
           navigate("/admin-email-templates")

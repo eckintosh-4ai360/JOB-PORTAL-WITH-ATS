@@ -28,8 +28,10 @@ import EmployerDashboard from "./pages/Employer/EmployerDashboard";
 import ApplicationViewer from "./pages/Employer/AppplicationViewer";
 import ManageJobs from "./pages/Employer/ManageJobs";
 import EmployerProfilePage from "./pages/Employer/EmployerProfilePage";
+import EmployerSetup from "./pages/Employer/EmployerSetup";
 import EmailTemplates from "./pages/Admin/EmailTemplates";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import EmployerOnboardingRoute from "./routes/EmployerOnboardingRoute";
 import LandingPage from "./pages/LandingPage/LandingPage";
 
 export const App = () => {
@@ -45,7 +47,6 @@ export const App = () => {
           <Route path="/resume-analyzer" element={<ResumeAnalyzer />} />
           <Route path="/saved-jobs" element={<SavedJobs />} />
           <Route path="/job/:jobId" element={<JobDetails />} />
-          <Route path="/post-job" element={<JobPostingForm />} />
 
           {/* Auth Routes */}
           <Route path="/signup" element={<SignUp />} />
@@ -61,11 +62,17 @@ export const App = () => {
 
           {/* Employer-only routes — login required */}
           <Route element={<ProtectedRoute requiredRole="employer" />}>
-            <Route path="/employer-dashboard" element={<EmployerDashboard />} />
-            <Route path="/manage-jobs" element={<ManageJobs />} />
-            <Route path="/email-templates" element={<EmailTemplates />} />
-            <Route path="/applicants" element={<ApplicationViewer />} />
-            <Route path="/company-profile" element={<EmployerProfilePage />} />
+            {/* The setup route is intentionally exempt from the completion gate. */}
+            <Route path="/company-setup" element={<EmployerSetup />} />
+
+            <Route element={<EmployerOnboardingRoute />}>
+              <Route path="/employer-dashboard" element={<EmployerDashboard />} />
+              <Route path="/post-job" element={<JobPostingForm />} />
+              <Route path="/manage-jobs" element={<ManageJobs />} />
+              <Route path="/email-templates" element={<EmailTemplates />} />
+              <Route path="/applicants" element={<ApplicationViewer />} />
+              <Route path="/company-profile" element={<EmployerProfilePage />} />
+            </Route>
           </Route>
 
           {/* Admin aliases for shared email templates screen */}

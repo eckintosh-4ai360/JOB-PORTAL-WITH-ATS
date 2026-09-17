@@ -8,9 +8,15 @@ import { useAuth } from "../../context/AuthContext";
 
 // SSOCallback
 
-const getPostLoginPath = (role) => (
-    role === "admin" ? "/admin-email-templates" : role === "employer" ? "/company-profile" : "/profile"
-);
+const getPostLoginPath = (user) => {
+    if (user.role === "admin") return "/admin-email-templates";
+    if (user.role === "employer") {
+        return user.employerOnboardingComplete === false
+            ? "/company-setup"
+            : "/employer-dashboard";
+    }
+    return "/profile";
+};
 
 const SSOCallback = () => {
     const { handleRedirectCallback, session } = useClerk();
@@ -77,7 +83,7 @@ const SSOCallback = () => {
                 login(user, token);
                 toast.success(`Welcome, ${user.name}!`);
 
-                navigate(getPostLoginPath(user.role), { replace: true });
+                navigate(getPostLoginPath(user), { replace: true });
             } catch (err) {
                 const data = err.response?.data;
 
@@ -110,7 +116,7 @@ const SSOCallback = () => {
             login(user, token);
             toast.success(`Welcome to SPG JobPortal, ${user.name}!`);
 
-            navigate(getPostLoginPath(user.role), { replace: true });
+            navigate(getPostLoginPath(user), { replace: true });
         } catch (err) {
             console.error("Role selection error:", err);
             setErrorMsg(err.response?.data?.message || "Something went wrong.");

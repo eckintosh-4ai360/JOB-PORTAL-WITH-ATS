@@ -8,6 +8,8 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const needsCompanySetup =
+    user?.role === "employer" && user?.employerOnboardingComplete === false;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -45,7 +47,9 @@ const Navbar = () => {
   };
 
   const handlePostJob = () => {
-    if (isAuthenticated && user?.role === "employer") {
+    if (isAuthenticated && needsCompanySetup) {
+      navigate("/company-setup");
+    } else if (isAuthenticated && user?.role === "employer") {
       navigate("/post-job");
     } else if (isAuthenticated) {
       navigate("/post-job");
@@ -168,7 +172,26 @@ const Navbar = () => {
                     </p>
                   </div>
 
-                  {user?.role === "employer" || user?.role === "admin" ? (
+                  {needsCompanySetup ? (
+                    <>
+                      <div className="mx-3 mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+                        <p className="text-xs font-bold text-amber-900">Company setup required</p>
+                        <p className="mt-0.5 text-[11px] leading-4 text-amber-700">
+                          Finish your organisation profile before accessing hiring tools.
+                        </p>
+                      </div>
+                      <Link
+                        to="/company-setup"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="mx-2 mt-1 flex items-center gap-2.5 rounded-xl bg-primary px-3 py-2.5 font-label-md font-bold text-on-primary transition-colors hover:brightness-110"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          checklist
+                        </span>
+                        Finish company setup
+                      </Link>
+                    </>
+                  ) : user?.role === "employer" || user?.role === "admin" ? (
                     <>
                       <Link
                         to="/employer-dashboard"
@@ -288,8 +311,12 @@ const Navbar = () => {
             type="button"
             className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#3d197f] to-[#6b35c6] px-3.5 py-2 text-sm font-semibold whitespace-nowrap text-white shadow-[0_5px_12px_rgba(72,35,154,0.28)] transition-all hover:brightness-110 active:scale-[0.98] sm:px-4"
           >
-            <span className="material-symbols-outlined text-[18px]">add_circle</span>
-            <span className="whitespace-nowrap">Post a Job</span>
+            <span className="material-symbols-outlined text-[18px]">
+              {needsCompanySetup ? "checklist" : "add_circle"}
+            </span>
+            <span className="whitespace-nowrap">
+              {needsCompanySetup ? "Finish setup" : "Post a Job"}
+            </span>
           </button>
 
           {/* Mobile hamburger menu toggle */}
