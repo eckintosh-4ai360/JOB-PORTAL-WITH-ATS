@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -10,6 +10,24 @@ const Navbar = () => {
   const { isDark, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+    setIsVisible(true);
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const isScrollingUp = currentScrollY < lastScrollY.current;
+
+      setIsVisible(currentScrollY < 8 || isScrollingUp);
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [location.pathname]);
 
   const navLinks = [
     { label: "Find Jobs", path: "/find-jobs" },
@@ -37,7 +55,11 @@ const Navbar = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 z-50 w-full px-3 pt-2 sm:px-5 sm:pt-3">
+    <header
+      className={`fixed top-0 left-0 z-50 w-full px-3 pt-2 transition-transform duration-200 ease-out will-change-transform sm:px-5 sm:pt-3 ${
+        isVisible ? "translate-y-0" : "-translate-y-[calc(100%+1rem)]"
+      }`}
+    >
       <div className="mx-auto flex h-[68px] w-full max-w-[1360px] items-center justify-between gap-3 rounded-2xl border border-white/80 bg-surface-card/90 px-3 shadow-[0_12px_32px_rgba(53,37,120,0.12)] backdrop-blur-xl sm:px-5 xl:gap-6">
         {/* Brand & Nav */}
         <div className="flex items-center gap-4 xl:gap-8 shrink-0">
