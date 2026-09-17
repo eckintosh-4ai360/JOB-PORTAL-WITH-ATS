@@ -30,6 +30,13 @@ const createJob = async (req, res) => {
             return res.status(403).json({ message: "Only employers and admins can post jobs" });
         }
 
+        if (req.user.role === "employer" && req.user.employerOnboardingComplete !== true) {
+            return res.status(403).json({
+                code: "EMPLOYER_SETUP_REQUIRED",
+                message: "Complete your company setup before posting a job.",
+            });
+        }
+
         const effectiveType = type || jobType || "Full-Time";
         const effectiveLogo = companyLogo || req.user.companyLogo || "";
 
@@ -38,7 +45,8 @@ const createJob = async (req, res) => {
             where: { userId: req.user._id }
         });
 
-        // If no company profile exists yet, create one for this employer!
+        // Legacy completed employers may not have a dedicated Company record yet.
+        // Never create or mark a profile as verified for an unfinished employer.
         if (!employerCompany) {
             const companyDisplayName = req.body.companyName || req.user.companyName || req.user.name || "Enterprise Company";
             try {
@@ -52,8 +60,10 @@ const createJob = async (req, res) => {
                         stage: "Growth",
                         industry: category || "General Services",
                         employees: "20-100",
-                        verified: true,
-                        rating: 4.8,
+                        verified: false,
+                        rating: 0,
+                        stack: [],
+                        perks: [],
                     }
                 });
 
@@ -117,6 +127,7 @@ const getCompanies = async (req, res) => {
         const employers = await prisma.user.findMany({
             where: {
                 role: { in: ["employer", "admin"] },
+                employerOnboardingComplete: true,
             },
             select: {
                 id: true,
@@ -159,8 +170,9 @@ const getCompanies = async (req, res) => {
                 openRoles: emp.postedJobs.length,
                 jobs: toClient(emp.postedJobs),
                 stack: [],
-                perks: ["Health Coverage", "Flexible Model", "Growth Budget", "Paid Time Off"],
-                glassdoor: 4.8,
+                perks: [],
+                verified: false,
+                glassdoor: 0,
                 createdAt: emp.createdAt,
             };
         });
@@ -209,7 +221,7 @@ const getAllJobs = async (req, res) => {
 
         const mappedJobs = jobs.map((job) => {
             const clientJob = toClient(job);
-            const compName = job.companyProfile?.name || job.company?.companyName || job.company?.name || "Verified Employer";
+            const compName = job.companyProfile?.name || job.company?.companyName || job.company?.name || "Hiring Company";
             const compLogo = job.companyProfile?.logo || job.companyLogo || job.company?.companyLogo || "";
             clientJob.companyName = compName;
             clientJob.companyLogo = compLogo;
@@ -254,7 +266,7 @@ const getJobById = async (req, res) => {
         }
 
         const clientJob = toClient(job);
-        const compName = job.companyProfile?.name || job.company?.companyName || job.company?.name || "Verified Employer";
+        const compName = job.companyProfile?.name || job.company?.companyName || job.company?.name || "Hiring Company";
         const compLogo = job.companyProfile?.logo || job.companyLogo || job.company?.companyLogo || "";
         clientJob.companyName = compName;
         clientJob.companyLogo = compLogo;

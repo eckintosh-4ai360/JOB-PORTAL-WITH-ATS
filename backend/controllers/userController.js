@@ -40,6 +40,8 @@ exports.updateProfile = async (req, res) => {
             companyName: updatedUser.companyName,
             companyDescription: updatedUser.companyDescription,
             companyLogo: updatedUser.companyLogo,
+            employerOnboardingComplete: updatedUser.employerOnboardingComplete !== false,
+            employerOnboardingCompletedAt: updatedUser.employerOnboardingCompletedAt || null,
         }));
         
     } catch (error) {

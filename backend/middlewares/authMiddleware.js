@@ -16,6 +16,7 @@ const protect = async (req, res, next) => {
                     id: true, name: true, email: true, role: true,
                     avatar: true, resume: true, clerkId: true,
                     companyName: true, companyDescription: true, companyLogo: true,
+                    employerOnboardingComplete: true, employerOnboardingCompletedAt: true,
                     createdAt: true, updatedAt: true,
                 }
             });
@@ -49,6 +50,7 @@ const optionalAuth = async (req, res, next) => {
                     id: true, name: true, email: true, role: true,
                     avatar: true, resume: true, clerkId: true,
                     companyName: true, companyDescription: true, companyLogo: true,
+                    employerOnboardingComplete: true, employerOnboardingCompletedAt: true,
                     createdAt: true, updatedAt: true,
                 }
             });

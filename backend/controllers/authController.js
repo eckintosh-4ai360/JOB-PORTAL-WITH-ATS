@@ -7,6 +7,22 @@ const { toClient } = require("../utils/prismaHelper");
 
 const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 
+const toAuthUser = (user) => toClient({
+    _id: user.id,
+    name: user.name,
+    email: user.email,
+    avatar: user.avatar,
+    role: user.role,
+    companyName: user.companyName || '',
+    companyDescription: user.companyDescription || '',
+    companyLogo: user.companyLogo || '',
+    resume: user.resume || '',
+    // Treat legacy cached sessions without this field as completed. New
+    // employers are explicitly created with `false` below.
+    employerOnboardingComplete: user.employerOnboardingComplete !== false,
+    employerOnboardingCompletedAt: user.employerOnboardingCompletedAt || null,
+});
+
 //Generate Token
 const genarateToken = (id) => {
     return jwt.sign({id}, process.env.JWT_SECRET, {expiresIn: "30d"});
@@ -30,7 +46,14 @@ exports.register = async (req, res) => {
         }
 
         const user = await prisma.user.create({
-            data: { name, email, password: hashedPassword, avatar, role }
+            data: {
+                name,
+                email,
+                password: hashedPassword,
+                avatar,
+                role,
+                employerOnboardingComplete: role !== "employer",
+            }
         });
 
         sendAccountCreatedEmail({
@@ -41,17 +64,7 @@ exports.register = async (req, res) => {
 
         res.status(201).json({
             token: genarateToken(user.id),
-            user: toClient({
-                _id: user.id,
-                name: user.name,
-                email: user.email,
-                avatar: user.avatar,
-                role: user.role,
-                companyName: user.companyName || '',
-                companyDescription: user.companyDescription || '',
-                companyLogo: user.companyLogo || '',
-                resume: user.resume || '',
-            })
+            user: toAuthUser(user)
         });
 
     } catch (error){
@@ -76,17 +89,7 @@ exports.login = async (req, res) => {
 
         res.json({
             token: genarateToken(user.id),
-            user: toClient({
-                _id: user.id,
-                name: user.name,
-                email: user.email,
-                avatar: user.avatar,
-                role: user.role,
-                companyName: user.companyName || '',
-                companyDescription: user.companyDescription || '',
-                companyLogo: user.companyLogo || '',
-                resume: user.resume || '',
-            })
+            user: toAuthUser(user)
         });
     } catch (error){
         console.error(error);
@@ -100,7 +103,7 @@ exports.getMe = async (req, res) => {
             return res.status(401).json({message: "Not authorized"});
         }
 
-        res.status(200).json({user: toClient(req.user)});
+        res.status(200).json({user: toAuthUser(req.user)});
     } catch (error){
         console.error(error);
         res.status(500).json({message: error.message});
@@ -174,6 +177,7 @@ exports.clerkAuth = async (req, res) => {
                     avatar,
                     role,
                     password: null,
+                    employerOnboardingComplete: role !== "employer",
                 }
             });
             isNewUser = true;
@@ -189,17 +193,7 @@ exports.clerkAuth = async (req, res) => {
 
         res.json({
             token: genarateToken(user.id),
-            user: toClient({
-                _id: user.id,
-                name: user.name,
-                email: user.email,
-                avatar: user.avatar,
-                role: user.role,
-                companyName: user.companyName || '',
-                companyDescription: user.companyDescription || '',
-                companyLogo: user.companyLogo || '',
-                resume: user.resume || '',
-            })
+            user: toAuthUser(user)
         });
 
     } catch (error) {

@@ -20,6 +20,10 @@ model User {
   companyName        String?
   companyDescription String?
   companyLogo        String?
+  // Existing employer accounts default to complete so this onboarding launch
+  // only gates employers created after it is introduced.
+  employerOnboardingComplete    Boolean   @default(true)
+  employerOnboardingCompletedAt DateTime?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
@@ -64,6 +68,16 @@ model Company {
   employees   String?
   industry    String?
   website     String?
+  legalName   String?
+  organizationType String?
+  registrationNumber String?
+  contactName String?
+  contactTitle String?
+  contactEmail String?
+  contactPhone String?
+  authorityConfirmedAt DateTime?
+  termsAcceptedAt DateTime?
+  hiringPolicyAcceptedAt DateTime?
   rating      Float?   @default(0)
   verified    Boolean  @default(false)
   stack       String[]

@@ -1,6 +1,133 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
 
+const ORGANIZATION_TYPES = new Set([
+    "Sole proprietorship",
+    "Partnership",
+    "Private limited company",
+    "Public limited company",
+    "Nonprofit / NGO",
+    "Government / public institution",
+    "International organisation",
+    "Other",
+]);
+
+const EMPLOYEE_BANDS = new Set([
+    "1-10",
+    "11-50",
+    "51-200",
+    "201-500",
+    "501-1,000",
+    "1,001-5,000",
+    "5,001+",
+]);
+
+const parseArray = (value) => {
+    const items = Array.isArray(value)
+        ? value
+        : typeof value === "string"
+            ? value.split(",")
+            : [];
+
+    return [...new Set(
+        items
+            .filter((item) => typeof item === "string")
+            .map((item) => item.trim())
+            .filter(Boolean)
+    )].slice(0, 12);
+};
+
+const isValidWebsite = (value) => {
+    if (!value) return true;
+    try {
+        const url = new URL(value);
+        return ["http:", "https:"].includes(url.protocol);
+    } catch {
+        return false;
+    }
+};
+
+const validateCompanySetup = (data) => {
+    const errors = {};
+    const text = (value) => typeof value === "string" ? value.trim() : "";
+    const name = text(data.name);
+    const legalName = text(data.legalName);
+    const description = text(data.description);
+    const hq = text(data.hq);
+    const contactName = text(data.contactName);
+    const contactTitle = text(data.contactTitle);
+    const contactEmail = text(data.contactEmail);
+    const contactPhone = text(data.contactPhone).replace(/[\s()-]/g, "");
+
+    if (name.length < 2 || name.length > 120) {
+        errors.name = "Enter a company name between 2 and 120 characters.";
+    }
+    if (legalName.length < 2 || legalName.length > 160) {
+        errors.legalName = "Enter the registered legal name of the organisation.";
+    }
+    if (!ORGANIZATION_TYPES.has(data.organizationType)) {
+        errors.organizationType = "Choose a valid organisation type.";
+    }
+    if (text(data.registrationNumber).length < 4 || text(data.registrationNumber).length > 100) {
+        errors.registrationNumber = "Enter the business registration number or TIN.";
+    }
+    if (!text(data.industry)) {
+        errors.industry = "Choose the industry your organisation works in.";
+    }
+    if (!EMPLOYEE_BANDS.has(data.employees)) {
+        errors.employees = "Choose your company size.";
+    }
+    if (!hq || !hq.toLowerCase().includes("ghana")) {
+        errors.hq = "Choose a Ghana-based office or remote location.";
+    }
+    if (!text(data.logo)) {
+        errors.logo = "Upload or provide a link to your company logo.";
+    }
+    if (description.length < 80 || description.length > 2000) {
+        errors.description = "Use 80 to 2,000 characters to describe your company.";
+    }
+    if (!isValidWebsite(text(data.website))) {
+        errors.website = "Enter a valid website URL beginning with http:// or https://.";
+    }
+    if (contactName.length < 2 || contactName.length > 120) {
+        errors.contactName = "Enter the name of the authorised hiring contact.";
+    }
+    if (contactTitle.length < 2 || contactTitle.length > 120) {
+        errors.contactTitle = "Enter the hiring contact's job title.";
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+        errors.contactEmail = "Enter a valid work email address.";
+    }
+    if (!/^(?:\+233\d{9}|0\d{9})$/.test(contactPhone)) {
+        errors.contactPhone = "Enter a valid Ghana phone number, for example +233 20 123 4567.";
+    }
+    if (parseArray(data.stack).length < 1) {
+        errors.stack = "Add at least one hiring speciality or area of work.";
+    }
+    if (parseArray(data.perks).length < 1) {
+        errors.perks = "Add at least one candidate benefit or workplace highlight.";
+    }
+    if (data.authorityConfirmed !== true) {
+        errors.authorityConfirmed = "Confirm that you are authorised to represent this company.";
+    }
+    if (data.termsAccepted !== true) {
+        errors.termsAccepted = "You must accept the employer terms to continue.";
+    }
+    if (data.fairHiringAcknowledged !== true) {
+        errors.fairHiringAcknowledged = "Acknowledge the fair-hiring and no-fee policy to continue.";
+    }
+
+    return errors;
+};
+
+const requireEmployer = (req, res) => {
+    if (req.user?.role !== "employer") {
+        res.status(403).json({ message: "Employer access is required." });
+        return false;
+    }
+    return true;
+};
+
 // @desc    Get all companies (public directory)
 // @route   GET /api/companies
 // @access  Public
@@ -37,17 +164,23 @@ const getCompanies = async (req, res) => {
                     },
                 },
                 user: {
-                    select: { id: true, name: true, email: true },
+                    select: { id: true, name: true, email: true, employerOnboardingComplete: true },
                 },
             },
             orderBy: { createdAt: "desc" },
         });
 
-        // 2. Also find employers who don't have a dedicated Company record yet
-        const existingCompanyUserIds = new Set(companies.map((c) => c.userId));
+        // Only completed employer profiles should be visible to candidates.
+        const visibleCompanies = companies.filter(
+            (company) => company.user?.employerOnboardingComplete !== false
+        );
+
+        // 2. Also find legacy employers who don't have a dedicated Company record yet
+        const existingCompanyUserIds = new Set(visibleCompanies.map((c) => c.userId));
         const employers = await prisma.user.findMany({
             where: {
                 role: { in: ["employer", "admin"] },
+                employerOnboardingComplete: true,
                 id: { notIn: Array.from(existingCompanyUserIds) },
             },
             select: {
@@ -90,18 +223,18 @@ const getCompanies = async (req, res) => {
                 industry: "General Services",
                 employees: "20-100",
                 website: "",
-                rating: 4.8,
-                glassdoor: 4.8,
-                verified: true,
+                rating: 0,
+                glassdoor: 0,
+                verified: false,
                 stack: [],
-                perks: ["Health Insurance", "Remote Flexibility", "Learning Budget", "Paid Time Off"],
+                perks: [],
                 openRoles: emp.postedJobs.length,
                 jobs: toClient(emp.postedJobs),
                 createdAt: emp.createdAt,
             };
         });
 
-        const mappedCompanies = companies.map((comp) => ({
+        const mappedCompanies = visibleCompanies.map((comp) => ({
             id: comp.id,
             _id: comp.id,
             userId: comp.userId,
@@ -116,8 +249,8 @@ const getCompanies = async (req, res) => {
             industry: comp.industry || "General Services",
             employees: comp.employees || "10-50",
             website: comp.website || "",
-            rating: comp.rating || 4.8,
-            glassdoor: comp.rating || 4.8,
+            rating: comp.rating ?? 0,
+            glassdoor: comp.rating ?? 0,
             verified: comp.verified,
             stack: comp.stack || [],
             perks: comp.perks || [],
@@ -154,7 +287,11 @@ const getCompanyById = async (req, res) => {
                 },
             });
 
-            if (!user) {
+            if (
+                !user ||
+                !["employer", "admin"].includes(user.role) ||
+                user.employerOnboardingComplete === false
+            ) {
                 return res.status(404).json({ message: "Company not found" });
             }
 
@@ -174,11 +311,11 @@ const getCompanyById = async (req, res) => {
                 industry: "General Services",
                 employees: "20-100",
                 website: "",
-                rating: 4.8,
-                glassdoor: 4.8,
-                verified: true,
+                rating: 0,
+                glassdoor: 0,
+                verified: false,
                 stack: [],
-                perks: ["Health Insurance", "Remote Flexibility", "Learning Budget", "Paid Time Off"],
+                perks: [],
                 openRoles: user.postedJobs.length,
                 jobs: toClient(user.postedJobs),
                 createdAt: user.createdAt,
@@ -194,12 +331,12 @@ const getCompanyById = async (req, res) => {
                     where: { isClosed: false },
                 },
                 user: {
-                    select: { id: true, name: true, email: true },
+                    select: { id: true, name: true, email: true, employerOnboardingComplete: true },
                 },
             },
         });
 
-        if (!company) {
+        if (!company || company.user?.employerOnboardingComplete === false) {
             return res.status(404).json({ message: "Company not found" });
         }
 
@@ -218,8 +355,8 @@ const getCompanyById = async (req, res) => {
             industry: company.industry || "General Services",
             employees: company.employees || "10-50",
             website: company.website || "",
-            rating: company.rating || 4.8,
-            glassdoor: company.rating || 4.8,
+            rating: company.rating ?? 0,
+            glassdoor: company.rating ?? 0,
             verified: company.verified,
             stack: company.stack || [],
             perks: company.perks || [],
@@ -240,6 +377,8 @@ const getCompanyById = async (req, res) => {
 // @access  Private (Employer)
 const getMyCompanyProfile = async (req, res) => {
     try {
+        if (!requireEmployer(req, res)) return;
+
         let company = await prisma.company.findUnique({
             where: { userId: req.user._id },
             include: {
@@ -250,24 +389,31 @@ const getMyCompanyProfile = async (req, res) => {
         });
 
         if (!company) {
-            // Return defaults based on User info
-            const user = await prisma.user.findUnique({ where: { id: req.user._id } });
+            // A new employer can save a draft before a Company record exists.
             return res.status(200).json(toClient({
-                name: user?.companyName || user?.name || "",
-                companyName: user?.companyName || user?.name || "",
-                logo: user?.companyLogo || "",
-                companyLogo: user?.companyLogo || "",
-                description: user?.companyDescription || "",
-                hq: "Accra, Ghana",
-                stage: "Growth",
-                industry: "General Services",
-                employees: "10-50",
+                name: req.user.companyName || "",
+                companyName: req.user.companyName || "",
+                logo: req.user.companyLogo || "",
+                companyLogo: req.user.companyLogo || "",
+                description: req.user.companyDescription || "",
+                hq: "",
+                stage: "",
+                industry: "",
+                employees: "",
                 website: "",
+                legalName: "",
+                organizationType: "",
+                registrationNumber: "",
+                contactName: req.user.name || "",
+                contactTitle: "",
+                contactEmail: req.user.email || "",
+                contactPhone: "",
                 stack: [],
                 perks: [],
                 verified: false,
-                rating: 5.0,
+                rating: 0,
                 jobs: [],
+                onboardingComplete: req.user.employerOnboardingComplete !== false,
             }));
         }
 
@@ -276,6 +422,7 @@ const getMyCompanyProfile = async (req, res) => {
             companyName: company.name,
             companyLogo: company.logo,
             openRoles: company.jobs ? company.jobs.length : 0,
+            onboardingComplete: req.user.employerOnboardingComplete !== false,
         }));
     } catch (error) {
         console.error("Error getting company profile:", error);
@@ -288,6 +435,8 @@ const getMyCompanyProfile = async (req, res) => {
 // @access  Private (Employer)
 const updateMyCompanyProfile = async (req, res) => {
     try {
+        if (!requireEmployer(req, res)) return;
+
         const {
             name,
             logo,
@@ -300,63 +449,124 @@ const updateMyCompanyProfile = async (req, res) => {
             website,
             stack,
             perks,
-            rating,
-            verified,
+            legalName,
+            organizationType,
+            registrationNumber,
+            contactName,
+            contactTitle,
+            contactEmail,
+            contactPhone,
+            completeSetup,
+            authorityConfirmed,
+            termsAccepted,
+            fairHiringAcknowledged,
         } = req.body;
 
-        const effectiveName = name || req.user.companyName || req.user.name || "Company";
+        const isCompletingSetup = completeSetup === true;
+        if (isCompletingSetup) {
+            const errors = validateCompanySetup({
+                name,
+                logo,
+                description,
+                hq,
+                employees,
+                industry,
+                website,
+                stack,
+                perks,
+                legalName,
+                organizationType,
+                registrationNumber,
+                contactName,
+                contactTitle,
+                contactEmail,
+                contactPhone,
+                authorityConfirmed,
+                termsAccepted,
+                fairHiringAcknowledged,
+            });
 
-        // Format stack & perks as array of strings if sent as comma-separated or array
-        const parseArray = (val) => {
-            if (Array.isArray(val)) return val;
-            if (typeof val === "string" && val.trim()) {
-                return val.split(",").map((s) => s.trim()).filter(Boolean);
+            if (Object.keys(errors).length > 0) {
+                return res.status(422).json({
+                    message: "Complete the required company setup details before continuing.",
+                    errors,
+                });
             }
-            return [];
-        };
+        }
+
+        const cleanText = (value) => typeof value === "string" ? value.trim() : "";
+        const nullableField = (value) => value === undefined ? undefined : cleanText(value) || null;
+        const effectiveName = cleanText(name) || req.user.companyName || req.user.name || "Company";
+        const parsedStack = stack === undefined ? undefined : parseArray(stack);
+        const parsedPerks = perks === undefined ? undefined : parseArray(perks);
+        const completionTime = isCompletingSetup ? new Date() : null;
 
         const company = await prisma.company.upsert({
             where: { userId: req.user._id },
             create: {
                 userId: req.user._id,
                 name: effectiveName,
-                logo: logo || req.user.companyLogo || "",
-                cover: cover || null,
-                description: description || req.user.companyDescription || "",
-                hq: hq || "Accra, Ghana",
-                stage: stage || "Growth",
-                employees: employees || "10-50",
-                industry: industry || "General Services",
-                website: website || "",
-                rating: rating ? Number(rating) : 4.8,
-                verified: verified !== undefined ? Boolean(verified) : false,
-                stack: parseArray(stack),
-                perks: parseArray(perks),
+                logo: cleanText(logo) || req.user.companyLogo || null,
+                cover: nullableField(cover),
+                description: cleanText(description) || req.user.companyDescription || null,
+                hq: nullableField(hq),
+                stage: nullableField(stage),
+                employees: nullableField(employees),
+                industry: nullableField(industry),
+                website: nullableField(website),
+                legalName: nullableField(legalName),
+                organizationType: nullableField(organizationType),
+                registrationNumber: nullableField(registrationNumber),
+                contactName: nullableField(contactName),
+                contactTitle: nullableField(contactTitle),
+                contactEmail: nullableField(contactEmail),
+                contactPhone: nullableField(contactPhone),
+                stack: parsedStack || [],
+                perks: parsedPerks || [],
+                ...(isCompletingSetup ? {
+                    authorityConfirmedAt: completionTime,
+                    termsAcceptedAt: completionTime,
+                    hiringPolicyAcceptedAt: completionTime,
+                } : {}),
             },
             update: {
                 name: effectiveName,
-                logo: logo !== undefined ? logo : undefined,
-                cover: cover !== undefined ? cover : undefined,
-                description: description !== undefined ? description : undefined,
-                hq: hq !== undefined ? hq : undefined,
-                stage: stage !== undefined ? stage : undefined,
-                employees: employees !== undefined ? employees : undefined,
-                industry: industry !== undefined ? industry : undefined,
-                website: website !== undefined ? website : undefined,
-                rating: rating !== undefined ? Number(rating) : undefined,
-                verified: verified !== undefined ? Boolean(verified) : undefined,
-                stack: stack !== undefined ? parseArray(stack) : undefined,
-                perks: perks !== undefined ? parseArray(perks) : undefined,
+                logo: nullableField(logo),
+                cover: nullableField(cover),
+                description: nullableField(description),
+                hq: nullableField(hq),
+                stage: nullableField(stage),
+                employees: nullableField(employees),
+                industry: nullableField(industry),
+                website: nullableField(website),
+                legalName: nullableField(legalName),
+                organizationType: nullableField(organizationType),
+                registrationNumber: nullableField(registrationNumber),
+                contactName: nullableField(contactName),
+                contactTitle: nullableField(contactTitle),
+                contactEmail: nullableField(contactEmail),
+                contactPhone: nullableField(contactPhone),
+                stack: parsedStack,
+                perks: parsedPerks,
+                ...(isCompletingSetup ? {
+                    authorityConfirmedAt: completionTime,
+                    termsAcceptedAt: completionTime,
+                    hiringPolicyAcceptedAt: completionTime,
+                } : {}),
             },
         });
 
         // Also sync basic company info to User table
-        await prisma.user.update({
+        const updatedUser = await prisma.user.update({
             where: { id: req.user._id },
             data: {
                 companyName: effectiveName,
-                ...(logo ? { companyLogo: logo } : {}),
-                ...(description ? { companyDescription: description } : {}),
+                ...(cleanText(logo) ? { companyLogo: cleanText(logo) } : {}),
+                ...(cleanText(description) ? { companyDescription: cleanText(description) } : {}),
+                ...(isCompletingSetup ? {
+                    employerOnboardingComplete: true,
+                    employerOnboardingCompletedAt: completionTime,
+                } : {}),
             },
         });
 
@@ -372,8 +582,23 @@ const updateMyCompanyProfile = async (req, res) => {
         });
 
         res.status(200).json({
-            message: "Company profile updated successfully",
+            message: isCompletingSetup
+                ? "Company setup completed successfully"
+                : "Company profile draft saved successfully",
             company: toClient(company),
+            user: toClient({
+                _id: updatedUser.id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                avatar: updatedUser.avatar,
+                role: updatedUser.role,
+                companyName: updatedUser.companyName || "",
+                companyDescription: updatedUser.companyDescription || "",
+                companyLogo: updatedUser.companyLogo || "",
+                resume: updatedUser.resume || "",
+                employerOnboardingComplete: updatedUser.employerOnboardingComplete !== false,
+                employerOnboardingCompletedAt: updatedUser.employerOnboardingCompletedAt || null,
+            }),
         });
     } catch (error) {
         console.error("Error updating company profile:", error);
