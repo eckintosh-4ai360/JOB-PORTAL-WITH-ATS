@@ -34,7 +34,7 @@ const Hero = () => {
     isAuthenticated && user?.role === "employer" ? "/employer-dashboard" : "/login";
 
   return (
-    <section className="relative isolate flex min-h-[82svh] items-center overflow-hidden bg-secondary pt-24 pb-14 text-white sm:min-h-[84svh] md:pt-28 lg:pb-16">
+    <section className="relative isolate flex min-h-[82svh] items-center overflow-hidden bg-primary pt-24 pb-14 text-white sm:min-h-[84svh] md:pt-28 lg:pb-16">
       <img
         src="/bg.jpg"
         alt="Hiring interview in progress"
@@ -48,7 +48,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: "easeOut" }}
-            className="text-sm font-bold uppercase tracking-[0.18em] text-orange-200"
+            className="text-sm font-bold uppercase tracking-[0.18em] text-primary-fixed"
           >
             Professional recruitment platform
           </motion.p>
@@ -81,7 +81,7 @@ const Hero = () => {
             <button
               type="button"
               onClick={() => navigate("/find-jobs")}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-bold text-white shadow-sm transition-colors hover:bg-orange-700"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-indigo-dark"
             >
               <Search className="h-5 w-5" />
               Find Jobs
@@ -107,7 +107,7 @@ const Hero = () => {
               <button
                 type="button"
                 onClick={() => navigate("/login")}
-                className="font-bold text-white transition-colors hover:text-orange-200"
+                className="font-bold text-white transition-colors hover:text-primary-fixed"
               >
                 Login
               </button>
@@ -115,7 +115,7 @@ const Hero = () => {
               <button
                 type="button"
                 onClick={() => navigate("/signup")}
-                className="font-bold text-white transition-colors hover:text-orange-200"
+                className="font-bold text-white transition-colors hover:text-primary-fixed"
               >
                 Create an account
               </button>
@@ -133,7 +133,7 @@ const Hero = () => {
 
               return (
                 <div key={item.text} className="flex items-center gap-3 text-sm text-white/80">
-                  <Icon className="h-5 w-5 shrink-0 text-orange-200" />
+                  <Icon className="h-5 w-5 shrink-0 text-primary-fixed" />
                   <span>{item.text}</span>
                 </div>
               );

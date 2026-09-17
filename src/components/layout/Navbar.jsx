@@ -42,7 +42,7 @@ const Navbar = () => {
         {/* Brand & Nav */}
         <div className="flex items-center gap-4 xl:gap-8 shrink-0">
           <Link
-            to="/find-jobs"
+            to="/"
             className="group flex shrink-0 items-center gap-2.5 rounded-xl px-1 py-1 focus:outline-none"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#3a1b8a] via-[#6833c4] to-[#b26ee9] shadow-[0_5px_14px_rgba(90,45,180,0.35)] transition-transform group-hover:scale-105">

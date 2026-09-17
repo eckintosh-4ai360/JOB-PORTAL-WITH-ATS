@@ -30,6 +30,7 @@ import ManageJobs from "./pages/Employer/ManageJobs";
 import EmployerProfilePage from "./pages/Employer/EmployerProfilePage";
 import EmailTemplates from "./pages/Admin/EmailTemplates";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import LandingPage from "./pages/LandingPage/LandingPage";
 
 export const App = () => {
   return (
@@ -37,7 +38,7 @@ export const App = () => {
       <Router>
         <Routes>
           {/* Public Core Job Search & Discovery Pages */}
-          <Route path="/" element={<FindJobs />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/find-jobs" element={<FindJobs />} />
           <Route path="/browse-companies" element={<BrowseCompanies />} />
           <Route path="/salaries-insights" element={<SalariesInsights />} />

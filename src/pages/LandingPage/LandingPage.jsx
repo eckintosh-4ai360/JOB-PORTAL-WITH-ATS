@@ -6,7 +6,7 @@ import CareerBanner from './components/CareerBanner'
 import Footer from './components/Footer'
 const LandingPage = () => {
   return (
-    <div className="min-h-screen bg-tertiary text-secondary">
+    <div className="min-h-screen bg-surface text-on-surface">
       <Header/>
       <Hero/>
       <Features/>
@@ -18,4 +18,3 @@ const LandingPage = () => {
 }
 
 export default LandingPage
-
