@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 
 const ResumeAnalyzer = () => {
   const navigate = useNavigate();
-  const [activeFileName, setActiveFileName] = useState("Kofi_Boateng_Senior_FullStack_2025.pdf");
+  const [activeFileName, setActiveFileName] = useState("Your_Resume.pdf");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [atsScore, setAtsScore] = useState(94);
@@ -104,7 +104,7 @@ const ResumeAnalyzer = () => {
               </h1>
 
               <p className="font-body-lg text-body-lg text-text-secondary leading-relaxed">
-                Upload your CV or portfolio to get instant ATS compatibility scoring, engineering skill verification, salary tier benchmarking, and algorithmically ranked role matches across top African tech employers.
+                Upload your CV or portfolio to get ATS compatibility feedback, skill highlights, salary insights, and role matches across verified employers in every industry.
               </p>
 
               {/* Trust Stats Badges */}
@@ -172,7 +172,7 @@ const ResumeAnalyzer = () => {
                       <div className="flex items-center gap-2 font-body-sm text-text-muted">
                         <span>1.8 MB</span>
                         <span>•</span>
-                        <span className="text-verified-badge font-semibold">Senior Tech Tier</span>
+                        <span className="text-verified-badge font-semibold">Profile Ready</span>
                       </div>
                     </div>
                   </div>
@@ -208,7 +208,7 @@ const ResumeAnalyzer = () => {
                         ATS &amp; Market Alignment
                       </h3>
                       <p className="font-body-sm text-text-secondary">
-                        Scored against 120+ senior full-stack roles
+                        Scored against active roles matching your profile
                       </p>
                     </div>
                     <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-primary">
@@ -264,10 +264,10 @@ const ResumeAnalyzer = () => {
                       </div>
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         <span className="px-2 py-0.5 rounded-full bg-salary-surface text-salary-emerald font-label-caps font-semibold">
-                          ✓ Strong Engineering Impact
+                          ✓ Strong Professional Experience
                         </span>
                         <span className="px-2 py-0.5 rounded-full bg-brand-indigo-light text-primary font-label-caps font-semibold">
-                          ✓ High-Demand Stack
+                          ✓ Relevant Skills Highlighted
                         </span>
                       </div>
                     </div>
@@ -286,7 +286,7 @@ const ResumeAnalyzer = () => {
                       <span className="text-body-md font-normal text-text-secondary">/ month</span>
                     </p>
                     <p className="font-body-sm text-text-secondary">
-                      Matches upper 85th percentile for Lead Full-Stack Engineers with 6+ years verified distributed architecture experience.
+                      Your profile is being assessed against the experience and qualifications requested in active job listings.
                     </p>
                   </div>
                 </div>
@@ -295,24 +295,24 @@ const ResumeAnalyzer = () => {
                 <div className="bg-surface-card rounded-2xl p-space-md border border-border-default shadow-sm flex flex-col gap-space-md">
                   <div>
                     <h4 className="font-headline-sm font-bold text-text-primary">
-                      Verified Technical Capabilities
+                      Verified Skills &amp; Qualifications
                     </h4>
                     <p className="font-body-sm text-text-muted">
-                      Extracted from work history and repositories
+                      Extracted from your work history, education, and uploaded documents
                     </p>
                   </div>
 
                   <div className="flex flex-wrap gap-1.5">
                     {[
-                      "React 19",
-                      "TypeScript",
-                      "Node.js",
-                      "PostgreSQL",
-                      "AWS ECS",
-                      "Docker",
-                      "GraphQL",
-                      "Redis Caching",
-                      "Next.js App Router",
+                      "Communication",
+                      "Customer Service",
+                      "Team Leadership",
+                      "Microsoft Office",
+                      "Problem Solving",
+                      "Time Management",
+                      "Project Coordination",
+                      "Professional Writing",
+                      "Data Entry",
                     ].map((s) => (
                       <span
                         key={s}
@@ -326,13 +326,13 @@ const ResumeAnalyzer = () => {
 
                   <div className="pt-2 border-t border-border-default">
                     <span className="font-label-caps uppercase text-error tracking-wider block mb-1">
-                      Recommended High-Yield Skill Boosters:
+                      Recommended Profile Improvements:
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                       {[
-                        "Apache Kafka (Event Streaming)",
-                        "Kubernetes (CKA)",
-                        "Go Microservices",
+                        "Add measurable achievements",
+                        "Include relevant certifications",
+                        "Tailor your professional summary",
                       ].map((gap) => (
                         <span
                           key={gap}
@@ -382,7 +382,7 @@ const ResumeAnalyzer = () => {
                   <div className="flex flex-col items-center justify-center py-24 bg-surface-card rounded-2xl border border-border-default">
                     <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3" />
                     <p className="font-body-md font-bold text-text-primary">
-                      Matching resume against 340+ tech employers...
+                      Matching resume against verified employers...
                     </p>
                   </div>
                 ) : (
@@ -526,7 +526,7 @@ const ResumeAnalyzer = () => {
                   Sync LinkedIn Profile
                 </h3>
                 <p className="font-body-sm text-text-secondary">
-                  Paste your public profile link to extract engineering achievements
+                  Paste your public profile link to extract relevant experience and achievements
                 </p>
               </div>
             </div>

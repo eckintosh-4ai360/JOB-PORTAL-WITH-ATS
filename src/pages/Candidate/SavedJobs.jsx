@@ -237,7 +237,7 @@ const SavedJobs = () => {
                     type="text"
                     value={filterSearch}
                     onChange={(e) => setFilterSearch(e.target.value)}
-                    placeholder="Filter by title, company, stack..."
+                    placeholder="Filter by title, company, or skill..."
                     className="w-full pl-10 pr-space-md py-2.5 rounded-xl bg-surface-container-low font-body-md text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 border border-border-default"
                   />
                 </div>
@@ -472,7 +472,7 @@ const SavedJobs = () => {
                   <div className="p-space-sm rounded-xl bg-surface-container-low border border-border-default">
                     <div className="flex items-center justify-between">
                       <span className="font-label-lg font-bold text-text-primary">
-                        Spagad Technologies
+                        BrightPath Academy
                       </span>
                       <span className="px-2 py-0.5 rounded-full bg-brand-indigo-light text-primary font-label-md font-semibold">
                         Stage 1 of 4
@@ -504,14 +504,14 @@ const SavedJobs = () => {
                       </span>
                     </div>
                     <span className="font-body-sm text-text-secondary block mt-0.5">
-                      Fintech Core Engineer
+                      Hiring process update
                     </span>
                     <div className="mt-2 flex items-center justify-between text-body-sm">
                       <span className="text-secondary font-medium flex items-center gap-1">
                         <span className="material-symbols-outlined text-[14px]">
                           check_circle
                         </span>
-                        Tech Assessment
+                        Skills assessment
                       </span>
                       <span className="text-text-muted text-[11px]">3 days ago</span>
                     </div>
@@ -531,7 +531,7 @@ const SavedJobs = () => {
                       </span>
                     </div>
                     <span className="font-body-sm text-text-secondary block mt-0.5">
-                      Senior Frontend Engineer
+                      Customer Service Manager
                     </span>
                     <div className="mt-2 flex items-center justify-between text-body-sm">
                       <span className="text-salary-emerald font-medium flex items-center gap-1">

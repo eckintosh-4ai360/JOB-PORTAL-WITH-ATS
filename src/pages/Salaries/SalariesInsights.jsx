@@ -6,10 +6,10 @@ import { API_PATHS } from "../../utils/apiPath";
 import toast from "react-hot-toast";
 
 const SalariesInsights = () => {
-  const [targetRole, setTargetRole] = useState("Senior Software Developer");
+  const [targetRole, setTargetRole] = useState("Operations Manager");
   const [targetLocation, setTargetLocation] = useState("Accra, Ghana (HQ Hub)");
   const [tenure, setTenure] = useState("Senior (4-7 Yrs)");
-  const [sector, setSector] = useState("Fintech & Banking");
+  const [sector, setSector] = useState("Business & Professional Services");
   const [showSubmitModal, setShowSubmitModal] = useState(false);
 
   // Data from API
@@ -77,14 +77,14 @@ const SalariesInsights = () => {
                 </div>
 
                 <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight">
-                  Real African Tech Salaries,{" "}
+                  Real African Salary Insights,{" "}
                   <span className="bg-gradient-to-r from-primary via-primary-container to-secondary bg-clip-text text-transparent">
                     Verified &amp; Open.
                   </span>
                 </h1>
 
                 <p className="font-body-lg text-body-lg text-text-secondary leading-relaxed">
-                  Explore live market compensation benchmarks, equity distributions, and skill premiums across Ghana, Nigeria, Kenya, and Pan-African remote engineering teams.
+                  Explore market compensation benchmarks and role insights across industries in Ghana, Nigeria, Kenya, and remote teams.
                 </p>
               </div>
 
@@ -204,10 +204,13 @@ const SalariesInsights = () => {
                       onChange={(e) => setSector(e.target.value)}
                       className="w-full bg-transparent font-label-lg text-on-surface focus:outline-none cursor-pointer"
                     >
-                      <option>Fintech &amp; Banking</option>
-                      <option>HealthTech &amp; AI</option>
-                      <option>Enterprise SaaS</option>
-                      <option>E-Commerce &amp; Logistics</option>
+                      <option>Business &amp; Professional Services</option>
+                      <option>Healthcare &amp; Social Care</option>
+                      <option>Education &amp; Training</option>
+                      <option>Finance &amp; Banking</option>
+                      <option>Construction &amp; Manufacturing</option>
+                      <option>Hospitality, Retail &amp; Tourism</option>
+                      <option>Technology &amp; Engineering</option>
                     </select>
                   </div>
                 </div>
@@ -235,11 +238,11 @@ const SalariesInsights = () => {
                   Trending Queries:
                 </span>
                 {[
-                  "Frontend Developer",
-                  "DevOps / SRE",
-                  "Engineering Manager",
-                  "Product Designer",
-                  "Data Engineer",
+                  "Registered Nurse",
+                  "Sales Manager",
+                  "Accountant",
+                  "Teacher",
+                  "Operations Manager",
                 ].map((q) => (
                   <button
                     key={q}
@@ -263,7 +266,7 @@ const SalariesInsights = () => {
               <div className="bg-surface-card p-space-md rounded-2xl border border-border-default shadow-xs flex flex-col justify-between gap-space-sm relative overflow-hidden group">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps uppercase text-text-muted tracking-wider">
-                    Median Senior Tech Pay
+                    Median Role Pay
                   </span>
                   <span className="p-2 rounded-xl bg-salary-surface text-salary-emerald flex items-center justify-center">
                     <span className="material-symbols-outlined text-[18px]">
@@ -283,7 +286,7 @@ const SalariesInsights = () => {
                       arrow_upward
                     </span>
                     <span>+14.2% YoY</span>
-                    <span className="text-text-muted font-normal text-xs ml-1">in Accra tech hubs</span>
+                    <span className="text-text-muted font-normal text-xs ml-1">in Accra</span>
                   </div>
                 </div>
                 <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
@@ -311,7 +314,7 @@ const SalariesInsights = () => {
                     <span className="font-label-md text-text-muted">/mo</span>
                   </div>
                   <p className="font-body-sm text-text-secondary mt-1">
-                    Fintech infrastructure &amp; cloud leads
+                    Experienced professionals across industries
                   </p>
                 </div>
                 <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
@@ -339,7 +342,7 @@ const SalariesInsights = () => {
                     <span className="font-label-md text-text-muted">Hybrid / Remote</span>
                   </div>
                   <p className="font-body-sm text-text-secondary mt-1">
-                    African tech roles offer remote flexibility
+                    Some roles offer remote flexibility
                   </p>
                 </div>
                 <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
@@ -501,7 +504,7 @@ const SalariesInsights = () => {
                   Anonymous Salary Disclosure
                 </h3>
                 <p className="font-body-sm text-text-secondary">
-                  100% encrypted &amp; aggregated to help all African tech workers
+                  100% encrypted and aggregated to help all workers make informed decisions
                 </p>
               </div>
             </div>
@@ -516,7 +519,7 @@ const SalariesInsights = () => {
                   required
                   value={subRole}
                   onChange={(e) => setSubRole(e.target.value)}
-                  placeholder="e.g. Lead Full-Stack Engineer"
+                  placeholder="e.g. Registered Nurse or Operations Manager"
                   className="p-2.5 rounded-xl bg-surface-container-low border border-border-default font-body-sm text-on-surface focus:outline-none"
                 />
               </div>

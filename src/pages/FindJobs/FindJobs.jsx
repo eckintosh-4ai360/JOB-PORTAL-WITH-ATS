@@ -251,13 +251,13 @@ const FindJobs = () => {
                   <div className="max-w-3xl">
                     <div className="mb-space-sm inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 py-1.5 font-label-caps font-bold uppercase tracking-wider text-white backdrop-blur-sm">
                       <span className="material-symbols-outlined text-[16px]">verified</span>
-                      100% verified tech roles
+                      Verified opportunities across every industry
                     </div>
                     <h1 className="font-headline-xl text-headline-xl tracking-tight text-white">
-                      Find Your Dream Tech Role
+                      Find Your Next Opportunity
                     </h1>
                     <p className="mt-2 max-w-2xl font-body-lg text-body-lg leading-relaxed text-white/85">
-                      Discover handpicked opportunities that match your skills, ambition, and preferred way of working.
+                      Discover opportunities that match your skills and ambitions.
                     </p>
                   </div>
 
@@ -269,7 +269,7 @@ const FindJobs = () => {
                         </span>
                       ))}
                     </div>
-                    <span className="font-label-md font-semibold leading-tight">Join 10k+<br />tech talent</span>
+                    <span className="font-label-md font-semibold leading-tight">Join thousands of<br />job seekers</span>
                   </div>
                 </div>
 
@@ -290,7 +290,7 @@ const FindJobs = () => {
                       type="text"
                       value={keyword}
                       onChange={(e) => setKeyword(e.target.value)}
-                      placeholder="Job title, company, or tech stack (e.g. React, Go)..."
+                      placeholder="Job title, company, skill, or profession..."
                       className="w-full bg-transparent font-body-md text-on-surface placeholder:text-text-muted focus:outline-none"
                     />
                   </div>
@@ -324,10 +324,16 @@ const FindJobs = () => {
                       className="w-full bg-transparent font-body-md text-on-surface focus:outline-none cursor-pointer"
                     >
                       <option value="">All Disciplines</option>
-                      <option value="engineering">Engineering</option>
-                      <option value="product">Product &amp; Design</option>
-                      <option value="executive">Executive Leadership</option>
-                      <option value="operations">People &amp; Operations</option>
+                      <option value="technology">Technology &amp; Engineering</option>
+                      <option value="healthcare">Healthcare &amp; Social Care</option>
+                      <option value="education">Education &amp; Training</option>
+                      <option value="business">Business &amp; Professional Services</option>
+                      <option value="sales">Sales, Marketing &amp; Customer Service</option>
+                      <option value="finance">Finance, Legal &amp; Administration</option>
+                      <option value="construction">Construction, Manufacturing &amp; Trades</option>
+                      <option value="hospitality">Hospitality, Retail &amp; Tourism</option>
+                      <option value="transport">Transport &amp; Logistics</option>
+                      <option value="government">Government, Nonprofit &amp; Community</option>
                     </select>
                   </div>
 
@@ -352,12 +358,12 @@ const FindJobs = () => {
                     Trending:
                   </span>
                   {[
-                    "Frontend",
-                    "Backend Developer",
+                    "Customer Service",
+                    "Healthcare",
                     "Remote Ghana",
-                    "Executive / Director",
-                    "Fintech",
-                    "DevOps",
+                    "Teaching",
+                    "Sales Manager",
+                    "Skilled Trades",
                   ].map((tag) => (
                     <button
                       key={tag}
@@ -396,19 +402,17 @@ const FindJobs = () => {
                     <span className="material-symbols-outlined text-[14px]">
                       verified
                     </span>
-                    Instant 95%+ Tech Match
+                    Instant Role Match
                   </span>
                 </div>
 
                 <h2 className="mt-2 font-headline-lg text-headline-lg font-bold tracking-tight text-[#14233c] md:text-[2rem] md:leading-[1.28]">
-                  Upload your Resume and let us find your perfect job for you
+                  Upload your resume and find your perfect job.
                 </h2>
 
                 <p className="max-w-3xl font-body-lg leading-relaxed text-[#53627d]">
-                  Skip manual filtering. Our intelligent parser analyzes your tech
-                  stack, identifies skill gaps, and unlocks tailored high-paying
-                  roles with personalized salary estimates across Africa &amp;
-                  global remote teams.
+                  Our intelligent parser matches your skills to high-paying roles
+                  and salary estimates across Africa and global remote teams.
                 </p>
 
                 <div className="flex flex-wrap items-center gap-x-7 gap-y-3 pt-3 font-label-lg text-[#526078]">
@@ -732,7 +736,7 @@ const FindJobs = () => {
                                 </span>
                                 <span
                                   className="material-symbols-outlined text-verified-badge text-[18px]"
-                                  title="Verified Tech Employer"
+                                  title="Verified Employer"
                                 >
                                   verified
                                 </span>
@@ -799,7 +803,7 @@ const FindJobs = () => {
                           </div>
                         </div>
 
-                        {/* Tech Stack Chips */}
+                        {/* Skills and qualifications */}
                         {Array.isArray(job.tags) && job.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 my-space-md">
                             {job.tags.map((tag) => (

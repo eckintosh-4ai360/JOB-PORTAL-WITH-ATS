@@ -88,13 +88,13 @@ const BrowseCompanies = () => {
               <div className="max-w-3xl">
                 <div className="inline-flex items-center gap-space-xs px-3 py-1 rounded-full bg-brand-indigo-light text-primary font-label-caps uppercase tracking-wider mb-space-sm">
                   <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  Verified Tech Ecosystem 2025
+                  Verified Employer Directory
                 </div>
                 <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight">
-                  Discover Top Tech Companies &amp; Startups in Africa
+                  Discover Employers Across Africa
                 </h1>
                 <p className="font-body-lg text-body-lg text-text-secondary mt-2">
-                  Explore workplace cultures, verified employee benefits, engineering stacks, and active job vacancies across Ghana, Nigeria, Kenya, and global remote hubs.
+                  Explore workplace cultures, employee benefits, areas of expertise, and active vacancies across Ghana, Nigeria, Kenya, and global remote hubs.
                 </p>
               </div>
 
@@ -135,7 +135,7 @@ const BrowseCompanies = () => {
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search by company name or tech stack (e.g. Go, Paystack)..."
+                    placeholder="Search by company name, industry, or specialty..."
                     className="w-full bg-transparent font-body-md text-on-surface placeholder:text-text-muted focus:outline-none"
                   />
                 </div>
@@ -276,7 +276,7 @@ const BrowseCompanies = () => {
                     </span>
                   </div>
 
-                  {/* Tech Stack Chips */}
+                  {/* Areas of expertise and tools */}
                   <div className="flex flex-wrap gap-1.5 mt-space-sm mb-space-md">
                     {company.stack.slice(0, 4).map((tech) => (
                       <span
@@ -365,7 +365,7 @@ const BrowseCompanies = () => {
 
             <div className="mb-4">
               <h4 className="font-label-caps uppercase text-text-muted mb-2">
-                Engineering Stack &amp; Tools
+                Areas of Expertise &amp; Tools
               </h4>
               <div className="flex flex-wrap gap-1.5">
                 {activeCompanyModal.stack.map((s) => (
@@ -400,7 +400,7 @@ const BrowseCompanies = () => {
 
             <div className="pt-3 border-t border-border-default flex items-center justify-between">
               <span className="font-body-sm text-text-muted">
-                {activeCompanyModal.openRoles} active positions matching tech candidates
+                {activeCompanyModal.openRoles} active positions available
               </span>
               <Link
                 to="/find-jobs"

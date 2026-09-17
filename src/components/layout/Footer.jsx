@@ -40,7 +40,7 @@ const Footer = () => {
                 Better work starts with the right connection.
               </h2>
               <p className="mt-space-sm max-w-md font-body-md leading-relaxed text-white/70">
-                SPG connects ambitious African tech talent with verified teams building what comes next.
+                SPG connects job seekers with verified employers across every industry.
               </p>
             </div>
 

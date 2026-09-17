@@ -33,7 +33,7 @@ const parseList = (val, defaultList = []) => {
   return defaultList;
 };
 
-const parseTags = (tags, defaultList = ["React", "TypeScript", "Node.js", "PostgreSQL", "AWS"]) => {
+const parseTags = (tags, defaultList = []) => {
   if (!tags) return defaultList;
   if (Array.isArray(tags)) return tags.filter(Boolean);
   if (typeof tags === "string") {
@@ -123,7 +123,7 @@ const JobDetails = () => {
     if (navigator.share) {
       navigator
         .share({
-          title: job?.title || "Tech Job Opportunity",
+          title: job?.title || "Job Opportunity",
           url: window.location.href,
         })
         .catch(() => {});
@@ -217,23 +217,23 @@ const JobDetails = () => {
 
   const companyHq = job.companyProfile?.hq || job.location || "Accra, Ghana";
   const companyEmployees = job.companyProfile?.employees || "20 - 100";
-  const companyIndustry = job.companyProfile?.industry || job.category || "Technology";
+  const companyIndustry = job.companyProfile?.industry || job.category || "General Services";
   const companyDesc =
     job.companyProfile?.description ||
     job.company?.companyDescription ||
-    `${companyName} is a verified tech enterprise building digital platforms across West Africa.`;
+    `${companyName} is a verified employer with opportunities for qualified candidates.`;
 
   const responsibilitiesList = parseList(job.responsibilities, [
-    "Architect, develop, and maintain modular Next.js / TypeScript frontends and Node.js microservices.",
-    "Design highly indexed, ACID-compliant relational schemas on PostgreSQL ensuring health record encryption.",
-    "Implement localized mobile money rails (MTN MoMo, Telecel Cash) and national healthcare APIs.",
+    "Deliver high-quality work that supports the team and the organisation's goals.",
+    "Collaborate with colleagues, customers, and stakeholders in a professional manner.",
+    "Follow relevant procedures, safety standards, and quality requirements.",
     "Optimize core web vitals, state management, caching mechanisms (Redis), and event queues across low-bandwidth environments.",
   ]);
 
   const requirementsList = parseList(job.requirements, [
-    "4+ years designing high-throughput relational schemas and shipping production React/Node applications.",
-    "Deep understanding of distributed state management and asynchronous queues.",
-    "Familiarity with containerized Kubernetes or Docker deployments on AWS/GCP.",
+    "Relevant experience, training, or qualifications for this position.",
+    "Strong communication, organisation, and problem-solving skills.",
+    "Ability to work reliably as part of a team and independently when needed.",
   ]);
 
   const perksList = parseList(job.perks || job.companyProfile?.perks, [
@@ -244,11 +244,7 @@ const JobDetails = () => {
   ]);
 
   const tagsList = parseTags(job.tags || job.companyProfile?.stack, [
-    "React",
-    "TypeScript",
-    "Node.js",
-    "PostgreSQL",
-    "AWS",
+    [],
   ]);
 
   const formatSalary = (val, fallback) => {
@@ -274,7 +270,7 @@ const JobDetails = () => {
               </Link>
               <span className="material-symbols-outlined text-[14px]">chevron_right</span>
               <Link to="/find-jobs" className="hover:text-primary transition-colors">
-                {job.category || "Engineering"}
+                {job.category || "Jobs"}
               </Link>
               <span className="material-symbols-outlined text-[14px]">chevron_right</span>
               <span className="text-primary font-bold truncate max-w-[200px]">
@@ -306,7 +302,7 @@ const JobDetails = () => {
                       Active Opportunity
                     </span>
                     <span className="px-2.5 py-0.5 rounded-full bg-brand-indigo-light text-primary font-label-caps font-semibold">
-                      {job.category || "Engineering Dept"}
+                      {job.category || "Department"}
                     </span>
                   </div>
 
@@ -421,7 +417,7 @@ const JobDetails = () => {
                 </h2>
                 <p className="font-body-lg text-body-lg text-text-secondary leading-relaxed whitespace-pre-line">
                   {job.description ||
-                    `${companyName} is seeking an exceptional developer to join our growing engineering team.`}
+                    `${companyName} is seeking a motivated candidate to join its team.`}
                 </p>
 
                 {/* Impact Metrics Mini Bento */}
@@ -472,14 +468,14 @@ const JobDetails = () => {
                 </ul>
               </div>
 
-              {/* Tech Stack & Qualifications */}
+              {/* Skills and qualifications */}
               <div className="bg-surface-card rounded-2xl p-space-lg md:p-space-xl border border-border-default shadow-sm flex flex-col gap-space-md">
                 <div className="flex items-center gap-space-xs text-primary font-label-caps uppercase tracking-wider">
-                  <span className="material-symbols-outlined text-[18px]">code</span>
+                  <span className="material-symbols-outlined text-[18px]">workspace_premium</span>
                   Requirements
                 </div>
                 <h2 className="font-headline-lg text-headline-lg text-text-primary tracking-tight">
-                  Target Technical Stack &amp; Qualifications
+                  Skills, Qualifications &amp; Requirements
                 </h2>
 
                 <div className="flex flex-wrap gap-2 my-1">
