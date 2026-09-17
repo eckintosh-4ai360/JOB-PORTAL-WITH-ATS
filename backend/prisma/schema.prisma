@@ -85,7 +85,9 @@ model Job {
   longitude        Float?
   category         String?
   customCategory   String?
+  tags             String[]      @default([])
   type             String
+  workModel        String?
   customJobType    String?
   deadline         DateTime?
   companyId        String
