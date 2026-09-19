@@ -305,8 +305,42 @@ Tested against live Groq and your live Neon database.
 
 ---
 
+## 10a. The account token limit (important)
+
+Your Groq account is capped at **8,000 tokens per minute** on every chat model
+(`gpt-oss-120b`, `gpt-oss-20b`, and `qwen3.8-27b` all report the same; only
+`groq/compound` is higher at 70k, but it allows just 250 requests/day). Check yours with:
+
+```bash
+curl -s -D - -o /dev/null https://api.groq.com/openai/v1/chat/completions \
+  -H "Authorization: Bearer $GROQ_API_KEY" -H "Content-Type: application/json" \
+  -d '{"model":"openai/gpt-oss-120b","messages":[{"role":"user","content":"hi"}],"max_completion_tokens":20}' \
+  | grep -i ratelimit
+```
+
+This limit shaped three settings, because `max_completion_tokens` is **reserved**
+against the per-minute allowance rather than billed on actual use:
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| `reasoning_effort` | `low` | The decisive one. These tasks are extraction and judgement, not multi-step deduction. On a 5-page CV it cut reasoning from ~3,500 tokens to ~10, and latency from 16s to 4s, with no loss of quality. |
+| `maxTokens` (analysis) | 5,000 | ~2.4k prompt + 5k reservation fits inside 8k with headroom. |
+| `GROQ_MAX_COMPLETION_TOKENS` | 6,000 | Ceiling on retry escalation, so the ladder cannot climb past the account limit. |
+
+If you upgrade the Groq plan, raise `GROQ_MAX_COMPLETION_TOKENS` and the analysis
+`maxTokens`, and consider restoring `reasoning_effort: medium` for analysis only.
+
+**Symptom to recognise:** if a report shows every field as "Not checked" with only
+Education filled in, the AI pass failed and you are seeing structural-only results.
+Education comes from a deterministic text scan, which is why it survives alone.
+
+---
+
 ## 11. Known limits and next steps
 
+- **Back-to-back analyses are slow on the free tier.** The 8k/minute cap means a second
+  analysis within the same minute waits out the window (~30-40s) rather than failing. One
+  analysis at a time is fast (~5-8s). A paid Groq plan removes this.
 - **Rate limiting is per-process.** Correct for one Node instance; behind multiple replicas
   it needs to move to Redis.
 - **Scanned-image PDFs cannot be read.** The error says so and asks for a text-based file.
