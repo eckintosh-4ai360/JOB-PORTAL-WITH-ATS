@@ -5,6 +5,7 @@ import Footer from "../../components/layout/Footer";
 import { useAuth } from "../../context/AuthContext";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
+import MatchBadge from "../../components/ai/MatchBadge";
 
 import toast from "react-hot-toast";
 
@@ -25,6 +26,9 @@ const FindJobs = () => {
   // Data & Async State
   const [jobs, setJobs] = useState([]);
   const [savedJobIds, setSavedJobIds] = useState(new Set());
+  // AI match scores keyed by job id, merged into cards as they arrive.
+  const [rawMatchScores, setMatchScores] = useState({});
+  const [needsResumeAnalysis, setNeedsResumeAnalysis] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [quickApplyJob, setQuickApplyJob] = useState(null);
   const [applyResume, setApplyResume] = useState(null);
@@ -72,6 +76,49 @@ const FindJobs = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  /**
+   * Load AI match scores for the signed-in candidate and merge them onto the
+   * job cards. This runs separately from loadData so a slow or rate-limited
+   * scoring call never delays the job list itself — badges appear when ready.
+   */
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let cancelled = false;
+
+    axiosInstance
+      .get(API_PATHS.AI.GET_JOB_MATCHES, { params: { limit: 40 } })
+      .then((res) => {
+        if (cancelled) return;
+        if (res.data?.needsProfile) {
+          setNeedsResumeAnalysis(true);
+          return;
+        }
+        const scores = {};
+        for (const match of res.data?.matches || []) {
+          scores[match.jobId] = {
+            matchScore: match.matchScore,
+            verdict: match.verdict,
+            missingSkills: match.missingSkills || [],
+          };
+        }
+        setMatchScores(scores);
+        setNeedsResumeAnalysis(false);
+      })
+      .catch(() => {
+        // Matching is an enhancement — the job list stands on its own.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
+
+  // Scores belong to the signed-in candidate, so a sign-out must not leave a
+  // previous session's badges on the cards. Derived rather than reset in an
+  // effect, which keeps sign-out to a single render.
+  const matchScores = isAuthenticated ? rawMatchScores : {};
 
   // Bookmark Save Toggle
   const handleToggleSave = async (e, jobId) => {
@@ -186,7 +233,11 @@ const FindJobs = () => {
     }).sort((a, b) => {
       if (sortBy === "salary") return (b.salaryMin || 0) - (a.salaryMin || 0);
       if (sortBy === "newest") return new Date(b.createdAt) - new Date(a.createdAt);
-      return (b.matchScore || 0) - (a.matchScore || 0);
+      // "Relevant" means AI match score when we have one, newest otherwise.
+      const scoreA = matchScores[a._id || a.id]?.matchScore ?? -1;
+      const scoreB = matchScores[b._id || b.id]?.matchScore ?? -1;
+      if (scoreA !== scoreB) return scoreB - scoreA;
+      return new Date(b.createdAt) - new Date(a.createdAt);
     });
   }, [
     jobs,
@@ -198,6 +249,7 @@ const FindJobs = () => {
     selectedExperience,
     salaryFloor,
     sortBy,
+    matchScores,
   ]);
 
   // Paginated View
@@ -653,6 +705,31 @@ const FindJobs = () => {
 
             {/* ================= MAIN STREAM: JOB CARDS (col-span-9) ================= */}
             <div className="lg:col-span-8 xl:col-span-9 flex flex-col gap-space-md">
+              {/* Prompt the one action that unlocks match scores on these cards */}
+              {isAuthenticated && needsResumeAnalysis && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm bg-brand-indigo-light border border-primary/20 rounded-2xl p-space-md">
+                  <div className="flex items-start gap-space-sm">
+                    <span className="material-symbols-outlined text-primary text-[22px] shrink-0">
+                      auto_awesome
+                    </span>
+                    <div>
+                      <p className="font-body-md font-bold text-primary">
+                        See how well you match each role
+                      </p>
+                      <p className="font-body-sm text-text-secondary">
+                        Analyse your resume once and every job here gets a match percentage.
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    to="/resume-analyzer"
+                    className="shrink-0 px-space-md py-2.5 rounded-xl bg-primary text-on-primary font-label-md font-bold hover:bg-brand-indigo-dark transition-colors text-center"
+                  >
+                    Analyse my resume
+                  </Link>
+                </div>
+              )}
+
               {/* Stream Header Controls */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm bg-surface-card p-space-md rounded-2xl border border-border-default shadow-xs">
                 <div className="flex items-center gap-2">
@@ -707,6 +784,7 @@ const FindJobs = () => {
                 <div className="flex flex-col gap-space-md">
                   {paginatedJobs.map((job) => {
                     const isSaved = savedJobIds.has(job._id);
+                    const match = matchScores[job._id || job.id];
                     return (
                       <article
                         key={job._id}
@@ -760,6 +838,27 @@ const FindJobs = () => {
                               >
                                 {job.title}
                               </Link>
+
+                              {/* AI match score — only when we actually have one */}
+                              {match && (
+                                <div className="flex flex-wrap items-center gap-space-xs mt-1.5">
+                                  <MatchBadge
+                                    score={match.matchScore}
+                                    verdict={match.verdict}
+                                    size="sm"
+                                  />
+                                  {match.missingSkills?.length > 0 && (
+                                    <span className="font-body-sm text-text-muted">
+                                      Missing{" "}
+                                      <span className="font-semibold text-amber-700">
+                                        {match.missingSkills.slice(0, 2).join(", ")}
+                                      </span>
+                                      {match.missingSkills.length > 2 &&
+                                        ` +${match.missingSkills.length - 2}`}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
 
                               <div className="flex flex-wrap items-center gap-y-1 gap-x-space-md mt-1 text-text-secondary font-body-sm">
                                 <span className="flex items-center gap-1">
