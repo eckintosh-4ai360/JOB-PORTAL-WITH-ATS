@@ -30,6 +30,34 @@ const isConfigured = () => Boolean(process.env.GROQ_API_KEY);
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Longest we will sit waiting out a rate limit before giving up. */
+const MAX_RETRY_AFTER_MS = Number(process.env.GROQ_MAX_RETRY_AFTER_MS || 20000);
+
+/**
+ * How long to wait after a 429.
+ *
+ * Groq sends a `retry-after` header, and its error body also carries a phrase
+ * like "Please try again in 6.221s". Honouring either beats a fixed backoff:
+ * the limit is a per-minute token window, so a 500ms retry is guaranteed to
+ * fail again and just burns more of the budget.
+ */
+const parseRetryAfter = (header, body = "") => {
+    const seconds = Number(header);
+    if (Number.isFinite(seconds) && seconds > 0) {
+        return Math.min(MAX_RETRY_AFTER_MS, Math.ceil(seconds * 1000));
+    }
+
+    const match = /try again in ([\d.]+)\s*(ms|s)\b/i.exec(body || "");
+    if (match) {
+        const value = Number(match[1]);
+        if (Number.isFinite(value)) {
+            const ms = match[2].toLowerCase() === "ms" ? value : value * 1000;
+            return Math.min(MAX_RETRY_AFTER_MS, Math.ceil(ms));
+        }
+    }
+    return null;
+};
+
 /**
  * Models in the gpt-oss family emit an internal reasoning trace. It is useful
  * for debugging but must never be shown to a candidate or employer, so it is
@@ -171,6 +199,13 @@ const chat = async ({
                 // budget. Flagged so chatJson can retry differently rather than
                 // giving up on a 400.
                 error.jsonValidateFailed = detail.includes("json_validate_failed");
+                // A tokens-per-minute cap is a pacing problem, not a prompt
+                // problem. chatJson must not "fix" it by asking for more tokens.
+                error.rateLimited = response.status === 429;
+                // 413 means this single request reserves more than the account's
+                // per-minute allowance. Only a smaller request can succeed.
+                error.tooLarge = response.status === 413;
+                error.retryAfterMs = parseRetryAfter(response.headers.get("retry-after"), detail);
                 throw error;
             }
 
@@ -190,9 +225,11 @@ const chat = async ({
             const retryable = aborted || error.retryable || error instanceof TypeError;
             if (!retryable || attempt === MAX_RETRIES) break;
 
-            // Exponential backoff with jitter keeps bursts of concurrent
-            // applicant scoring from hammering a rate-limited endpoint.
-            await sleep(500 * 2 ** attempt + Math.floor(Math.random() * 250));
+            // Wait exactly as long as the server asked when it told us; a
+            // token-per-minute window will not have reopened after 500ms.
+            // Otherwise fall back to exponential backoff with jitter.
+            const wait = error.retryAfterMs || 500 * 2 ** attempt + Math.floor(Math.random() * 250);
+            await sleep(wait);
         } finally {
             clearTimeout(timer);
         }
@@ -236,25 +273,23 @@ const chatJson = async ({ system, user, schemaHint, ...rest } = {}) => {
     const baseTokens = rest.maxTokens || 4096;
 
     /**
-     * Escalating attempts. Strict JSON mode first; if the model overruns its
-     * budget, retry with a bigger budget and lighter reasoning, then without
-     * JSON mode at all (extractJson copes with fences and stray prose), and
-     * finally on the smaller model.
+     * Escalating attempts. Strict JSON mode first; if the model runs out of
+     * room, retry with a little more headroom and no reasoning trace, then
+     * without JSON mode at all (extractJson copes with fences and stray
+     * prose), and finally on the smaller model.
+     *
+     * Headroom grows modestly and is capped by GROQ_MAX_COMPLETION_TOKENS.
+     * `max_completion_tokens` is reserved against the account's tokens-per-
+     * minute allowance, so an unbounded ladder does not retry its way to
+     * success — it walks straight into a 413.
      */
+    const ceiling = Number(process.env.GROQ_MAX_COMPLETION_TOKENS || 6000);
+    const roomier = Math.min(ceiling, Math.round(baseTokens * 1.4));
+
     const attempts = [
         { model: primaryModel, json: true, maxTokens: baseTokens },
-        {
-            model: primaryModel,
-            json: true,
-            maxTokens: Math.min(32000, Math.round(baseTokens * 2)),
-            reasoningEffort: "low",
-        },
-        {
-            model: primaryModel,
-            json: false,
-            maxTokens: Math.min(32000, Math.round(baseTokens * 2)),
-            reasoningEffort: "low",
-        },
+        { model: primaryModel, json: true, maxTokens: roomier, reasoningEffort: "low" },
+        { model: primaryModel, json: false, maxTokens: roomier, reasoningEffort: "low" },
     ];
     if (GROQ_FALLBACK_MODEL && GROQ_FALLBACK_MODEL !== primaryModel) {
         attempts.push({ model: GROQ_FALLBACK_MODEL, json: true, maxTokens: baseTokens });
@@ -262,9 +297,20 @@ const chatJson = async ({ system, user, schemaHint, ...rest } = {}) => {
 
     let lastError = null;
 
-    for (const attempt of attempts) {
+    for (const [index, attempt] of attempts.entries()) {
+        // Escalating the token budget is the cure for truncated JSON and the
+        // poison for a rate limit — a bigger request is exactly what a TPM cap
+        // rejects. After a 429 hold the size; after a 413 ("request too large")
+        // actively shrink, because only a smaller request can ever succeed.
+        let sized = attempt;
+        if (index > 0 && lastError?.tooLarge) {
+            sized = { ...attempt, maxTokens: Math.max(1024, Math.round(baseTokens * 0.6)) };
+        } else if (index > 0 && lastError?.rateLimited) {
+            sized = { ...attempt, maxTokens: Math.min(attempt.maxTokens, baseTokens) };
+        }
+
         try {
-            const result = await chat({ ...rest, ...attempt, messages });
+            const result = await chat({ ...rest, ...sized, messages });
             const data = extractJson(result.content);
 
             if (!data) {
@@ -276,9 +322,23 @@ const chatJson = async ({ system, user, schemaHint, ...rest } = {}) => {
                 );
             }
 
+            // Escalation is invisible to the caller, so record when it was
+            // needed — a rising rate here means the token budget is too tight
+            // for real documents.
+            if (index > 0) {
+                console.warn(
+                    `Groq: recovered on attempt ${index + 1}/${attempts.length} ` +
+                    `(model=${sized.model}, json=${sized.json}, maxTokens=${sized.maxTokens})`
+                );
+            }
+
             return { data, model: result.model, usage: result.usage, finishReason: result.finishReason };
         } catch (error) {
             lastError = error;
+            console.warn(
+                `Groq: attempt ${index + 1}/${attempts.length} failed ` +
+                `(model=${sized.model}, maxTokens=${sized.maxTokens}): ${error.message.slice(0, 200)}`
+            );
             // A missing key or a timeout will not be fixed by trying again.
             if (error.status === 503 || error.status === 504) break;
         }
