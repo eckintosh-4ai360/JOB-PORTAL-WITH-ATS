@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const multer = require("multer");
 const prisma = require("./config/prisma");
 
 const authRoutes = require("./routes/authRoutes");
@@ -48,6 +49,26 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {}));
 
 //Error handling for routes
 app.use((err, req, res, next) => {
+    // Upload rejections are user mistakes, not server faults. They are thrown
+    // by multer before any controller runs, so they bypass controller
+    // try/catch blocks and would otherwise surface as a bare 500 — which tells
+    // someone who picked the wrong file that the site is broken.
+    if (err instanceof multer.MulterError) {
+        const messages = {
+            LIMIT_FILE_SIZE: "That file is too large. Please upload a file under 12MB.",
+            LIMIT_FILE_COUNT: "Too many files were uploaded at once.",
+            LIMIT_UNEXPECTED_FILE: `Unexpected file field "${err.field}".`,
+        };
+        return res.status(err.code === "LIMIT_FILE_SIZE" ? 413 : 400).json({
+            message: messages[err.code] || "That file could not be uploaded.",
+            code: err.code,
+        });
+    }
+
+    if (err?.code === "INVALID_FILE_TYPE") {
+        return res.status(400).json({ message: err.message, code: err.code });
+    }
+
     console.error("Unhandled error:", err.stack || err);
     res.status(500).json({ message: "internal server error", error: err.message });
 });
