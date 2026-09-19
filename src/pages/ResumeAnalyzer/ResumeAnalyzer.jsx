@@ -428,6 +428,26 @@ const ResumeAnalyzer = () => {
                           <span className="mb-1.5 block font-label-caps uppercase tracking-wider text-text-muted">
                             What we read from your resume
                           </span>
+
+                          {/* Without the AI pass these fields were never
+                              extracted. Printing "Not detected" would blame the
+                              resume for our own failure, so say what happened. */}
+                          {analysis.degraded && (
+                            <p className="mb-space-sm flex items-start gap-1.5 rounded-lg bg-amber-50 p-2 font-body-sm text-amber-900">
+                              <span
+                                className="material-symbols-outlined text-[15px] shrink-0"
+                                aria-hidden="true"
+                              >
+                                warning
+                              </span>
+                              <span>
+                                The AI review did not run for this attempt, so these fields were not
+                                extracted. Your ATS checks below are still accurate — re-run the
+                                analysis to fill this in.
+                              </span>
+                            </p>
+                          )}
+
                           <dl className="grid grid-cols-2 gap-x-space-md gap-y-1">
                             {[
                               { label: "Name", value: analysis.profile.fullName },
@@ -447,21 +467,28 @@ const ResumeAnalyzer = () => {
                                     ? ""
                                     : analysis.profile.highestEducationLevel,
                               },
-                            ].map((field) => (
-                              <div key={field.label} className="min-w-0">
-                                <dt className="font-label-caps uppercase text-text-muted">
-                                  {field.label}
-                                </dt>
-                                <dd
-                                  className={`truncate font-body-sm ${
-                                    field.value ? "text-text-primary" : "text-error"
-                                  }`}
-                                  title={field.value || "Not detected"}
-                                >
-                                  {field.value || "Not detected"}
-                                </dd>
-                              </div>
-                            ))}
+                            ].map((field) => {
+                              const placeholder = analysis.degraded ? "Not checked" : "Not detected";
+                              return (
+                                <div key={field.label} className="min-w-0">
+                                  <dt className="font-label-caps uppercase text-text-muted">
+                                    {field.label}
+                                  </dt>
+                                  <dd
+                                    className={`truncate font-body-sm ${
+                                      field.value
+                                        ? "text-text-primary"
+                                        : analysis.degraded
+                                          ? "text-text-muted"
+                                          : "text-error"
+                                    }`}
+                                    title={field.value || placeholder}
+                                  >
+                                    {field.value || placeholder}
+                                  </dd>
+                                </div>
+                              );
+                            })}
                           </dl>
 
                           {analysis.profile.skills?.length > 0 && (
