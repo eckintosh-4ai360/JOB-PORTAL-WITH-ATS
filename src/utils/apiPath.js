@@ -66,5 +66,29 @@ export const API_PATHS = {
     GET_ALL: "/api/email-templates",
     UPDATE: (key) => `/api/email-templates/${key}`,
   },
+
+  // AI — resume analysis and job matching (Groq / openai-gpt-oss-120b)
+  AI: {
+    STATUS: "/api/ai/status",
+
+    // Resume analysis. ANALYZE_RESUME accepts a multipart file upload, a
+    // pasted resumeText, a documentId, or a resumeUrl.
+    ANALYZE_RESUME: "/api/ai/resume/analyze",
+    GET_ANALYSIS: "/api/ai/resume/analysis",
+    GET_ANALYSIS_HISTORY: "/api/ai/resume/history",
+
+    // Candidate matching profile — the criteria a match is scored against
+    GET_MATCH_PROFILE: "/api/ai/match/profile",
+    UPDATE_MATCH_PROFILE: "/api/ai/match/profile",
+
+    // Candidate-facing matches
+    GET_JOB_MATCHES: "/api/ai/match/jobs",
+    GET_JOB_MATCH: (jobId) => `/api/ai/match/job/${jobId}`,
+
+    // Employer-facing applicant scoring
+    GET_SCORED_APPLICANTS: (jobId) => `/api/ai/match/applicants/${jobId}`,
+    RESCORE_APPLICANTS: (jobId) => `/api/ai/match/applicants/${jobId}/rescore`,
+    GET_JOB_SPEC: (jobId) => `/api/ai/match/job-spec/${jobId}`,
+  },
 };
 
