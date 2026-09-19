@@ -25,7 +25,7 @@ const NavigationItem = ({ item, isActive, onClick, isCollapsed, isAdmin }) => {
             : "text-slate-600 hover:bg-violet-50 hover:text-violet-800"
           : isActive
             ? "bg-white text-secondary shadow-sm shadow-black/5"
-            : "text-gray-400 hover:bg-white/5 hover:text-white"
+            : "text-slate-100 hover:bg-white/10 hover:text-white"
       }`}
     >
       <Icon
@@ -36,7 +36,7 @@ const NavigationItem = ({ item, isActive, onClick, isCollapsed, isAdmin }) => {
               : "text-slate-400 group-hover:text-violet-700"
             : isActive
               ? "text-primary"
-              : "text-gray-400 group-hover:text-white"
+              : "text-slate-200 group-hover:text-white"
         }`}
       />
 
@@ -183,10 +183,10 @@ const DashboardLayout = ({ children, activeMenu }) => {
         </div>
 
         {/* Bottom Profile section matching image layout */}
-        <div className={`border-t pt-4 ${isAdmin ? "border-violet-100" : "border-white/5"}`}>
+        <div className={`border-t pt-4 ${isAdmin ? "border-violet-100" : "border-white/15"}`}>
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center gap-3 rounded-xl p-2 text-left transition-all duration-200 group ${isAdmin ? "hover:bg-rose-50" : "hover:bg-white/5"}`}
+            className={`w-full flex items-center gap-3 rounded-xl p-2 text-left transition-all duration-200 group ${isAdmin ? "hover:bg-rose-50" : "hover:bg-white/10"}`}
             title="Click to logout"
           >
             {user?.avatar ? (
@@ -202,9 +202,9 @@ const DashboardLayout = ({ children, activeMenu }) => {
             )}
             <div className="flex-1 min-w-0">
               <p className={`text-sm font-semibold truncate ${isAdmin ? "text-slate-800" : "text-white"}`}>{user?.name || (isAdmin ? "Administrator" : "Employer")}</p>
-              <p className={`text-xs truncate capitalize ${isAdmin ? "text-slate-400" : "text-gray-400"}`}>{isAdmin ? "Administrator" : user?.role || "employer"}</p>
+              <p className={`text-xs truncate capitalize ${isAdmin ? "text-slate-400" : "text-slate-200"}`}>{isAdmin ? "Administrator" : user?.role || "employer"}</p>
             </div>
-            <LogOut className={`h-4 w-4 transition-colors ${isAdmin ? "text-slate-400 group-hover:text-rose-500" : "text-gray-500 group-hover:text-red-400"}`} />
+            <LogOut className={`h-4 w-4 transition-colors ${isAdmin ? "text-slate-400 group-hover:text-rose-500" : "text-slate-200 group-hover:text-rose-200"}`} />
           </button>
         </div>
       </aside>

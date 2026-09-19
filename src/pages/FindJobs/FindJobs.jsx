@@ -460,9 +460,9 @@ const FindJobs = () => {
                     type="button"
                     className="mt-1 flex w-full items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-[#2f1bc9] to-[#4430db] py-3 font-label-lg font-bold text-white shadow-[0_5px_12px_rgba(52,37,205,0.24)] transition hover:brightness-110"
                   >
-                    <span>Analyze with AI</span>
-                    <span className="material-symbols-outlined text-[16px]">
-                      sparkles
+                    <span>Analyze with SPG AI</span>
+                    <span className=" text-[16px]">
+                      {/* sparkles */}
                     </span>
                   </button>
                 </div>

@@ -114,7 +114,7 @@ const JobPostingForm = () => {
 
                 <h1 className="font-headline-xl text-headline-xl text-text-primary tracking-tight font-extrabold leading-tight">
                   Post a Job &amp; Reach{" "}
-                  <span className="bg-gradient-to-r from-primary via-primary-container to-secondary bg-clip-text text-transparent">
+                  <span className="bg-primary bg-clip-text text-transparent">
                     45,000+ Verified
                   </span>{" "}
                   Qualified Candidates
