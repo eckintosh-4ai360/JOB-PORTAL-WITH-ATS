@@ -99,7 +99,8 @@ Your job is to produce an honest, specific, actionable review. Follow these rule
 5. yearsOfExperience is total professional experience in years, computed from employment dates. Overlapping roles count once. Internships count as half.
 6. Scores are 0-100 and must be earned. A resume with no numbers, no dates, and duty-based phrasing scores below 50 for impact. Reserve scores above 90 for genuinely excellent work.
 7. Currency in this market is the Ghana cedi (GH₵). Write salary figures accordingly.
-8. Return between 4 and 8 suggestions, ordered with the highest-impact first.`;
+8. Return between 4 and 8 suggestions, ordered with the highest-impact first.
+9. Keep the output compact so it always fits in one response: at most the 6 most recent roles in "experience", at most 2 "highlights" each, and at most 12 grammar issues. Summarise rather than transcribing the resume back.`;
 
 /**
  * Build the user-side prompt. Target role and job context are optional and
@@ -362,8 +363,18 @@ const analyzeResume = async ({ resumeText, layout = {}, targetRole = "", jobCont
                 jobContext: jobContext ? truncateForPrompt(jobContext, 4000) : "",
                 atsFindings,
             }),
-            temperature: 0.25,
-            maxTokens: 8000,
+            // Budgeted to fit one call inside an 8k tokens-per-minute account
+            // limit: ~2.4k prompt + 5k reservation leaves headroom.
+            //
+            // reasoning_effort "low" is the decisive setting. This task is
+            // extraction and judgement, not multi-step logic, so a long
+            // reasoning trace bought nothing while consuming the entire budget
+            // — which truncated the JSON, triggered a retry at double the size,
+            // and then tripped the rate limit. Dropping it took a 5-page CV
+            // from ~3.5k reasoning tokens and 16s to ~10 tokens and 4s.
+            temperature: 0.15,
+            maxTokens: 5000,
+            reasoningEffort: "low",
         });
 
         const sanitized = sanitizeAnalysis(data, { resumeText, ats });
