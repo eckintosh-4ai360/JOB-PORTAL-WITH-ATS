@@ -119,7 +119,220 @@ const EmptyState = ({ title, description, icon: Icon = Inbox }) => (
 );
 
 //   Applicant List Item  
-const ApplicantListItem = ({ app, index, isSelected, onClick }) => {
+/** Colour band for an AI fit score. Matches the candidate-side bands. */
+const fitTone = (score) => {
+  if (score === null || score === undefined)
+    return "bg-gray-50 text-gray-500 ring-gray-200 dark:bg-gray-500/10 dark:text-gray-400 dark:ring-gray-500/30";
+  if (score >= 80)
+    return "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30";
+  if (score >= 65)
+    return "bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-400 dark:ring-sky-500/30";
+  if (score >= 50)
+    return "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/30";
+  return "bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:ring-rose-500/30";
+};
+
+const RECOMMENDATION_TONE = {
+  shortlist: { label: "Shortlist", tone: "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30" },
+  interview: { label: "Interview", tone: "bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-400 dark:ring-sky-500/30" },
+  hold: { label: "Hold", tone: "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/30" },
+  reject: { label: "Not a fit", tone: "bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:ring-rose-500/30" },
+};
+
+/**
+ * AI fit assessment for the selected applicant.
+ *
+ * Written for the recruiter: a score, a recommendation, the dimension
+ * breakdown behind it, and what to probe in an interview. The breakdown is
+ * what makes the recommendation reviewable rather than an opaque verdict — a
+ * hiring decision should never rest on a number nobody can question.
+ */
+const AiFitPanel = ({ score, isLoading, jobSpec }) => {
+  const [showBreakdown, setShowBreakdown] = useState(false);
+
+  if (isLoading && !score) {
+    return (
+      <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm flex items-center gap-3">
+        <Loader2 className="h-4 w-4 animate-spin text-indigo-500" />
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          Scoring this applicant against the role…
+        </span>
+      </div>
+    );
+  }
+
+  if (!score) return null;
+
+  const recommendation = RECOMMENDATION_TONE[score.recommendation] || null;
+  const dimensions = Object.entries(score.dimensions || {}).sort(
+    (a, b) => (b[1].weight || 0) - (a[1].weight || 0)
+  );
+
+  return (
+    <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
+      <div className="flex items-center gap-2 mb-4">
+        <TrendingUp className="h-4 w-4 text-indigo-500" />
+        <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">AI fit assessment</h3>
+        {score.degraded && (
+          <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+            rule-based only
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-start gap-4 flex-wrap">
+        <div
+          className={`flex flex-col items-center justify-center rounded-2xl px-4 py-3 ring-1 ${fitTone(score.matchScore)}`}
+        >
+          <span className="text-2xl font-bold leading-none">{score.matchScore}%</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide mt-0.5">fit</span>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
+              {score.verdict}
+            </span>
+            {recommendation && (
+              <span
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold ring-1 ${recommendation.tone}`}
+              >
+                {recommendation.label}
+              </span>
+            )}
+          </div>
+          {score.aiSummary && (
+            <p className="mt-1.5 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+              {score.aiSummary}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Strengths and gaps side by side — a recruiter reads both. */}
+      {(score.strengths?.length > 0 || score.gaps?.length > 0) && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {score.strengths?.length > 0 && (
+            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-500/10 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400 mb-1.5">
+                Strengths
+              </p>
+              <ul className="space-y-1">
+                {score.strengths.map((item) => (
+                  <li
+                    key={item}
+                    className="flex gap-1.5 text-xs text-emerald-900 dark:text-emerald-300"
+                  >
+                    <CheckCircle2 className="h-3 w-3 shrink-0 mt-0.5" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {score.gaps?.length > 0 && (
+            <div className="rounded-xl bg-amber-50 dark:bg-amber-500/10 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400 mb-1.5">
+                Gaps
+              </p>
+              <ul className="space-y-1">
+                {score.gaps.map((item) => (
+                  <li
+                    key={item}
+                    className="flex gap-1.5 text-xs text-amber-900 dark:text-amber-300"
+                  >
+                    <AlertCircle className="h-3 w-3 shrink-0 mt-0.5" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {score.interviewFocus?.length > 0 && (
+        <div className="mt-3 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-400 mb-1.5">
+            Worth probing in an interview
+          </p>
+          <ul className="space-y-1">
+            {score.interviewFocus.map((item) => (
+              <li key={item} className="flex gap-1.5 text-xs text-indigo-900 dark:text-indigo-300">
+                <Star className="h-3 w-3 shrink-0 mt-0.5" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {dimensions.length > 0 && (
+        <>
+          <button
+            type="button"
+            onClick={() => setShowBreakdown((value) => !value)}
+            aria-expanded={showBreakdown}
+            className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            <ChevronDown
+              className={`h-3.5 w-3.5 transition-transform ${showBreakdown ? "rotate-180" : ""}`}
+            />
+            {showBreakdown ? "Hide score breakdown" : "Show score breakdown"}
+          </button>
+
+          {showBreakdown && (
+            <div className="mt-3 space-y-2.5 border-t border-gray-100 dark:border-gray-800 pt-3">
+              {dimensions.map(([key, dimension]) => (
+                <div key={key}>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-xs font-semibold capitalize text-gray-700 dark:text-gray-300">
+                      {key}
+                      <span className="ml-1.5 font-normal text-gray-400 dark:text-gray-500">
+                        {dimension.weight}% of score · {dimension.label}
+                      </span>
+                    </span>
+                    <span className="text-xs font-bold text-gray-900 dark:text-gray-100">
+                      {dimension.score}
+                    </span>
+                  </div>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                    <div
+                      className={`h-full rounded-full ${
+                        dimension.score >= 80
+                          ? "bg-emerald-500"
+                          : dimension.score >= 65
+                            ? "bg-sky-500"
+                            : dimension.score >= 50
+                              ? "bg-amber-500"
+                              : "bg-rose-500"
+                      }`}
+                      style={{ width: `${dimension.score}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              {jobSpec?.requiredSkills?.length > 0 && (
+                <p className="pt-1 text-[11px] text-gray-400 dark:text-gray-500">
+                  Scored against: {jobSpec.requiredSkills.join(", ")}
+                  {jobSpec.requiredYears ? ` · ${jobSpec.requiredYears}+ yrs` : ""}
+                </p>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      <p className="mt-4 text-[11px] leading-relaxed text-gray-400 dark:text-gray-500">
+        This is decision support, not a decision. Review the resume yourself before rejecting anyone.
+      </p>
+    </div>
+  );
+};
+
+const ApplicantListItem = ({ app, index, isSelected, onClick, aiScore }) => {
   const name = app.applicantName || app.applicant?.name || "Unknown Applicant";
   const initials = getInitials(name);
   const gradient = AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length];
@@ -147,9 +360,18 @@ const ApplicantListItem = ({ app, index, isSelected, onClick }) => {
             <span className="ml-1.5 inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/30">Guest</span>
           )}
         </p>
-        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 flex-wrap">
           <Calendar className="h-3 w-3 shrink-0" />
           <span>{moment(app.createdAt).fromNow()}</span>
+          {/* AI fit score — absent until the applicant has been scored */}
+          {aiScore && (
+            <span
+              className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold ring-1 ${fitTone(aiScore.matchScore)}`}
+              title={`${aiScore.verdict} — AI fit score against this role's requirements`}
+            >
+              {aiScore.matchScore}% fit
+            </span>
+          )}
         </div>
       </div>
 
@@ -192,6 +414,13 @@ const ApplicationViewer = () => {
   const [isSchedulingModalOpen, setIsSchedulingModalOpen] = useState(false);
   const [interviewDetails, setInterviewDetails] = useState({ date: "", time: "", location: "", notes: "" });
 
+  //   AI fit scoring, keyed by application id
+  const [aiScores, setAiScores] = useState({});
+  const [jobSpec, setJobSpec] = useState(null);
+  const [isLoadingScores, setIsLoadingScores] = useState(false);
+  const [isRescoring, setIsRescoring] = useState(false);
+  const [sortByFit, setSortByFit] = useState("fit");
+
   //   Fetch Applications   
   const fetchApplications = useCallback(async () => {
     if (!jobId) return;
@@ -215,15 +444,62 @@ const ApplicationViewer = () => {
     fetchApplications();
   }, [fetchApplications]);
 
-  //   Filter Logic   
-  const filtered = applications.filter((app) => {
-    const name = (app.applicantName || app.applicant?.name || "").toLowerCase();
-    const email = (app.applicantEmail || app.applicant?.email || "").toLowerCase();
-    const q = searchQuery.toLowerCase();
-    const matchesSearch = !q || name.includes(q) || email.includes(q);
-    const matchesStatus = statusFilter === "All" || app.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  /**
+   * Load AI fit scores for this job's applicants.
+   *
+   * Runs after the applicant list so the roster is never blocked by scoring —
+   * the first call scores any unscored applicant, which costs one AI request
+   * each, so it is deliberately separate and cached server-side.
+   */
+  const fetchAiScores = useCallback(
+    async ({ refresh = false } = {}) => {
+      if (!jobId) return;
+      refresh ? setIsRescoring(true) : setIsLoadingScores(true);
+      try {
+        const res = refresh
+          ? await axiosInstance.post(API_PATHS.AI.RESCORE_APPLICANTS(jobId))
+          : await axiosInstance.get(API_PATHS.AI.GET_SCORED_APPLICANTS(jobId));
+
+        const scores = {};
+        for (const applicant of res.data?.applicants || []) {
+          if (applicant.aiScore) scores[applicant._id || applicant.id] = applicant.aiScore;
+        }
+        setAiScores(scores);
+        setJobSpec(res.data?.jobSpec || null);
+        if (refresh) toast.success("Applicants rescored");
+      } catch (err) {
+        if (err.response?.status === 429) {
+          toast.error("AI scoring limit reached. Try again shortly.");
+        }
+        // Otherwise stay quiet: scoring is an enhancement, not the page.
+      } finally {
+        refresh ? setIsRescoring(false) : setIsLoadingScores(false);
+      }
+    },
+    [jobId]
+  );
+
+  useEffect(() => {
+    if (applications.length > 0) fetchAiScores();
+  }, [applications.length, fetchAiScores]);
+
+  //   Filter Logic
+  const filtered = applications
+    .filter((app) => {
+      const name = (app.applicantName || app.applicant?.name || "").toLowerCase();
+      const email = (app.applicantEmail || app.applicant?.email || "").toLowerCase();
+      const q = searchQuery.toLowerCase();
+      const matchesSearch = !q || name.includes(q) || email.includes(q);
+      const matchesStatus = statusFilter === "All" || app.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (sortByFit !== "fit") return 0;
+      // Unscored applicants sort last rather than being treated as a zero.
+      const scoreA = aiScores[a._id || a.id]?.matchScore ?? -1;
+      const scoreB = aiScores[b._id || b.id]?.matchScore ?? -1;
+      return scoreB - scoreA;
+    });
 
   //   Summary counts   
   const counts = STATUS_OPTIONS.reduce((acc, s) => {
@@ -444,12 +720,47 @@ const ApplicationViewer = () => {
                 </div>
               </div>
 
-              {/* Count label */}
-              <div className="px-4 py-2 border-b border-gray-50 dark:border-gray-800">
+              {/* Count label + AI sort controls */}
+              <div className="px-4 py-2 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between gap-2">
                 <p className="text-xs font-semibold text-gray-400 dark:text-gray-500">
                   {filtered.length} applicant{filtered.length !== 1 ? "s" : ""}
                   {statusFilter !== "All" && ` · ${statusFilter}`}
                 </p>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  {/* Ranking by fit is the whole point of scoring, so it is the
+                      default — but a recruiter can always go back to recency. */}
+                  <button
+                    type="button"
+                    onClick={() => setSortByFit((v) => (v === "fit" ? "recent" : "fit"))}
+                    title={
+                      sortByFit === "fit"
+                        ? "Sorted by AI fit score — click to sort by most recent"
+                        : "Sorted by most recent — click to rank by AI fit score"
+                    }
+                    className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold transition-colors ${
+                      sortByFit === "fit"
+                        ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
+                        : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                    }`}
+                  >
+                    <TrendingUp className="h-3 w-3" />
+                    {sortByFit === "fit" ? "By fit" : "By date"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => fetchAiScores({ refresh: true })}
+                    disabled={isRescoring || isLoadingScores}
+                    title="Rescore every applicant against this role"
+                    className="rounded-lg p-1 text-gray-400 hover:text-indigo-600 dark:text-gray-500 dark:hover:text-indigo-400 disabled:opacity-40 transition-colors"
+                    aria-label="Rescore all applicants"
+                  >
+                    <RefreshCw
+                      className={`h-3 w-3 ${isRescoring || isLoadingScores ? "animate-spin" : ""}`}
+                    />
+                  </button>
+                </div>
               </div>
 
               {/* List */}
@@ -468,6 +779,7 @@ const ApplicationViewer = () => {
                       index={i}
                       isSelected={selectedApp?._id === app._id}
                       onClick={() => setSelectedApp(app)}
+                      aiScore={aiScores[app._id || app.id]}
                     />
                   ))
                 )}
@@ -516,6 +828,13 @@ const ApplicationViewer = () => {
 
                 {/* Detail Body */}
                 <div className="px-7 py-6 space-y-6">
+
+                  {/*  AI fit assessment for this applicant  */}
+                  <AiFitPanel
+                    score={aiScores[selectedApp._id || selectedApp.id]}
+                    isLoading={isLoadingScores}
+                    jobSpec={jobSpec}
+                  />
 
                   {/*  Change Status ─ */}
                   <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
