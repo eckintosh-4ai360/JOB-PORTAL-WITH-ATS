@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../../components/layout/Navbar";
-import Footer from "../../components/layout/Footer";
+import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
@@ -100,10 +99,9 @@ const JobPostingForm = () => {
   };
 
   return (
-    <div className="bg-surface min-h-screen text-on-surface flex flex-col pt-20">
-      <Navbar />
-
-      <main className="flex-1 w-full pb-space-xl">
+    <DashboardLayout activeMenu="post-job">
+      <div className="min-h-full bg-surface text-on-surface">
+        <main className="w-full pb-space-xl">
         {/* ================= HERO HEADER & TRUST ENGINE ================= */}
         <section className="w-full bg-gradient-to-b from-brand-indigo-light/50 via-surface to-surface pb-space-lg border-b border-border-default">
           <div className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin pt-space-lg">
@@ -116,7 +114,7 @@ const JobPostingForm = () => {
 
                 <h1 className="font-headline-xl text-headline-xl text-text-primary tracking-tight font-extrabold leading-tight">
                   Post a Job &amp; Reach{" "}
-                  <span className="bg-gradient-to-r from-primary via-primary-container to-secondary bg-clip-text text-transparent">
+                  <span className="bg-primary bg-clip-text text-transparent">
                     45,000+ Verified
                   </span>{" "}
                   Qualified Candidates
@@ -673,10 +671,9 @@ const JobPostingForm = () => {
             </div>
           </div>
         </section>
-      </main>
-
-      <Footer />
-    </div>
+        </main>
+      </div>
+    </DashboardLayout>
   );
 };
 

@@ -33,9 +33,165 @@ model User {
   savedJobs          SavedJob[]
   analytics          Analytics?
   company            Company?
+  candidateProfile   CandidateProfile?
+  resumeAnalyses     ResumeAnalysis[]
+  jobMatches         JobMatch[]
 
   @@index([email])
   @@index([clerkId])
+}
+
+// Matching profile for a candidate. Splits cleanly in two:
+//  - preferences the candidate sets by hand (location, pay, mobility)
+//  - a snapshot of skills/experience lifted from their latest resume analysis
+// Both feed utils/matchEngine so a match can be scored without re-parsing a CV.
+model CandidateProfile {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Candidate-controlled preferences
+  location              String?
+  expectedSalaryMin     Float?
+  expectedSalaryMax     Float?
+  salaryCurrency        String   @default("GH₵")
+  salaryPeriod          String   @default("month")
+  willingToRelocate     Boolean  @default(false)
+  openToRemote          Boolean  @default(true)
+  targetRoles           String[] @default([])
+
+  // Snapshot from the most recent resume analysis
+  skills                String[] @default([])
+  softSkills            String[] @default([])
+  certifications        String[] @default([])
+  industries            String[] @default([])
+  yearsOfExperience     Float?
+  highestEducationLevel String?
+  seniority             String?
+  headline              String?
+  resumeAnalysisId      String?
+  profileSyncedAt       DateTime?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+// One stored AI resume analysis. Keyed by a hash of the extracted text so an
+// unchanged resume is never billed to Groq twice.
+model ResumeAnalysis {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName      String?
+  resumeUrl     String?
+  resumeHash    String
+  targetRole    String?
+  targetJobId   String?
+
+  overallScore  Int
+  atsScore      Int
+  qualityScore  Int
+  grammarScore  Int?
+
+  wordCount     Int?
+  pageCount     Int?
+  multiColumn   Boolean  @default(false)
+
+  // Full payloads kept as JSON — the shapes are presentation detail and
+  // querying inside them is never needed.
+  profile       Json
+  atsChecks     Json
+  atsSections   Json?
+  atsSignals    Json?
+  quality       Json
+  grammar       Json
+  missingSkills Json
+  suggestions   Json
+  keywords      Json?
+  redFlags      Json?
+
+  resumeText    String?
+  model         String?
+  degraded      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, resumeHash])
+}
+
+// AI-extracted structured requirements for a job posting. Cached per job and
+// re-extracted only when the posting text changes (tracked by sourceHash).
+model JobRequirementSpec {
+  id                     String   @id @default(cuid())
+  jobId                  String   @unique
+  job                    Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  requiredSkills         String[] @default([])
+  preferredSkills        String[] @default([])
+  requiredCertifications String[] @default([])
+  keyResponsibilities    String[] @default([])
+  requiredYears          Int?
+  requiredEducationLevel String?
+  seniority              String?
+  workModel              String?
+  sourceHash             String
+  model                  String?
+
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+// A candidate-facing match score for one job. Cached so listing pages are fast
+// and invalidated when the candidate's resume analysis changes.
+model JobMatch {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId         String
+  job           Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  matchScore    Int
+  verdict       String
+  dimensions    Json
+  strengths     String[] @default([])
+  gaps          String[] @default([])
+  missingSkills String[] @default([])
+  aiSummary     String?
+  aiAdjustment  Int?
+  profileKey    String?
+  model         String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, jobId])
+  @@index([userId, matchScore])
+  @@index([jobId])
+}
+
+// An employer-facing score for one application, so a recruiter can rank a
+// shortlist by fit instead of by arrival order.
+model ApplicantScore {
+  id             String   @id @default(cuid())
+  applicationId  String   @unique
+  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  jobId          String
+
+  matchScore     Int
+  verdict        String
+  dimensions     Json
+  strengths      String[] @default([])
+  gaps           String[] @default([])
+  aiSummary      String?
+  recommendation String?
+  interviewFocus String[] @default([])
+  model          String?
+  degraded       Boolean  @default(false)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([jobId, matchScore])
 }
 
 model Document {
@@ -118,6 +274,8 @@ model Job {
 
   applications     Application[]
   savedBy          SavedJob[]
+  requirementSpec  JobRequirementSpec?
+  matches          JobMatch[]
 
   @@index([companyId])
   @@index([companyProfileId])
@@ -144,6 +302,8 @@ model Application {
   interviewNotes    String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+
+  aiScore           ApplicantScore?
 
   @@index([jobId])
   @@index([applicantId])
