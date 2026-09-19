@@ -5,6 +5,7 @@ import Footer from "../../components/layout/Footer";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
+import JobMatchPanel from "../../components/ai/JobMatchPanel";
 import toast from "react-hot-toast";
 
 const parseList = (val, defaultList = []) => {
@@ -529,36 +530,9 @@ const JobDetails = () => {
 
             {/* RIGHT SIDEBAR (col-span-4) */}
             <div className="lg:col-span-4 flex flex-col gap-space-md">
-              {/* ATS Match Card */}
-              <div className="bg-surface-card rounded-2xl p-space-md md:p-space-lg border border-border-default shadow-sm flex flex-col gap-space-sm">
-                <div className="flex items-center justify-between">
-                  <span className="font-label-caps uppercase text-text-muted">
-                    ATS Match Analysis
-                  </span>
-                  <span className="font-numeric-metric text-salary-emerald font-bold">
-                    94% Compatible
-                  </span>
-                </div>
-
-                <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-                  <div className="bg-salary-emerald h-full rounded-full w-[94%]" />
-                </div>
-
-                <p className="font-body-sm text-text-secondary mt-1">
-                  Your profile matches primary criteria requested by {companyName}.
-                </p>
-
-                <button
-                  onClick={() => navigate("/resume-analyzer")}
-                  type="button"
-                  className="mt-1 w-full py-2.5 rounded-xl bg-brand-indigo-light text-primary hover:bg-brand-indigo-subtle font-label-md font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[16px]">
-                    auto_awesome
-                  </span>
-                  <span>Tailor CV for this Role</span>
-                </button>
-              </div>
+              {/* Real AI match score for this role, scored against the
+                  candidate's analysed resume across six dimensions. */}
+              <JobMatchPanel jobId={jobId} isAuthenticated={isAuthenticated} />
 
               {/* Company Profile Card */}
               <div className="bg-surface-card rounded-2xl p-space-md md:p-space-lg border border-border-default shadow-sm flex flex-col gap-space-sm">
