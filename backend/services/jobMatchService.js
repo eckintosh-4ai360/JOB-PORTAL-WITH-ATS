@@ -300,7 +300,11 @@ const refineMatches = async ({ profileSummary, scored, limit = 8 }) => {
             schemaHint: REFINE_SCHEMA_HINT,
             user: `CANDIDATE:\n${profileSummary}\n\nJOBS TO REVIEW (${subset.length}):\n${jobBlocks.join("\n\n")}\n\nReturn the JSON object with one entry per job.`,
             temperature: 0.3,
-            maxTokens: 4000,
+            // Same TPM budget applies here as in resume analysis: low
+            // reasoning keeps a multi-job refinement inside one minute's
+            // allowance, and this is comparison, not deduction.
+            maxTokens: 3000,
+            reasoningEffort: "low",
         });
 
         for (const entry of data?.matches || []) {
@@ -565,7 +569,8 @@ const scoreApplicant = async ({ application, job, resumeText, profile = null, sp
                 "Assess this applicant for the role and return the JSON object.",
             ].join("\n"),
             temperature: 0.25,
-            maxTokens: 3000,
+            maxTokens: 2500,
+            reasoningEffort: "low",
         });
 
         const adjustment = Number(data?.adjustment);
