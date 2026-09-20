@@ -48,7 +48,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: "easeOut" }}
-            className="text-sm font-bold uppercase tracking-[0.18em] text-primary-fixed"
+            className="text-sm font-bold uppercase tracking-[0.18em] text-primary-fixed dark:text-indigo-300"
           >
             Professional recruitment platform
           </motion.p>
@@ -81,7 +81,7 @@ const Hero = () => {
             <button
               type="button"
               onClick={() => navigate("/find-jobs")}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-indigo-dark"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-indigo-dark dark:bg-indigo-500 dark:hover:bg-indigo-400"
             >
               <Search className="h-5 w-5" />
               Find Jobs
@@ -91,7 +91,7 @@ const Hero = () => {
             <button
               type="button"
               onClick={() => navigate(employerPath)}
-              className="inline-flex min-h-12 items-center justify-center rounded-md border border-white/35 bg-white/10 px-6 text-sm font-bold text-white backdrop-blur transition-colors hover:bg-white hover:text-secondary"
+              className="inline-flex min-h-12 items-center justify-center rounded-md border border-white/35 bg-white/10 px-6 text-sm font-bold text-white backdrop-blur transition-colors hover:bg-white hover:text-secondary dark:hover:text-indigo-700"
             >
               Post a Job
             </button>
@@ -107,7 +107,7 @@ const Hero = () => {
               <button
                 type="button"
                 onClick={() => navigate("/login")}
-                className="font-bold text-white transition-colors hover:text-primary-fixed"
+                className="font-bold text-white transition-colors hover:text-primary-fixed dark:hover:text-indigo-300"
               >
                 Login
               </button>
@@ -115,7 +115,7 @@ const Hero = () => {
               <button
                 type="button"
                 onClick={() => navigate("/signup")}
-                className="font-bold text-white transition-colors hover:text-primary-fixed"
+                className="font-bold text-white transition-colors hover:text-primary-fixed dark:hover:text-indigo-300"
               >
                 Create an account
               </button>
@@ -133,7 +133,7 @@ const Hero = () => {
 
               return (
                 <div key={item.text} className="flex items-center gap-3 text-sm text-white/80">
-                  <Icon className="h-5 w-5 shrink-0 text-primary-fixed" />
+                  <Icon className="h-5 w-5 shrink-0 text-primary-fixed dark:text-indigo-300" />
                   <span>{item.text}</span>
                 </div>
               );
