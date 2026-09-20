@@ -89,6 +89,88 @@
 }
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  /*
+   * Most marketplace screens use the semantic colour tokens above rather than
+   * raw Tailwind greys. Override the tokens here so the persisted theme switch
+   * changes those screens too, not just pages that happen to use `dark:`.
+   */
+  .dark {
+    color-scheme: dark;
+    --color-primary: #a5b4fc;
+    --color-primary-container: #6366f1;
+    --color-primary-fixed: #23245d;
+    --color-primary-fixed-dim: #373a85;
+    --color-on-primary: #ffffff;
+    --color-on-primary-container: #eef2ff;
+    --color-on-primary-fixed: #eef2ff;
+    --color-on-primary-fixed-variant: #c7d2fe;
+
+    --color-brand-indigo-dark: #818cf8;
+    --color-brand-indigo-light: #20265d;
+    --color-brand-indigo-subtle: #2e387c;
+
+    --color-secondary: #7dd3fc;
+    --color-secondary-container: #075985;
+    --color-secondary-fixed: #153b5b;
+    --color-secondary-fixed-dim: #1c557b;
+    --color-on-secondary: #04131f;
+    --color-on-secondary-container: #e0f2fe;
+    --color-on-secondary-fixed: #e0f2fe;
+    --color-on-secondary-fixed-variant: #bae6fd;
+
+    --color-tertiary: #6ee7b7;
+    --color-tertiary-container: #065f46;
+    --color-tertiary-fixed: #0b3a2a;
+    --color-tertiary-fixed-dim: #0e5940;
+    --color-on-tertiary: #032519;
+    --color-on-tertiary-container: #d1fae5;
+    --color-on-tertiary-fixed: #d1fae5;
+    --color-on-tertiary-fixed-variant: #a7f3d0;
+
+    --color-surface: #080e1b;
+    --color-surface-dim: #050914;
+    --color-surface-bright: #111a2b;
+    --color-surface-variant: #1c2940;
+    --color-surface-tint: #a5b4fc;
+    --color-surface-card: #101827;
+    --color-surface-page: #080e1b;
+    --color-surface-container: #19253a;
+    --color-surface-container-low: #111d30;
+    --color-surface-container-lowest: #0b1220;
+    --color-surface-container-high: #22324b;
+    --color-surface-container-highest: #2d405d;
+    --color-on-surface: #eef2ff;
+    --color-on-surface-variant: #cbd5e1;
+    --color-on-background: #eef2ff;
+    --color-background: #080e1b;
+
+    --color-border-default: #293a55;
+    --color-border-subtle: #1a2940;
+    --color-outline: #94a3b8;
+    --color-outline-variant: #475569;
+
+    --color-text-primary: #f8fafc;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #94a3b8;
+
+    --color-salary-emerald: #34d399;
+    --color-salary-surface: #062f29;
+    --color-verified-badge: #38bdf8;
+
+    --color-error: #fca5a5;
+    --color-error-container: #4c1218;
+    --color-on-error: #450a0a;
+    --color-on-error-container: #fecaca;
+
+    --color-inverse-surface: #eaf1ff;
+    --color-inverse-on-surface: #172033;
+    --color-inverse-primary: #4338ca;
+  }
+
   html, body, #root {
     margin: 0;
     padding: 0;
