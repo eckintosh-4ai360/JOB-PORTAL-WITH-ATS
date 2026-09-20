@@ -139,7 +139,7 @@ export const EmployerDashboard = () => {
         <div className="max-w-7xl mx-auto space-y-8 pb-12">
 
           {/*  Welcome Banner  */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-secondary via-secondary to-secondary px-8 py-7 shadow-xl">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-secondary via-secondary to-secondary px-8 py-7 shadow-xl dark:from-slate-800 dark:via-slate-800 dark:to-slate-900">
             {/* Decorative blobs */}
             <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
             <div className="pointer-events-none absolute bottom-0 right-1/3 h-40 w-40 rounded-full bg-indigo-500/20 blur-2xl" />

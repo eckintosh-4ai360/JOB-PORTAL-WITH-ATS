@@ -267,7 +267,7 @@ const EmployerProfilePage = () => {
         </div>
 
         {/*  Hero Profile Banner  */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-secondary via-secondary to-indigo-900 px-8 py-8 shadow-xl">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-secondary via-secondary to-indigo-900 px-8 py-8 shadow-xl dark:from-slate-800 dark:via-slate-800 dark:to-indigo-950">
           {/* Decorative blobs */}
           <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-indigo-500/20 blur-3xl" />
           <div className="pointer-events-none absolute bottom-0 left-1/4 h-36 w-36 rounded-full bg-blue-500/20 blur-2xl" />

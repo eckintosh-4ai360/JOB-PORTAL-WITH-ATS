@@ -150,7 +150,7 @@ const EmailTemplates = () => {
                     type="button"
                     onClick={() => selectTemplate(template.key)}
                     className={`w-full rounded-xl px-3 py-3 text-left transition-colors ${selectedKey === template.key
-                      ? "bg-secondary text-white"
+                      ? "bg-secondary text-white dark:bg-indigo-500"
                       : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"}`}
                   >
                     <p className="text-sm font-semibold">{template.name}</p>
