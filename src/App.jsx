@@ -71,6 +71,8 @@ export const App = () => {
             <Route element={<EmployerOnboardingRoute />}>
               <Route path="/employer-dashboard" element={<EmployerDashboard />} />
               <Route path="/post-job" element={<JobPostingForm />} />
+              {/* Editing reuses the full posting form so employers get every field. */}
+              <Route path="/edit-job/:jobId" element={<JobPostingForm />} />
               <Route path="/manage-jobs" element={<ManageJobs />} />
               <Route path="/email-templates" element={<EmailTemplates />} />
               <Route path="/applicants" element={<ApplicationViewer />} />
