@@ -26,6 +26,12 @@ Two feature sets, sharing one scoring engine.
 - Employer side: applicants ranked by fit, with a recommendation, interview focus areas,
   and the same breakdown
 
+**Candidate workspace and theme consistency**
+- One shared main navbar for the public site and candidate pages, including the profile page
+- A persistent light/dark control that is available before sign-in and after sign-in
+- A clear candidate route layout: Profile, Saved Jobs, Applications & Docs, and AI Resume Match
+- Legacy `/documents` and `/my-applications` links safely redirect to the combined hub
+
 ---
 
 ## 2. Model choice
@@ -123,7 +129,7 @@ Added to `backend/.env` (which is gitignored — the key will not be committed):
 GROQ_API_KEY=gsk_...
 GROQ_MODEL=openai/gpt-oss-120b
 GROQ_FALLBACK_MODEL=openai/gpt-oss-20b
-GROQ_REASONING_EFFORT=medium
+GROQ_REASONING_EFFORT=low
 GROQ_TIMEOUT_MS=60000
 AI_MATCH_MAX_ADJUSTMENT=8
 AI_MAX_MATCH_JOBS=40
@@ -233,6 +239,26 @@ missing skills, and the full breakdown. This replaced a hardcoded "94% Compatibl
 default with a toggle back to date. The detail pane adds a recommendation
 (shortlist/interview/hold/reject), strengths, gaps, interview focus areas, and the
 breakdown, with a note that this is decision support rather than a decision.
+
+### Candidate navigation and display modes
+
+The account menu's **Candidate Profile** item leads to `/profile`. That page is now under
+the same main navbar as the marketplace instead of a separate candidate-only header. Its
+profile summary retains a compact preview of recent applications and the active resume,
+with direct **Applications & Docs** actions to the full hub.
+
+| Destination | Route | Contents |
+| --- | --- | --- |
+| Candidate Profile | `/profile` | Personal details, resume status, recent applications, saved/application counts |
+| Saved Jobs | `/saved-jobs` | Bookmarked roles |
+| Applications & Docs | `/applications` | Application tracking, interviews, resume and document uploads |
+| AI Resume Match | `/resume-analyzer` | ATS report, quality/grammar feedback and scored roles |
+
+`/documents` and `/my-applications` remain as protected redirects to `/applications`, so
+old bookmarks and links do not lead to a duplicate or misleading page. The mode control in
+the main navbar works for visitors too and stores the choice in local storage. Semantic
+surface, text and border tokens now switch with it, so public screens and direct
+`dark:`-styled candidate screens stay legible in either mode.
 
 ---
 
