@@ -219,7 +219,7 @@ const SignUp = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex font-display text-secondary overflow-hidden">
+    <div className="min-h-screen bg-gray-50 flex font-display text-secondary overflow-hidden dark:bg-gray-950">
       
       {/* LEFT SIDE: Brand Showcase (Hidden on Mobile) */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-[#131211] overflow-hidden flex-col justify-between p-12 xl:p-16 select-none">
@@ -308,7 +308,7 @@ const SignUp = () => {
       </div>
 
       {/* RIGHT SIDE: Interactive SignUp Form Container */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative bg-white overflow-y-auto max-h-screen py-10">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative bg-white overflow-y-auto max-h-screen py-10 dark:bg-gray-950">
         
         {/* Subtle decorative lights for mobile */}
         <div className="lg:hidden absolute top-0 right-0 w-64 h-64 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
@@ -321,10 +321,10 @@ const SignUp = () => {
         >
           {/* Form Header */}
           <div className="space-y-2 text-center lg:text-left">
-            <h2 className="text-3xl font-extrabold text-secondary tracking-tight">
+            <h2 className="text-3xl font-extrabold text-secondary tracking-tight dark:text-gray-100">
               Create Account
             </h2>
-            <p className="text-gray-500 font-medium text-sm">
+            <p className="text-gray-500 font-medium text-sm dark:text-gray-400">
               Join thousands of professionals finding their dream jobs
             </p>
           </div>
@@ -334,9 +334,9 @@ const SignUp = () => {
 
           <div className="relative flex items-center justify-center">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
             </div>
-            <span className="relative px-4 bg-white text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <span className="relative px-4 bg-white text-xs font-semibold text-gray-400 uppercase tracking-wider dark:bg-gray-950 dark:text-gray-500">
               Or fill details
             </span>
           </div>
@@ -346,7 +346,7 @@ const SignUp = () => {
             
             {/* Full Name */}
             <div className="space-y-1">
-              <label className="block text-sm font-bold text-gray-700">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-200">
                 Full Name *
               </label>
               <div 
@@ -355,7 +355,7 @@ const SignUp = () => {
                     ? "border-red-500 bg-red-50/10 focus-within:ring-2 focus-within:ring-red-500/20" 
                     : activeField === "fullName"
                       ? "border-primary ring-2 ring-primary/20" 
-                      : "border-gray-200 hover:border-gray-300"
+                      : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
                 }`}
               >
                 <div className="pl-3.5 flex items-center pointer-events-none">
@@ -364,7 +364,7 @@ const SignUp = () => {
                       ? "text-red-400" 
                       : activeField === "fullName" 
                         ? "text-primary" 
-                        : "text-gray-400"
+                        : "text-gray-400 dark:text-gray-500"
                   }`} />
                 </div>
                 <input 
@@ -395,7 +395,7 @@ const SignUp = () => {
 
             {/* Email Address */}
             <div className="space-y-1">
-              <label className="block text-sm font-bold text-gray-700">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-200">
                 Email Address *
               </label>
               <div 
@@ -404,7 +404,7 @@ const SignUp = () => {
                     ? "border-red-500 bg-red-50/10 focus-within:ring-2 focus-within:ring-red-500/20" 
                     : activeField === "email"
                       ? "border-primary ring-2 ring-primary/20" 
-                      : "border-gray-200 hover:border-gray-300"
+                      : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
                 }`}
               >
                 <div className="pl-3.5 flex items-center pointer-events-none">
@@ -413,7 +413,7 @@ const SignUp = () => {
                       ? "text-red-400" 
                       : activeField === "email" 
                         ? "text-primary" 
-                        : "text-gray-400"
+                        : "text-gray-400 dark:text-gray-500"
                   }`} />
                 </div>
                 <input 
@@ -444,7 +444,7 @@ const SignUp = () => {
 
             {/* Password */}
             <div className="space-y-1">
-              <label className="block text-sm font-bold text-gray-700">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-200">
                 Password *
               </label>
               <div 
@@ -453,7 +453,7 @@ const SignUp = () => {
                     ? "border-red-500 bg-red-50/10 focus-within:ring-2 focus-within:ring-red-500/20" 
                     : activeField === "password"
                       ? "border-primary ring-2 ring-primary/20" 
-                      : "border-gray-200 hover:border-gray-300"
+                      : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
                 }`}
               >
                 <div className="pl-3.5 flex items-center pointer-events-none">
@@ -462,7 +462,7 @@ const SignUp = () => {
                       ? "text-red-400" 
                       : activeField === "password" 
                         ? "text-primary" 
-                        : "text-gray-400"
+                        : "text-gray-400 dark:text-gray-500"
                   }`} />
                 </div>
                 <input 
@@ -481,7 +481,7 @@ const SignUp = () => {
                     ...prev,
                     showPassword: !prev.showPassword
                   }))}
-                  className="absolute right-3.5 text-gray-400 hover:text-gray-600 transition-colors p-1"
+                  className="absolute right-3.5 text-gray-400 hover:text-gray-600 transition-colors p-1 dark:hover:text-gray-300"
                 >
                   {formState.showPassword ? (
                     <EyeOff className="h-5 w-5" />
@@ -507,12 +507,12 @@ const SignUp = () => {
 
             {/* Profile Picture Upload (Optional) */}
             <div className="space-y-1.5">
-              <label className="block text-sm font-bold text-gray-700">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-200">
                 Profile Picture (Optional)
               </label>
-              <div className="flex items-center space-x-4 p-1.5 border border-gray-100 rounded-xl bg-gray-50/50">
+              <div className="flex items-center space-x-4 p-1.5 border border-gray-100 rounded-xl bg-gray-50/50 dark:border-gray-800 dark:bg-gray-900/50">
                 {/* Photo Preview */}
-                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 border border-gray-300 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 border border-gray-300 flex items-center justify-center shrink-0 dark:bg-gray-800 dark:border-gray-700">
                   {avatarPreview ? (
                     <img src={avatarPreview} alt="Avatar Preview" className="w-full h-full object-cover" />
                   ) : (
@@ -531,19 +531,19 @@ const SignUp = () => {
                   <button
                     type="button"
                     onClick={triggerFileInput}
-                    className="flex items-center space-x-2 border border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50 py-1.5 px-4 rounded-lg text-xs font-bold text-gray-700 transition-all cursor-pointer shadow-xs"
+                    className="flex items-center space-x-2 border border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50 py-1.5 px-4 rounded-lg text-xs font-bold text-gray-700 transition-all cursor-pointer shadow-xs dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-gray-600 dark:hover:bg-gray-800"
                   >
                     <Upload className="w-3.5 h-3.5" />
                     <span>Upload Photo</span>
                   </button>
-                  <p className="text-[10px] text-gray-400">JPG, PNG up to 5MB</p>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500">JPG, PNG up to 5MB</p>
                 </div>
               </div>
             </div>
 
             {/* Role selection */}
             <div className="space-y-1.5">
-              <label className="block text-sm font-bold text-gray-700">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-200">
                 I am a *
               </label>
               <div className="grid grid-cols-2 gap-4">
@@ -555,14 +555,14 @@ const SignUp = () => {
                   className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all cursor-pointer ${
                     formData.role === "jobseeker"
                       ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
-                      : "border-gray-200 hover:border-gray-300 bg-white text-gray-500"
+                      : "border-gray-200 hover:border-gray-300 bg-white text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-600"
                   }`}
                 >
                   <User className={`w-6 h-6 mb-1 transition-colors ${
-                    formData.role === "jobseeker" ? "text-primary" : "text-gray-400"
+                    formData.role === "jobseeker" ? "text-primary" : "text-gray-400 dark:text-gray-500"
                   }`} />
                   <span className="text-[13px] font-bold block">Job Seeker</span>
-                  <span className="text-[10px] text-gray-400 mt-0.5">Looking for opportunities</span>
+                  <span className="text-[10px] text-gray-400 mt-0.5 dark:text-gray-500">Looking for opportunities</span>
                 </button>
 
                 {/* Employer Option */}
@@ -572,14 +572,14 @@ const SignUp = () => {
                   className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all cursor-pointer ${
                     formData.role === "employer"
                       ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
-                      : "border-gray-200 hover:border-gray-300 bg-white text-gray-500"
+                      : "border-gray-200 hover:border-gray-300 bg-white text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-600"
                   }`}
                 >
                   <Building2 className={`w-6 h-6 mb-1 transition-colors ${
-                    formData.role === "employer" ? "text-primary" : "text-gray-400"
+                    formData.role === "employer" ? "text-primary" : "text-gray-400 dark:text-gray-500"
                   }`} />
                   <span className="text-[13px] font-bold block">Employer</span>
-                  <span className="text-[10px] text-gray-400 mt-0.5">Hiring talent</span>
+                  <span className="text-[10px] text-gray-400 mt-0.5 dark:text-gray-500">Hiring talent</span>
                 </button>
 
               </div>
@@ -614,7 +614,7 @@ const SignUp = () => {
             </button>
 
             {/* Link to Login */}
-            <div className="text-center pt-2 text-sm text-gray-500 font-semibold">
+            <div className="text-center pt-2 text-sm text-gray-500 font-semibold dark:text-gray-400">
               Already have an account?{" "}
               <Link 
                 to="/login" 

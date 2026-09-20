@@ -50,7 +50,7 @@ const GoogleSignInButton = ({ role = null, label = "Continue with Google" }) => 
             onClick={handleGoogleSignIn}
             disabled={loading}
             aria-busy={loading}
-            className="w-full flex items-center justify-center space-x-3 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 py-2.5 rounded-xl transition-all font-semibold text-sm text-gray-700 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+            className="w-full flex items-center justify-center space-x-3 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 py-2.5 rounded-xl transition-all font-semibold text-sm text-gray-700 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-600 dark:hover:bg-gray-800"
         >
             {loading ? (
                 <svg className="w-4 h-4 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">

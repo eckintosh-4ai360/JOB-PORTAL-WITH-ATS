@@ -154,7 +154,7 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex font-display text-secondary overflow-hidden">
+    <div className="min-h-screen bg-gray-50 flex font-display text-secondary overflow-hidden dark:bg-gray-950">
       
       {/* LEFT SIDE: Brand Showcase (Hidden on Mobile) */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-[#131211] overflow-hidden flex-col justify-between p-12 xl:p-16 select-none">
@@ -243,7 +243,7 @@ const Login = () => {
       </div>
 
       {/* RIGHT SIDE: Interactive Login Form Container */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative bg-white dark:bg-gray-950">
         
         {/* Subtle decorative lights for mobile */}
         <div className="lg:hidden absolute top-0 right-0 w-64 h-64 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
@@ -256,10 +256,10 @@ const Login = () => {
         >
           {/* Form Header */}
           <div className="space-y-3">
-            <h2 className="text-3xl font-extrabold text-secondary tracking-tight">
+            <h2 className="text-3xl font-extrabold text-secondary tracking-tight dark:text-gray-100">
               Welcome Back
             </h2>
-            <p className="text-gray-500 font-medium">
+            <p className="text-gray-500 font-medium dark:text-gray-400">
               Sign in to your account to continue your search
             </p>
           </div>
@@ -269,9 +269,9 @@ const Login = () => {
 
           <div className="relative flex items-center justify-center">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
             </div>
-            <span className="relative px-4 bg-white text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <span className="relative px-4 bg-white text-xs font-semibold text-gray-400 uppercase tracking-wider dark:bg-gray-950 dark:text-gray-500">
               Or continue with
             </span>
           </div>
@@ -281,7 +281,7 @@ const Login = () => {
             
             {/* Email Address */}
             <div className="space-y-1.5">
-              <label className="block text-sm font-bold text-gray-700">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-200">
                 Email Address
               </label>
               <div 
@@ -290,7 +290,7 @@ const Login = () => {
                     ? "border-red-500 bg-red-50/10 focus-within:ring-2 focus-within:ring-red-500/20" 
                     : activeField === "email"
                       ? "border-primary ring-2 ring-primary/20" 
-                      : "border-gray-200 hover:border-gray-300"
+                      : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
                 }`}
               >
                 <div className="pl-3.5 flex items-center pointer-events-none">
@@ -299,7 +299,7 @@ const Login = () => {
                       ? "text-red-400" 
                       : activeField === "email" 
                         ? "text-primary" 
-                        : "text-gray-400"
+                        : "text-gray-400 dark:text-gray-500"
                   }`} />
                 </div>
                 <input 
@@ -310,7 +310,7 @@ const Login = () => {
                   onChange={handleInputChange}
                   onFocus={() => setActiveField("email")}
                   onBlur={() => setActiveField(null)}
-                  className="w-full pl-3 pr-4 py-3 bg-transparent text-secondary placeholder-gray-400 outline-none text-[15px] font-medium"
+                  className="w-full pl-3 pr-4 py-3 bg-transparent text-secondary placeholder-gray-400 outline-none text-[15px] font-medium dark:text-gray-100 dark:placeholder-gray-500"
                 />
               </div>
               <AnimatePresence>
@@ -331,7 +331,7 @@ const Login = () => {
             {/* Password */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <label className="block text-sm font-bold text-gray-700">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200">
                   Password
                 </label>
                 <Link 
@@ -347,7 +347,7 @@ const Login = () => {
                     ? "border-red-500 bg-red-50/10 focus-within:ring-2 focus-within:ring-red-500/20" 
                     : activeField === "password"
                       ? "border-primary ring-2 ring-primary/20" 
-                      : "border-gray-200 hover:border-gray-300"
+                      : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
                 }`}
               >
                 <div className="pl-3.5 flex items-center pointer-events-none">
@@ -356,7 +356,7 @@ const Login = () => {
                       ? "text-red-400" 
                       : activeField === "password" 
                         ? "text-primary" 
-                        : "text-gray-400"
+                        : "text-gray-400 dark:text-gray-500"
                   }`} />
                 </div>
                 <input 
@@ -367,7 +367,7 @@ const Login = () => {
                   onChange={handleInputChange}
                   onFocus={() => setActiveField("password")}
                   onBlur={() => setActiveField(null)}
-                  className="w-full pl-3 pr-11 py-3 bg-transparent text-secondary placeholder-gray-400 outline-none text-[15px] font-medium"
+                  className="w-full pl-3 pr-11 py-3 bg-transparent text-secondary placeholder-gray-400 outline-none text-[15px] font-medium dark:text-gray-100 dark:placeholder-gray-500"
                 />
                 <button
                   type="button"
@@ -375,7 +375,7 @@ const Login = () => {
                     ...prev,
                     showPassword: !prev.showPassword
                   }))}
-                  className="absolute right-3.5 text-gray-400 hover:text-gray-600 transition-colors p-1"
+                  className="absolute right-3.5 text-gray-400 hover:text-gray-600 transition-colors p-1 dark:hover:text-gray-300"
                 >
                   {formState.showPassword ? (
                     <EyeOff className="h-5 w-5" />
@@ -409,12 +409,12 @@ const Login = () => {
                   onChange={handleInputChange}
                   className="sr-only peer"
                 />
-                <div className="w-5 h-5 border border-gray-200 peer-checked:border-primary peer-checked:bg-primary rounded-md flex items-center justify-center transition-all mr-2.5 bg-white shadow-xs">
+                <div className="w-5 h-5 border border-gray-200 peer-checked:border-primary peer-checked:bg-primary rounded-md flex items-center justify-center transition-all mr-2.5 bg-white shadow-xs dark:border-gray-700 dark:bg-gray-900">
                   <svg className="w-3.5 h-3.5 text-white scale-0 peer-checked:scale-100 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="text-sm font-semibold text-gray-600">Remember me for 30 days</span>
+                <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">Remember me for 30 days</span>
               </label>
             </div>
 
@@ -447,7 +447,7 @@ const Login = () => {
             </button>
 
             {/* Link to Register */}
-            <div className="text-center pt-3 text-sm text-gray-500 font-semibold">
+            <div className="text-center pt-3 text-sm text-gray-500 font-semibold dark:text-gray-400">
               New to SPG JobPortal?{" "}
               <Link 
                 to="/signup" 
