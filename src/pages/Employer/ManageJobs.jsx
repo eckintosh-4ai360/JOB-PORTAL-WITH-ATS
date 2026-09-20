@@ -2,50 +2,14 @@ import { useEffect, useState } from "react";
 import {
   Briefcase, Plus, Search, Edit3, XCircle, Trash2,
   AlertCircle, Users, CheckCircle, ChevronDown, Loader2,
-  MapPin, DollarSign, Send, Eye, X, ArrowUpDown,
-  ChevronLeft, ChevronRight, Calendar,
+  MapPin, DollarSign, Eye, ArrowUpDown,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
-import { InputField, SelectField, TextAreaField } from "../../components/input/InputField";
-import { LocationPicker } from "../../components/input/LocationPicker";
-
-// ─ Static option lists for editor 
-const CATEGORY_OPTIONS = [
-  { value: "technology",    label: "Technology & Engineering" },
-  { value: "design",        label: "Design & Creative" },
-  { value: "marketing",     label: "Marketing & Sales" },
-  { value: "business",      label: "Business & Professional Services" },
-  { value: "finance",       label: "Finance & Accounting" },
-  { value: "healthcare",    label: "Healthcare & Medical" },
-  { value: "education",     label: "Education & Training" },
-  { value: "engineering",   label: "Engineering" },
-  { value: "operations",    label: "Operations & Logistics" },
-  { value: "construction",  label: "Construction, Manufacturing & Trades" },
-  { value: "hospitality",   label: "Hospitality, Retail & Tourism" },
-  { value: "transport",     label: "Transport & Supply Chain" },
-  { value: "government",    label: "Government, Nonprofit & Community" },
-  { value: "hr",            label: "Human Resources" },
-  { value: "other",         label: "Other" },
-];
-
-const JOB_TYPE_OPTIONS = [
-  { value: "Full-Time",   label: "Full-Time" },
-  { value: "Part-Time",   label: "Part-Time" },
-  { value: "Contract",    label: "Contract" },
-  { value: "Internship",  label: "Internship" },
-  { value: "Remote",      label: "Remote" },
-  { value: "Other",       label: "Other" },
-];
-
-// Currency badge component
-const GhsIcon = () => (
-  <span className="text-xs font-bold text-gray-400 dark:text-gray-500 leading-none">GH₵</span>
-);
-
 const ManageJobs = () => {
   const navigate = useNavigate();
 
@@ -55,11 +19,6 @@ const ManageJobs = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest"); // newest, oldest, alphabetical
 
-  // Edit modal state
-  const [editingJob, setEditingJob] = useState(null);
-  const [editForm, setEditForm] = useState({});
-  const [editErrors, setEditErrors] = useState({});
-  const [isUpdating, setIsUpdating] = useState(false);
 
   // Delete modal state
   const [deletingJobId, setDeletingJobId] = useState(null);
@@ -165,103 +124,10 @@ const ManageJobs = () => {
   };
 
   // Open Edit Modal
+  // Editing opens the full posting form rather than a reduced dialog, so
+  // every field an employer filled in at creation is available again.
   const handleEditClick = (job) => {
-    setEditingJob(job);
-    setEditForm({
-      title: job.title || "",
-      location: job.location || "",
-      latitude: job.latitude || null,
-      longitude: job.longitude || null,
-      category: job.category || "",
-      customCategory: job.customCategory || "",
-      jobType: job.type || "", // DB stores as type, form uses jobType
-      customJobType: job.customJobType || "",
-      description: job.description || "",
-      requirements: job.requirements || "",
-      salaryMin: job.salaryMin || "",
-      salaryMax: job.salaryMax || "",
-      deadline: job.deadline ? new Date(job.deadline).toISOString().split("T")[0] : "",
-    });
-    setEditErrors({});
-  };
-
-  // Edit Change Handler
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm(prev => ({ ...prev, [name]: value }));
-    if (editErrors[name]) setEditErrors(prev => ({ ...prev, [name]: "" }));
-  };
-
-  // Edit validation
-  const validateEdit = () => {
-    const errors = {};
-    if (!editForm.title?.trim()) errors.title = "Job title is required.";
-    if (!editForm.location?.trim()) errors.location = "Location is required.";
-    if (!editForm.category) errors.category = "Please select a category.";
-    if (editForm.category === "other" && !editForm.customCategory?.trim())
-      errors.customCategory = "Please specify your category.";
-    if (!editForm.jobType) errors.jobType = "Please select a job type.";
-    if (editForm.jobType === "Other" && !editForm.customJobType?.trim())
-      errors.customJobType = "Please specify the job type.";
-    if (!editForm.description?.trim()) errors.description = "Job description is required.";
-    if (!editForm.requirements?.trim()) errors.requirements = "Requirements are required.";
-    if (editForm.salaryMin && editForm.salaryMax) {
-      if (Number(editForm.salaryMin) > Number(editForm.salaryMax)) {
-        errors.salaryMin = "Min salary cannot exceed max salary.";
-      }
-    }
-    return errors;
-  };
-
-  // Submit Edit Form
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    const validationErrors = validateEdit();
-    if (Object.keys(validationErrors).length > 0) {
-      setEditErrors(validationErrors);
-      return;
-    }
-
-    setIsUpdating(true);
-    try {
-      const payload = {
-        title: editForm.title,
-        description: editForm.description,
-        requirements: editForm.requirements,
-        location: editForm.location,
-        latitude: editForm.latitude || undefined,
-        longitude: editForm.longitude || undefined,
-        category: editForm.category,
-        customCategory: editForm.category === "other" ? editForm.customCategory : undefined,
-        type: editForm.jobType, // mapped correctly to schema 'type'
-        customJobType: editForm.jobType === "Other" ? editForm.customJobType : undefined,
-        salaryMin: Number(editForm.salaryMin) || undefined,
-        salaryMax: Number(editForm.salaryMax) || undefined,
-        deadline: editForm.deadline || undefined,
-      };
-
-      await axiosInstance.put(API_PATHS.JOBS.UPDATE_JOB(editingJob._id), payload);
-      toast.success("Job updated successfully");
-      
-      // Refresh local jobs list
-      setJobs(prev =>
-        prev.map(job =>
-          job._id === editingJob._id
-            ? {
-                ...job,
-                ...payload,
-                isClosed: job.isClosed, // maintain close status
-              }
-            : job
-        )
-      );
-      setEditingJob(null);
-    } catch (error) {
-      console.error("Error updating job:", error);
-      toast.error(error.response?.data?.message || "Failed to update job");
-    } finally {
-      setIsUpdating(false);
-    }
+    navigate(`/edit-job/${job.id || job._id}`);
   };
 
   return (
@@ -575,195 +441,6 @@ const ManageJobs = () => {
           </div>
         )}
       </div>
-
-      {/*  Edit Job Modal  */}
-      {editingJob && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
-            {/* Header */}
-            <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4 mb-5">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Edit Job Posting</h3>
-                <p className="text-xs text-gray-400 dark:text-gray-500">Make changes to your job parameters below</p>
-              </div>
-              <button
-                onClick={() => setEditingJob(null)}
-                className="rounded-lg p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleEditSubmit} className="space-y-6">
-              <InputField
-                label="Job Title"
-                name="title"
-                required
-                icon={Briefcase}
-                placeholder="e.g. Operations Manager"
-                value={editForm.title}
-                onChange={handleEditChange}
-                error={editErrors.title}
-              />
-
-              <LocationPicker
-                label="Location / Business Address"
-                required
-                value={editForm.location}
-                latitude={editForm.latitude}
-                longitude={editForm.longitude}
-                onChange={({ location, latitude, longitude }) => {
-                  setEditForm((prev) => ({ ...prev, location, latitude, longitude }));
-                  if (editErrors.location) setEditErrors((prev) => ({ ...prev, location: "" }));
-                }}
-                error={editErrors.location}
-                placeholder="e.g. Accra, Ghana or search Google Locator"
-              />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <SelectField
-                  label="Category"
-                  name="category"
-                  required
-                  icon={Users}
-                  placeholder="Select category"
-                  options={CATEGORY_OPTIONS}
-                  value={editForm.category}
-                  onChange={handleEditChange}
-                  error={editErrors.category}
-                />
-                <SelectField
-                  label="Job Type"
-                  name="jobType"
-                  required
-                  icon={Briefcase}
-                  placeholder="Select type"
-                  options={JOB_TYPE_OPTIONS}
-                  value={editForm.jobType}
-                  onChange={handleEditChange}
-                  error={editErrors.jobType}
-                />
-              </div>
-
-              {/* Conditional "Other" specification fields */}
-              {editForm.category === "other" && (
-                <InputField
-                  label="Specify Category"
-                  name="customCategory"
-                  required
-                  icon={Users}
-                  placeholder="e.g., Agriculture, Logistics…"
-                  value={editForm.customCategory}
-                  onChange={handleEditChange}
-                  error={editErrors.customCategory}
-                />
-              )}
-
-              {editForm.jobType === "Other" && (
-                <InputField
-                  label="Specify Job Type"
-                  name="customJobType"
-                  required
-                  icon={Briefcase}
-                  placeholder="e.g., Freelance, Volunteer…"
-                  value={editForm.customJobType}
-                  onChange={handleEditChange}
-                  error={editErrors.customJobType}
-                />
-              )}
-
-              {/* Application Deadline */}
-              <InputField
-                label="Application Deadline"
-                name="deadline"
-                type="date"
-                icon={Calendar}
-                placeholder="Select closing date"
-                value={editForm.deadline}
-                onChange={handleEditChange}
-                error={editErrors.deadline}
-                hint="The date when this job listing stops accepting applications"
-              />
-
-              <TextAreaField
-                label="Job Description"
-                name="description"
-                required
-                placeholder="Describe role..."
-                value={editForm.description}
-                onChange={handleEditChange}
-                error={editErrors.description}
-                rows={5}
-              />
-
-              <TextAreaField
-                label="Requirements"
-                name="requirements"
-                required
-                placeholder="Requirements list..."
-                value={editForm.requirements}
-                onChange={handleEditChange}
-                error={editErrors.requirements}
-                rows={4}
-              />
-
-              <div>
-                <p className="mb-1 text-sm font-semibold text-gray-700 dark:text-gray-300">Salary Range</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <InputField
-                    name="salaryMin"
-                    type="number"
-                    icon={GhsIcon}
-                    iconPadding="pl-14"
-                    placeholder="Min"
-                    value={editForm.salaryMin}
-                    onChange={handleEditChange}
-                    error={editErrors.salaryMin}
-                  />
-                  <InputField
-                    name="salaryMax"
-                    type="number"
-                    icon={GhsIcon}
-                    iconPadding="pl-14"
-                    placeholder="Max"
-                    value={editForm.salaryMax}
-                    onChange={handleEditChange}
-                    error={editErrors.salaryMax}
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-gray-800 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setEditingJob(null)}
-                  className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isUpdating}
-                  className="flex items-center gap-2 rounded-xl bg-slate-700 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 disabled:opacity-60"
-                >
-                  {isUpdating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4" />
-                      Save Changes
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/*  Delete Confirmation Dialog  */}
       {deletingJobId && (

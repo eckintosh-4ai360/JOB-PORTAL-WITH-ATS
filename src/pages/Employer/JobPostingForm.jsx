@@ -1,17 +1,38 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 
+const DEPARTMENT_OPTIONS = [
+  "Business & Professional Services",
+  "Technology & Engineering",
+  "Healthcare & Social Care",
+  "Education & Training",
+  "Sales, Marketing & Customer Service",
+  "Finance, Legal & Administration",
+  "Construction, Manufacturing & Trades",
+  "Hospitality, Retail & Tourism",
+  "Transport, Logistics & Supply Chain",
+  "Government, Nonprofit & Community",
+  "Creative & Media",
+  "Other",
+];
+
 const JobPostingForm = () => {
   const navigate = useNavigate();
+  const { jobId } = useParams();
   const { user } = useAuth();
+
+  // The same form posts a new vacancy and edits an existing one, so employers
+  // get every field in both cases instead of a reduced edit dialog.
+  const isEditing = Boolean(jobId);
 
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingJob, setIsLoadingJob] = useState(isEditing);
 
   // Form State
   const [companyName, setCompanyName] = useState(user?.companyName || "");
@@ -21,6 +42,11 @@ const JobPostingForm = () => {
   const [location, setLocation] = useState("");
   const [jobType, setJobType] = useState("Full-Time");
   const [experienceLevel, setExperienceLevel] = useState("Mid-level");
+  const [deadline, setDeadline] = useState("");
+
+  // Set elsewhere (the map picker, custom category/type entries). The form has
+  // no input for them, so hold them and write them back untouched on save.
+  const [passthrough, setPassthrough] = useState({});
 
   // Step 2
   const [tagsInput, setTagsInput] = useState("");
@@ -40,6 +66,49 @@ const JobPostingForm = () => {
   // Step 4
   const [selectedTier, setSelectedTier] = useState("featured");
 
+  useEffect(() => {
+    if (!isEditing) return;
+
+    let cancelled = false;
+    const loadJob = async () => {
+      try {
+        const res = await axiosInstance.get(API_PATHS.JOBS.GET_JOB_BY_ID(jobId));
+        const job = res.data?.job || res.data;
+        if (cancelled || !job) return;
+
+        setTitle(job.title || "");
+        setLocation(job.location || "");
+        setDepartment(job.category || "Business & Professional Services");
+        setJobType(job.type || job.jobType || "Full-Time");
+        setWorkModel(job.workModel || "Hybrid");
+        setCompanyName(job.companyName || job.company?.companyName || user?.companyName || "");
+        setDescription(job.description || "");
+        setRequirements(job.requirements || "");
+        setTagsInput(Array.isArray(job.tags) ? job.tags.join(", ") : "");
+        setSalaryMin(job.salaryMin != null ? String(job.salaryMin) : "");
+        setSalaryMax(job.salaryMax != null ? String(job.salaryMax) : "");
+        setDeadline(job.deadline ? new Date(job.deadline).toISOString().split("T")[0] : "");
+        setPassthrough({
+          customCategory: job.customCategory ?? undefined,
+          customJobType: job.customJobType ?? undefined,
+          latitude: job.latitude ?? undefined,
+          longitude: job.longitude ?? undefined,
+        });
+      } catch (err) {
+        console.error("Failed to load job for editing:", err);
+        toast.error("Could not load this job posting.");
+        navigate("/manage-jobs");
+      } finally {
+        if (!cancelled) setIsLoadingJob(false);
+      }
+    };
+
+    loadJob();
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditing, jobId, navigate, user?.companyName]);
+
   const tagsList = tagsInput.split(",").map((t) => t.trim()).filter(Boolean);
 
   const handleNext = (e) => {
@@ -56,7 +125,7 @@ const JobPostingForm = () => {
 
     if (!user) {
       toast.error("Please sign in or create an employer account to post a job.");
-      navigate("/login", { state: { from: { pathname: "/post-job" } } });
+      navigate("/login", { state: { from: { pathname: isEditing ? `/edit-job/${jobId}` : "/post-job" } } });
       return;
     }
 
@@ -69,7 +138,6 @@ const JobPostingForm = () => {
     try {
       const payload = {
         title,
-        companyName,
         location,
         category: department || "Other",
         type: jobType,
@@ -80,9 +148,25 @@ const JobPostingForm = () => {
         salaryMax: Number(salaryMax) || 0,
         tags: tagsList,
         workModel,
+        deadline: deadline || null,
       };
 
-      const res = await axiosInstance.post(API_PATHS.JOBS.POST_JOB, payload);
+      if (isEditing) {
+        // companyName is not a column on the job, and the update endpoint
+        // spreads the body straight into the write.
+        await axiosInstance.put(API_PATHS.JOBS.UPDATE_JOB(jobId), {
+          ...passthrough,
+          ...payload,
+        });
+        toast.success("Job posting updated.");
+        navigate("/manage-jobs");
+        return;
+      }
+
+      const res = await axiosInstance.post(API_PATHS.JOBS.POST_JOB, {
+        ...payload,
+        companyName,
+      });
       toast.success("Job successfully published to SPG Talent Network!");
       const newJobId = res.data?.job?.id || res.data?.job?._id;
       if (newJobId) {
@@ -91,15 +175,29 @@ const JobPostingForm = () => {
         navigate("/find-jobs");
       }
     } catch (err) {
-      console.error("Failed to post job:", err);
-      toast.error(err.response?.data?.message || "Failed to post job. Please try again.");
+      console.error(isEditing ? "Failed to update job:" : "Failed to post job:", err);
+      toast.error(
+        err.response?.data?.message ||
+          (isEditing ? "Failed to update job. Please try again." : "Failed to post job. Please try again.")
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isLoadingJob) {
+    return (
+      <DashboardLayout activeMenu="manage-jobs">
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 bg-surface text-on-surface">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="font-body-md text-text-muted">Loading this job posting…</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <DashboardLayout activeMenu="post-job">
+    <DashboardLayout activeMenu={isEditing ? "manage-jobs" : "post-job"}>
       <div className="min-h-full bg-surface text-on-surface">
         <main className="w-full pb-space-xl">
         {/* ================= HERO HEADER & TRUST ENGINE ================= */}
@@ -108,20 +206,35 @@ const JobPostingForm = () => {
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-space-lg">
               <div className="max-w-3xl flex flex-col gap-space-xs">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary w-fit font-label-md font-semibold">
-                  <span className="material-symbols-outlined text-[18px]">verified</span>
-                  A trusted hiring platform for every industry
+                  <span className="material-symbols-outlined text-[18px]">
+                    {isEditing ? "edit_note" : "verified"}
+                  </span>
+                  {isEditing
+                    ? "Editing a live posting"
+                    : "A trusted hiring platform for every industry"}
                 </div>
 
-                <h1 className="font-headline-xl text-headline-xl text-text-primary tracking-tight font-extrabold leading-tight">
-                  Post a Job &amp; Reach{" "}
-                  <span className="bg-primary bg-clip-text text-transparent">
-                    45,000+ Verified
-                  </span>{" "}
-                  Qualified Candidates
-                </h1>
+                {isEditing ? (
+                  <h1 className="font-headline-xl text-headline-xl text-text-primary tracking-tight font-extrabold leading-tight">
+                    Edit{" "}
+                    <span className="bg-primary bg-clip-text text-transparent">
+                      {title || "this role"}
+                    </span>
+                  </h1>
+                ) : (
+                  <h1 className="font-headline-xl text-headline-xl text-text-primary tracking-tight font-extrabold leading-tight">
+                    Post a Job &amp; Reach{" "}
+                    <span className="bg-primary bg-clip-text text-transparent">
+                      45,000+ Verified
+                    </span>{" "}
+                    Qualified Candidates
+                  </h1>
+                )}
 
                 <p className="font-body-lg text-body-lg text-text-secondary">
-                  Connect with people across business, healthcare, education, construction, hospitality, technology, public service, and more.
+                  {isEditing
+                    ? "Every field from the original posting is here. Changes go live as soon as you save."
+                    : "Connect with people across business, healthcare, education, construction, hospitality, technology, public service, and more."}
                 </p>
               </div>
 
@@ -149,7 +262,7 @@ const JobPostingForm = () => {
                   { num: 1, label: "Job Details & Role" },
                   { num: 2, label: "Requirements & Skills" },
                   { num: 3, label: "Compensation & Perks" },
-                  { num: 4, label: "Review & Publish" },
+                  { num: 4, label: isEditing ? "Review & Save" : "Review & Publish" },
                 ].map((s) => (
                   <button
                     key={s.num}
@@ -236,18 +349,16 @@ const JobPostingForm = () => {
                           onChange={(e) => setDepartment(e.target.value)}
                           className="h-12 px-4 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface focus:outline-none cursor-pointer"
                         >
-                          <option>Business &amp; Professional Services</option>
-                          <option>Technology &amp; Engineering</option>
-                          <option>Healthcare &amp; Social Care</option>
-                          <option>Education &amp; Training</option>
-                          <option>Sales, Marketing &amp; Customer Service</option>
-                          <option>Finance, Legal &amp; Administration</option>
-                          <option>Construction, Manufacturing &amp; Trades</option>
-                          <option>Hospitality, Retail &amp; Tourism</option>
-                          <option>Transport, Logistics &amp; Supply Chain</option>
-                          <option>Government, Nonprofit &amp; Community</option>
-                          <option>Creative &amp; Media</option>
-                          <option>Other</option>
+                          {/* Show a stored value that predates this list rather
+                              than silently displaying the wrong department. */}
+                          {department && !DEPARTMENT_OPTIONS.includes(department) && (
+                            <option value={department}>{department} (current)</option>
+                          )}
+                          {DEPARTMENT_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
                         </select>
                       </div>
                     </div>
@@ -308,6 +419,21 @@ const JobPostingForm = () => {
                           placeholder="e.g. Accra, Ghana (Hybrid)"
                           className="h-12 px-4 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface focus:outline-none"
                         />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="font-label-lg font-semibold text-text-primary">
+                          Application Deadline
+                        </label>
+                        <input
+                          type="date"
+                          value={deadline}
+                          onChange={(e) => setDeadline(e.target.value)}
+                          className="h-12 px-4 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface focus:outline-none"
+                        />
+                        <span className="font-body-sm text-text-muted">
+                          Optional. Leave empty to keep the role open indefinitely.
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -584,9 +710,17 @@ const JobPostingForm = () => {
                       disabled={isSubmitting}
                       className="px-space-xl py-3 rounded-xl bg-primary hover:bg-brand-indigo-dark text-on-primary font-label-lg font-bold shadow-md transition-all flex items-center gap-2 disabled:opacity-50"
                     >
-                      <span>{isSubmitting ? "Publishing Role..." : "Publish Vacancy Now"}</span>
+                      <span>
+                        {isSubmitting
+                          ? isEditing
+                            ? "Saving Changes..."
+                            : "Publishing Role..."
+                          : isEditing
+                            ? "Save Changes"
+                            : "Publish Vacancy Now"}
+                      </span>
                       <span className="material-symbols-outlined text-[18px]">
-                        rocket_launch
+                        {isEditing ? "save" : "rocket_launch"}
                       </span>
                     </button>
                   )}
