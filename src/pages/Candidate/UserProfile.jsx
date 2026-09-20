@@ -220,7 +220,7 @@ const UserProfile = () => {
   const initials = form.name ? form.name.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") : "?";
 
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-gray-950 flex flex-col">
+    <div className="min-h-screen bg-slate-50/50 pt-20 dark:bg-gray-950 flex flex-col">
       <CandidateHeader />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -235,6 +235,14 @@ const UserProfile = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate("/applications")}
+              className="hidden sm:flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition-all hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-indigo-500/40 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
+            >
+              <FileText className="h-4 w-4" />
+              Applications &amp; Docs
+            </button>
             {isEditing ? (
               <>
                 <button
@@ -329,7 +337,7 @@ const UserProfile = () => {
               <div className="mt-4 flex flex-wrap gap-2 justify-center sm:justify-start">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/85 backdrop-blur-sm">
                   <Shield className="h-3 w-3 text-indigo-300" />
-                  Verified Account
+                  Account Profile
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/85 backdrop-blur-sm">
                   <Briefcase className="h-3 w-3 text-indigo-300" />
@@ -428,7 +436,7 @@ const UserProfile = () => {
                 </div>
 
                 <button
-                  onClick={() => navigate("/documents")}
+                  onClick={() => navigate("/applications")}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-indigo-100 hover:bg-indigo-700 transition shrink-0"
                 >
                   Manage Documents
@@ -447,10 +455,10 @@ const UserProfile = () => {
                   <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Recent Applications</h3>
                 </div>
                 <button
-                  onClick={() => navigate("/find-jobs")}
+                  onClick={() => navigate("/applications")}
                   className="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1"
                 >
-                  Find more jobs <ArrowRight className="h-3 w-3" />
+                  View all <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
 
