@@ -67,8 +67,8 @@ export const QualityBreakdown = ({ quality }) => {
       {(quality.strengths?.length > 0 || quality.weaknesses?.length > 0) && (
         <div className="grid gap-space-sm sm:grid-cols-2">
           {quality.strengths?.length > 0 && (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-space-sm">
-              <span className="mb-1 block font-label-caps uppercase tracking-wider text-emerald-700">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-space-sm dark:bg-emerald-500/10 dark:border-emerald-500/25">
+              <span className="mb-1 block font-label-caps uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
                 Working well
               </span>
               <ul className="flex flex-col gap-1">
@@ -85,8 +85,8 @@ export const QualityBreakdown = ({ quality }) => {
           )}
 
           {quality.weaknesses?.length > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-space-sm">
-              <span className="mb-1 block font-label-caps uppercase tracking-wider text-amber-700">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-space-sm dark:bg-amber-500/10 dark:border-amber-500/25">
+              <span className="mb-1 block font-label-caps uppercase tracking-wider text-amber-700 dark:text-amber-300">
                 Holding you back
               </span>
               <ul className="flex flex-col gap-1">
@@ -143,7 +143,7 @@ export const GrammarPanel = ({ grammar }) => {
       </div>
 
       {grammar.issueCount === 0 ? (
-        <p className="flex items-center gap-2 rounded-xl bg-emerald-50 p-space-sm font-body-md text-emerald-700">
+        <p className="flex items-center gap-2 rounded-xl bg-emerald-50 p-space-sm font-body-md text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
           <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
             spellcheck
           </span>
@@ -154,10 +154,10 @@ export const GrammarPanel = ({ grammar }) => {
           {grammar.issues.map((issue, index) => {
             const severityStyle =
               issue.severity === "high"
-                ? "border-rose-200 bg-rose-50"
+                ? "border-rose-200 bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/25"
                 : issue.severity === "medium"
-                  ? "border-amber-200 bg-amber-50"
-                  : "border-sky-200 bg-sky-50";
+                  ? "border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/25"
+                  : "border-sky-200 bg-sky-50 dark:bg-sky-500/10 dark:border-sky-500/25";
 
             return (
               <li
@@ -165,7 +165,7 @@ export const GrammarPanel = ({ grammar }) => {
                 className={`rounded-xl border p-space-sm ${severityStyle}`}
               >
                 <div className="mb-1 flex flex-wrap items-center gap-1.5">
-                  <span className="rounded-md bg-white/70 px-1.5 py-0.5 font-label-caps uppercase text-text-secondary">
+                  <span className="rounded-md bg-white/70 px-1.5 py-0.5 font-label-caps uppercase text-text-secondary dark:bg-white/10">
                     {issue.type}
                   </span>
                   <span className="font-label-caps uppercase text-text-muted">
@@ -176,7 +176,7 @@ export const GrammarPanel = ({ grammar }) => {
                 {issue.excerpt && (
                   <p className="font-body-sm text-text-secondary">
                     <span className="text-text-muted">Found: </span>
-                    <span className="rounded bg-white/80 px-1 font-medium text-rose-800 line-through decoration-rose-400">
+                    <span className="rounded bg-white/80 px-1 font-medium text-rose-800 line-through decoration-rose-400 dark:bg-white/10 dark:text-rose-300">
                       {issue.excerpt}
                     </span>
                   </p>
@@ -184,7 +184,7 @@ export const GrammarPanel = ({ grammar }) => {
                 {issue.suggestion && (
                   <p className="mt-0.5 font-body-sm text-text-secondary">
                     <span className="text-text-muted">Use: </span>
-                    <span className="rounded bg-white/80 px-1 font-semibold text-emerald-800">
+                    <span className="rounded bg-white/80 px-1 font-semibold text-emerald-800 dark:bg-white/10 dark:text-emerald-300">
                       {issue.suggestion}
                     </span>
                   </p>
@@ -226,7 +226,7 @@ export const MissingSkillsPanel = ({ missingSkills = [], targetRole }) => {
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-body-md font-bold text-text-primary">{item.skill}</span>
-                <span className={`rounded-md bg-white/70 px-1.5 py-0.5 font-label-caps uppercase ${style.text}`}>
+                <span className={`rounded-md bg-white/70 px-1.5 py-0.5 font-label-caps uppercase dark:bg-white/10 ${style.text}`}>
                   {item.importance}
                 </span>
               </div>
@@ -325,14 +325,14 @@ export const KeywordPanel = ({ keywords }) => {
 
       {present.length > 0 && (
         <div>
-          <span className="mb-1.5 block font-label-caps uppercase tracking-wider text-emerald-700">
+          <span className="mb-1.5 block font-label-caps uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
             Found in your resume ({present.length})
           </span>
           <div className="flex flex-wrap gap-1.5">
             {present.map((keyword) => (
               <span
                 key={keyword}
-                className="flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 font-label-md font-semibold text-emerald-700"
+                className="flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 font-label-md font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/25 dark:text-emerald-300"
               >
                 <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
                   check
@@ -346,14 +346,14 @@ export const KeywordPanel = ({ keywords }) => {
 
       {missing.length > 0 && (
         <div>
-          <span className="mb-1.5 block font-label-caps uppercase tracking-wider text-amber-700">
+          <span className="mb-1.5 block font-label-caps uppercase tracking-wider text-amber-700 dark:text-amber-300">
             Worth adding ({missing.length})
           </span>
           <div className="flex flex-wrap gap-1.5">
             {missing.map((keyword) => (
               <span
                 key={keyword}
-                className="flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 font-label-md font-semibold text-amber-700"
+                className="flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 font-label-md font-semibold text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/25 dark:text-amber-300"
               >
                 <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
                   add
@@ -377,8 +377,8 @@ export const RedFlagsPanel = ({ redFlags = [] }) => {
   if (redFlags.length === 0) return null;
 
   return (
-    <div className="rounded-3xl border border-rose-200 bg-rose-50 p-space-md">
-      <h3 className="flex items-center gap-1.5 font-headline-sm font-bold text-rose-800">
+    <div className="rounded-3xl border border-rose-200 bg-rose-50 p-space-md dark:bg-rose-500/10 dark:border-rose-500/25">
+      <h3 className="flex items-center gap-1.5 font-headline-sm font-bold text-rose-800 dark:text-rose-300">
         <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
           flag
         </span>

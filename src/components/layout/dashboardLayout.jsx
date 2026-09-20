@@ -22,9 +22,9 @@ const NavigationItem = ({ item, isActive, onClick, isCollapsed, isAdmin }) => {
         isAdmin
           ? isActive
             ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[0_8px_18px_rgba(79,70,229,0.22)]"
-            : "text-slate-600 hover:bg-violet-50 hover:text-violet-800"
+            : "text-slate-600 hover:bg-violet-50 hover:text-violet-800 dark:text-slate-300 dark:hover:bg-violet-500/10 dark:hover:text-violet-200"
           : isActive
-            ? "bg-white text-secondary shadow-sm shadow-black/5"
+            ? "bg-white text-secondary shadow-sm shadow-black/5 dark:bg-white/10 dark:text-white"
             : "text-slate-100 hover:bg-white/10 hover:text-white"
       }`}
     >
@@ -33,9 +33,9 @@ const NavigationItem = ({ item, isActive, onClick, isCollapsed, isAdmin }) => {
           isAdmin
             ? isActive
               ? "text-white"
-              : "text-slate-400 group-hover:text-violet-700"
+              : "text-slate-400 group-hover:text-violet-700 dark:group-hover:text-violet-300"
             : isActive
-              ? "text-primary"
+              ? "text-primary dark:text-indigo-300"
               : "text-slate-200 group-hover:text-white"
         }`}
       />
@@ -115,18 +115,18 @@ const DashboardLayout = ({ children, activeMenu }) => {
   const firstName = user?.name?.split(" ")[0] ?? (isAdmin ? "Admin" : "Employer");
   const sidebarClass = isAdmin
     ? isMobile
-      ? `fixed inset-y-0 left-0 z-50 w-[280px] transform border-r border-violet-100 bg-white p-4 shadow-[16px_0_40px_rgba(76,55,143,0.14)] transition-transform duration-300 ${
+      ? `fixed inset-y-0 left-0 z-50 w-[280px] transform border-r border-violet-100 bg-white p-4 shadow-[16px_0_40px_rgba(76,55,143,0.14)] dark:border-slate-800 dark:bg-slate-900 transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`
-      : "h-full w-64 shrink-0 rounded-[22px] border border-violet-100/90 bg-white/95 p-4 shadow-[0_16px_36px_rgba(76,55,143,0.10)] backdrop-blur"
+      : "h-full w-64 shrink-0 rounded-[22px] border border-violet-100/90 bg-white/95 p-4 shadow-[0_16px_36px_rgba(76,55,143,0.10)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 dark:shadow-[0_16px_36px_rgba(0,0,0,0.38)]"
     : isMobile
       ? `fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } w-64 bg-secondary p-5`
+        } w-64 bg-secondary p-5 dark:bg-gray-900`
       : "w-64 h-full flex flex-col shrink-0 bg-transparent p-5";
 
   return (
-    <div className={`h-screen w-screen flex overflow-hidden font-display ${isAdmin ? "bg-[radial-gradient(circle_at_top_left,_#ede9fe_0%,_#f8fafc_42%,_#eef2ff_100%)]" : "bg-secondary"} ${isMobile ? "p-0" : "p-3"}`}>
+    <div className={`h-screen w-screen flex overflow-hidden font-display ${isAdmin ? "bg-[radial-gradient(circle_at_top_left,_#ede9fe_0%,_#f8fafc_42%,_#eef2ff_100%)] dark:bg-none dark:bg-slate-950" : "bg-secondary dark:bg-gray-900"} ${isMobile ? "p-0" : "p-3"}`}>
       {/* Mobile Drawer Overlay */}
       {isMobile && sidebarOpen && (
         <div
@@ -149,17 +149,17 @@ const DashboardLayout = ({ children, activeMenu }) => {
                 <Briefcase className="h-5 w-5 text-white" />
               </div>
               <div>
-                <span className={`block text-xl font-bold tracking-tight ${isAdmin ? "text-slate-900" : "text-white"}`}>
+                <span className={`block text-xl font-bold tracking-tight ${isAdmin ? "text-slate-900 dark:text-white" : "text-white"}`}>
                   {isAdmin ? "SPG Admin" : "SPG Portal"}
                 </span>
-                {isAdmin && <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-violet-500">Platform control</span>}
+                {isAdmin && <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-violet-500 dark:text-violet-300">Platform control</span>}
               </div>
             </Link>
 
             {isMobile && (
               <button
                 onClick={() => setSidebarOpen(false)}
-                className={`p-1.5 rounded-lg transition-colors ${isAdmin ? "bg-violet-50 text-violet-500 hover:bg-violet-100 hover:text-violet-700" : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"}`}
+                className={`p-1.5 rounded-lg transition-colors ${isAdmin ? "bg-violet-50 text-violet-500 hover:bg-violet-100 hover:text-violet-700 dark:bg-slate-800 dark:text-violet-300 dark:hover:bg-slate-700" : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"}`}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -167,7 +167,7 @@ const DashboardLayout = ({ children, activeMenu }) => {
           </div>
 
           {/* Navigation Links */}
-          {isAdmin && <p className="mb-2 px-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-400">Workspace</p>}
+          {isAdmin && <p className="mb-2 px-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Workspace</p>}
           <nav className="space-y-1.5">
             {navigationMenu.map((item) => (
               <NavigationItem
@@ -183,10 +183,10 @@ const DashboardLayout = ({ children, activeMenu }) => {
         </div>
 
         {/* Bottom Profile section matching image layout */}
-        <div className={`border-t pt-4 ${isAdmin ? "border-violet-100" : "border-white/15"}`}>
+        <div className={`border-t pt-4 ${isAdmin ? "border-violet-100 dark:border-slate-800" : "border-white/15"}`}>
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center gap-3 rounded-xl p-2 text-left transition-all duration-200 group ${isAdmin ? "hover:bg-rose-50" : "hover:bg-white/10"}`}
+            className={`w-full flex items-center gap-3 rounded-xl p-2 text-left transition-all duration-200 group ${isAdmin ? "hover:bg-rose-50 dark:hover:bg-rose-500/10" : "hover:bg-white/10"}`}
             title="Click to logout"
           >
             {user?.avatar ? (
@@ -201,10 +201,10 @@ const DashboardLayout = ({ children, activeMenu }) => {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-semibold truncate ${isAdmin ? "text-slate-800" : "text-white"}`}>{user?.name || (isAdmin ? "Administrator" : "Employer")}</p>
-              <p className={`text-xs truncate capitalize ${isAdmin ? "text-slate-400" : "text-slate-200"}`}>{isAdmin ? "Administrator" : user?.role || "employer"}</p>
+              <p className={`text-sm font-semibold truncate ${isAdmin ? "text-slate-800 dark:text-slate-100" : "text-white"}`}>{user?.name || (isAdmin ? "Administrator" : "Employer")}</p>
+              <p className={`text-xs truncate capitalize ${isAdmin ? "text-slate-400 dark:text-slate-500" : "text-slate-200"}`}>{isAdmin ? "Administrator" : user?.role || "employer"}</p>
             </div>
-            <LogOut className={`h-4 w-4 transition-colors ${isAdmin ? "text-slate-400 group-hover:text-rose-500" : "text-slate-200 group-hover:text-rose-200"}`} />
+            <LogOut className={`h-4 w-4 transition-colors ${isAdmin ? "text-slate-400 dark:text-slate-500 group-hover:text-rose-500" : "text-slate-200 group-hover:text-rose-200"}`} />
           </button>
         </div>
       </aside>
@@ -214,7 +214,7 @@ const DashboardLayout = ({ children, activeMenu }) => {
         className={`flex-1 flex flex-col overflow-hidden ${
           isAdmin ? "bg-white/80 dark:bg-slate-950" : "bg-[#f8faf9] dark:bg-gray-950"
         } ${
-          isMobile ? "rounded-none h-full" : isAdmin ? "h-[calc(100vh-24px)] rounded-[24px] border border-white/80 shadow-[0_18px_42px_rgba(76,55,143,0.10)]" : "rounded-[24px] border border-white/5 h-[calc(100vh-24px)]"
+          isMobile ? "rounded-none h-full" : isAdmin ? "h-[calc(100vh-24px)] rounded-[24px] border border-white/80 shadow-[0_18px_42px_rgba(76,55,143,0.10)] dark:border-slate-800 dark:shadow-[0_18px_42px_rgba(0,0,0,0.38)]" : "rounded-[24px] border border-white/5 h-[calc(100vh-24px)]"
         }`}
       >
         {/* Inner Top Navbar */}

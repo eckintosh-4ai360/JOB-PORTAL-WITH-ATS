@@ -167,7 +167,7 @@ const JobMatchPanel = ({ jobId, isAuthenticated }) => {
           {match.strengths.slice(0, 3).map((strength) => (
             <span
               key={strength}
-              className="flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-label-md font-semibold text-emerald-700"
+              className="flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-label-md font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/25 dark:text-emerald-300"
             >
               <span className="material-symbols-outlined text-[13px]" aria-hidden="true">
                 check
@@ -179,15 +179,15 @@ const JobMatchPanel = ({ jobId, isAuthenticated }) => {
       )}
 
       {match.missingSkills?.length > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-space-sm">
-          <span className="mb-1 block font-label-caps uppercase tracking-wider text-amber-700">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-space-sm dark:bg-amber-500/10 dark:border-amber-500/25">
+          <span className="mb-1 block font-label-caps uppercase tracking-wider text-amber-700 dark:text-amber-300">
             Skills this role wants that you have not shown
           </span>
           <div className="flex flex-wrap gap-1.5">
             {match.missingSkills.map((skill) => (
               <span
                 key={skill}
-                className="rounded-lg bg-white/70 px-2 py-0.5 font-label-md font-semibold text-amber-800"
+                className="rounded-lg bg-white/70 px-2 py-0.5 font-label-md font-semibold text-amber-800 dark:bg-white/10 dark:text-amber-300"
               >
                 {skill}
               </span>

@@ -308,7 +308,7 @@ const ResumeAnalyzer = () => {
 
         {aiStatus && !aiStatus.enabled && (
           <div className="mx-auto mt-space-md max-w-[1280px] px-margin-mobile md:px-margin">
-            <p className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-space-md font-body-md text-amber-900">
+            <p className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-space-md font-body-md text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/25">
               <span className="material-symbols-outlined text-[20px] shrink-0" aria-hidden="true">
                 warning
               </span>
@@ -378,7 +378,7 @@ const ResumeAnalyzer = () => {
                         {delta !== null && delta !== 0 && (
                           <span
                             className={`shrink-0 rounded-lg px-2 py-1 font-label-md font-bold ${
-                              delta > 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
+                              delta > 0 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
                             }`}
                             title="Change since your previous analysis"
                           >
@@ -406,7 +406,7 @@ const ResumeAnalyzer = () => {
                                     {value ?? "n/a"}
                                   </span>
                                 </div>
-                                <div className="h-2 w-full overflow-hidden rounded-full bg-white/80 shadow-inner">
+                                <div className="h-2 w-full overflow-hidden rounded-full bg-white/80 shadow-inner dark:bg-white/10">
                                   <div
                                     className={`h-full rounded-full bg-gradient-to-r ${rowStyle.bar}`}
                                     style={{
@@ -433,7 +433,7 @@ const ResumeAnalyzer = () => {
                               extracted. Printing "Not detected" would blame the
                               resume for our own failure, so say what happened. */}
                           {analysis.degraded && (
-                            <p className="mb-space-sm flex items-start gap-1.5 rounded-lg bg-amber-50 p-2 font-body-sm text-amber-900">
+                            <p className="mb-space-sm flex items-start gap-1.5 rounded-lg bg-amber-50 p-2 font-body-sm text-amber-900 dark:bg-amber-500/10">
                               <span
                                 className="material-symbols-outlined text-[15px] shrink-0"
                                 aria-hidden="true"
@@ -500,7 +500,7 @@ const ResumeAnalyzer = () => {
                                 {analysis.profile.skills.map((skill) => (
                                   <span
                                     key={skill}
-                                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-label-md font-semibold text-emerald-700"
+                                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-label-md font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/25 dark:text-emerald-300"
                                   >
                                     {skill}
                                   </span>

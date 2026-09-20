@@ -3,7 +3,7 @@ import {
   FileText, Upload, Eye, Download, Trash2, Loader2,
   Inbox, Info, ChevronDown, Calendar, Clock, CheckCircle2,
   XCircle, AlertCircle, AlertTriangle, Briefcase, Building2,
-  MapPin, ExternalLink, Search, ArrowRight, Shield, Check,
+  ExternalLink, Search, ArrowRight, Shield, Check,
   X, HelpCircle, FileCheck, Layers, Sparkles, Filter,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
   RefreshCw, Plus, Share2, Copy
@@ -783,229 +783,163 @@ export const MyDocuments = () => {
               </div>
             ) : (
               <>
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50/80 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-700 text-[11px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        <th className="py-3.5 px-6">Company Name</th>
-                        <th className="py-3.5 px-6">Role</th>
-                        <th className="py-3.5 px-6">Date Applied</th>
-                        <th className="py-3.5 px-6">Status</th>
-                        <th className="py-3.5 px-6">Interview Response</th>
-                        <th className="py-3.5 px-6 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-xs">
-                      {paginatedApplications.map((app, index) => {
-                        const company = app.job?.company;
-                        const companyName = company?.companyName || company?.name || "Company";
-                        const companyLogo = company?.companyLogo;
-                        const statusCfg = STATUS_CONFIGS[app.status] || STATUS_CONFIGS.Applied;
-                        const StatusIcon = statusCfg.icon;
-                        const gradient = COMPANY_GRADIENTS[index % COMPANY_GRADIENTS.length];
-                        const initials = getInitials(companyName);
-
-                        return (
-                          <tr
-                            key={app._id}
-                            className="hover:bg-slate-50/60 dark:hover:bg-gray-800/50 transition-colors group"
-                          >
-                            {/* Company Name */}
-                            <td className="py-4 px-6 font-semibold text-gray-900 dark:text-gray-100">
-                              <div className="flex items-center gap-3">
-                                {companyLogo ? (
-                                  <img
-                                    src={companyLogo}
-                                    alt={companyName}
-                                    className="h-9 w-9 rounded-xl object-contain border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-0.5"
-                                  />
-                                ) : (
-                                  <div
-                                    className={`h-9 w-9 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-xs font-bold shadow-xs`}
-                                  >
-                                    {initials}
-                                  </div>
-                                )}
-                                <div className="min-w-0">
-                                  <p className="font-bold text-gray-900 dark:text-gray-100 truncate max-w-[180px]">
-                                    {companyName}
-                                  </p>
-                                  {app.job?.location && (
-                                    <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate max-w-[180px] flex items-center gap-1">
-                                      <MapPin className="h-3 w-3" />
-                                      {app.job.location}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            </td>
-
-                            {/* Role */}
-                            <td className="py-4 px-6">
-                              <div className="min-w-0">
-                                <Link
-                                  to={`/job/${app.job?._id}`}
-                                  className="font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 hover:underline truncate block max-w-[200px]"
-                                >
-                                  {app.job?.title || "Role Title"}
-                                </Link>
-                                <span className="inline-block mt-0.5 text-[10px] font-semibold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
-                                  {app.job?.type || "Full-Time"}
-                                </span>
-                              </div>
-                            </td>
-
-                            {/* Date Applied */}
-                            <td className="py-4 px-6 text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">
-                              {moment(app.createdAt).format("DD-MM-YYYY")}
-                              <span className="block text-[10px] text-gray-400 dark:text-gray-500">
-                                {moment(app.createdAt).fromNow()}
-                              </span>
-                            </td>
-
-                            {/* Status */}
-                            <td className="py-4 px-6 whitespace-nowrap">
-                              <span
-                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${statusCfg.badge}`}
-                              >
-                                <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} />
-                                <StatusIcon className={`h-3 w-3 ${statusCfg.spin ? "animate-spin" : ""}`} />
-                                {statusCfg.label}
-                              </span>
-                            </td>
-
-                            {/* Interview Response */}
-                            <td className="py-4 px-6 whitespace-nowrap">
-                              {app.status === "Interviewing" && app.interview?.date ? (
-                                <button
-                                  onClick={() => {
-                                    setSelectedInterviewApp(app);
-                                    setIsInterviewModalOpen(true);
-                                  }}
-                                  className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition shadow-2xs"
-                                >
-                                  <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                                  Confirmed ({moment(app.interview.date).format("D MMM")})
-                                </button>
-                              ) : app.status === "Interviewing" ? (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-md">
-                                  <Clock className="h-3 w-3" />
-                                  Schedule Pending
-                                </span>
-                              ) : app.status === "Offered" ? (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md">
-                                  <Sparkles className="h-3 w-3" />
-                                  Offer Extended
-                                </span>
-                              ) : (
-                                <span className="text-[11px] text-gray-400 dark:text-gray-500 italic">
-                                  —
-                                </span>
-                              )}
-                            </td>
-
-                            {/* Actions */}
-                            <td className="py-4 px-6 text-right whitespace-nowrap">
-                              <div className="flex items-center justify-end gap-2">
-                                {app.status === "Interviewing" && app.interview && (
-                                  <button
-                                    onClick={() => {
-                                      setSelectedInterviewApp(app);
-                                      setIsInterviewModalOpen(true);
-                                    }}
-                                    className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition"
-                                  >
-                                    View Interview
-                                  </button>
-                                )}
-
-                                <button
-                                  onClick={() => setAppToWithdraw(app)}
-                                  className="px-3 py-1.5 text-xs font-bold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-500/10 transition shadow-2xs"
-                                  title="Withdraw this application"
-                                >
-                                  WITHDRAW
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile Cards View */}
-                <div className="block md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                {/* Application cards — same card language as Saved Jobs and Find Jobs */}
+                <div className="flex flex-col gap-space-md bg-surface-page/60 p-space-md dark:bg-gray-950/40 sm:p-space-lg">
                   {paginatedApplications.map((app, index) => {
                     const company = app.job?.company;
                     const companyName = company?.companyName || company?.name || "Company";
+                    const companyLogo = company?.companyLogo;
                     const statusCfg = STATUS_CONFIGS[app.status] || STATUS_CONFIGS.Applied;
+                    const StatusIcon = statusCfg.icon;
                     const gradient = COMPANY_GRADIENTS[index % COMPANY_GRADIENTS.length];
                     const initials = getInitials(companyName);
 
                     return (
-                      <div key={app._id} className="p-4 space-y-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-2.5">
-                            <div
-                              className={`h-9 w-9 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-xs font-bold shrink-0`}
-                            >
-                              {initials}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-bold text-gray-900 dark:text-gray-100 text-sm truncate">{companyName}</p>
+                      <article
+                        key={app._id}
+                        className="group relative overflow-hidden rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_12px_28px_rgba(40,34,86,0.07)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_20px_40px_rgba(89,47,174,0.14)] md:p-space-lg"
+                      >
+                        <div className="flex flex-col items-start justify-between gap-space-md md:flex-row">
+                          <div className="flex min-w-0 flex-1 items-start gap-space-md">
+                            {companyLogo ? (
+                              <img
+                                src={companyLogo}
+                                alt={companyName}
+                                className="h-14 w-14 shrink-0 rounded-2xl border border-primary/10 bg-surface-card object-contain p-1 shadow-sm"
+                              />
+                            ) : (
+                              <div
+                                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} font-headline-sm font-bold text-white shadow-sm`}
+                              >
+                                {initials}
+                              </div>
+                            )}
+
+                            <div className="flex min-w-0 flex-1 flex-col">
+                              <div className="mb-1 flex flex-wrap items-center gap-space-xs">
+                                <span className="font-label-lg font-bold text-text-primary">
+                                  {companyName}
+                                </span>
+                                <span className="text-text-muted">•</span>
+                                <span className="font-body-sm text-text-muted">
+                                  Applied {moment(app.createdAt).fromNow()}
+                                </span>
+                              </div>
+
                               <Link
                                 to={`/job/${app.job?._id}`}
-                                className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline truncate block"
+                                className="block truncate font-headline-md font-bold text-text-primary transition-colors hover:text-primary"
                               >
-                                {app.job?.title}
+                                {app.job?.title || "Role Title"}
                               </Link>
+
+                              <div className="mt-1 flex flex-wrap items-center gap-y-1 gap-x-space-md font-body-sm text-text-secondary">
+                                <span className="flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-[16px] text-text-muted">
+                                    location_on
+                                  </span>
+                                  {app.job?.location || "Location"}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-[16px] text-text-muted">
+                                    schedule
+                                  </span>
+                                  {app.job?.type || "Full-Time"}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-[16px] text-text-muted">
+                                    event
+                                  </span>
+                                  {moment(app.createdAt).format("DD-MM-YYYY")}
+                                </span>
+                              </div>
                             </div>
                           </div>
 
+                          {/* Status takes the slot the save action holds on the job cards */}
                           <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold shrink-0 ${statusCfg.badge}`}
+                            className={`inline-flex shrink-0 items-center gap-1.5 self-end rounded-full px-2.5 py-1 font-label-md font-bold md:self-start ${statusCfg.badge}`}
                           >
+                            <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} />
+                            <StatusIcon className={`h-3 w-3 ${statusCfg.spin ? "animate-spin" : ""}`} />
                             {statusCfg.label}
                           </span>
                         </div>
 
-                        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                          <span>Applied: {moment(app.createdAt).format("DD-MM-YYYY")}</span>
-                          <span>{app.job?.location || "Location"}</span>
-                        </div>
-
-                        {app.status === "Interviewing" && app.interview?.date && (
-                          <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-between">
-                            <div className="text-xs">
-                              <p className="font-bold text-emerald-800 dark:text-emerald-400">Interview Confirmed</p>
-                              <p className="text-[11px] text-emerald-600 dark:text-emerald-400/80">
-                                {moment(app.interview.date).format("ddd, D MMM")} @ {app.interview.time}
-                              </p>
+                        {/* Interview state, previously its own table column */}
+                        {app.status === "Interviewing" && app.interview?.date ? (
+                          <div className="mt-space-md flex flex-col gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-space-sm dark:border-emerald-500/20 dark:bg-emerald-500/10 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                              <div>
+                                <p className="font-label-md font-bold text-emerald-800 dark:text-emerald-400">
+                                  Interview confirmed
+                                </p>
+                                <p className="font-body-sm text-emerald-700/80 dark:text-emerald-400/80">
+                                  {moment(app.interview.date).format("ddd, D MMM")} @ {app.interview.time}
+                                </p>
+                              </div>
                             </div>
                             <button
+                              type="button"
                               onClick={() => {
                                 setSelectedInterviewApp(app);
                                 setIsInterviewModalOpen(true);
                               }}
-                              className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white"
+                              className="shrink-0 rounded-xl bg-emerald-600 px-3 py-1.5 font-label-md font-bold text-white transition-colors hover:bg-emerald-700"
                             >
-                              Details
+                              View details
                             </button>
                           </div>
-                        )}
+                        ) : app.status === "Interviewing" ? (
+                          <div className="mt-space-md flex items-center gap-2 rounded-2xl border border-amber-100 bg-amber-50/60 p-space-sm font-label-md font-semibold text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400">
+                            <Clock className="h-4 w-4 shrink-0" />
+                            Interview scheduling pending
+                          </div>
+                        ) : app.status === "Offered" ? (
+                          <div className="mt-space-md flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-space-sm font-label-md font-bold text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
+                            <Sparkles className="h-4 w-4 shrink-0" />
+                            Offer extended
+                          </div>
+                        ) : null}
 
-                        <div className="pt-2 flex items-center justify-end gap-2 border-t border-gray-50 dark:border-gray-800">
-                          <button
-                            onClick={() => setAppToWithdraw(app)}
-                            className="px-3 py-1 text-xs font-bold text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/30 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
-                          >
-                            Withdraw
-                          </button>
+                        {/* Bottom row mirrors the compensation and action row on the job cards */}
+                        <div className="mt-space-md flex flex-col justify-between gap-space-sm border-t border-border-default pt-space-sm sm:flex-row sm:items-center">
+                          <div>
+                            <span className="block font-label-caps uppercase tracking-wider text-text-muted">
+                              Date applied
+                            </span>
+                            <span className="mt-0.5 block font-body-sm text-text-secondary">
+                              {moment(app.createdAt).format("DD MMM YYYY")}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-space-sm">
+                            {app.status === "Interviewing" && app.interview && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedInterviewApp(app);
+                                  setIsInterviewModalOpen(true);
+                                }}
+                                className="inline-flex items-center justify-center gap-1 rounded-xl bg-brand-indigo-light px-space-md py-2.5 font-label-md font-bold text-primary transition-colors hover:bg-brand-indigo-subtle"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">event</span>
+                                <span>View interview</span>
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => setAppToWithdraw(app)}
+                              title="Withdraw this application"
+                              className="inline-flex items-center justify-center gap-1 rounded-xl border border-border-default px-space-md py-2.5 font-label-md font-bold text-text-secondary transition-colors hover:border-error/40 hover:bg-error-container hover:text-error"
+                            >
+                              Withdraw
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      </article>
                     );
                   })}
                 </div>

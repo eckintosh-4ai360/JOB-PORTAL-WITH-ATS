@@ -183,7 +183,7 @@ const JobMatchList = ({ matches = [], isLoading, onRefresh, isRefreshing, needsP
                         {match.strengths.slice(0, 3).map((strength) => (
                           <span
                             key={strength}
-                            className="flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-label-md font-semibold text-emerald-700"
+                            className="flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-label-md font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/25 dark:text-emerald-300"
                           >
                             <span className="material-symbols-outlined text-[13px]" aria-hidden="true">
                               check
@@ -200,7 +200,7 @@ const JobMatchList = ({ matches = [], isLoading, onRefresh, isRefreshing, needsP
                         {match.missingSkills.slice(0, 4).map((skill) => (
                           <span
                             key={skill}
-                            className="rounded-lg border border-amber-200 bg-amber-50 px-2 py-0.5 font-label-md font-semibold text-amber-700"
+                            className="rounded-lg border border-amber-200 bg-amber-50 px-2 py-0.5 font-label-md font-semibold text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/25 dark:text-amber-300"
                           >
                             {skill}
                           </span>
@@ -266,8 +266,8 @@ const JobMatchList = ({ matches = [], isLoading, onRefresh, isRefreshing, needsP
                     <DimensionBreakdown dimensions={match.dimensions} />
 
                     {match.gaps?.length > 0 && (
-                      <div className="mt-space-md rounded-xl border border-amber-200 bg-amber-50 p-space-sm">
-                        <span className="mb-1 block font-label-caps uppercase tracking-wider text-amber-700">
+                      <div className="mt-space-md rounded-xl border border-amber-200 bg-amber-50 p-space-sm dark:bg-amber-500/10 dark:border-amber-500/25">
+                        <span className="mb-1 block font-label-caps uppercase tracking-wider text-amber-700 dark:text-amber-300">
                           What is holding this score down
                         </span>
                         <ul className="flex flex-col gap-1">
