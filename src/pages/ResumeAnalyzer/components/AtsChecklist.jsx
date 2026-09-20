@@ -48,16 +48,16 @@ const AtsChecklist = ({ checks = [], signals = {} }) => {
           </p>
         </div>
         <div className="flex items-center gap-1.5 font-label-md">
-          <span className="rounded-lg bg-emerald-50 px-2 py-1 font-bold text-emerald-700">
+          <span className="rounded-lg bg-emerald-50 px-2 py-1 font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
             {passes.length} pass
           </span>
           {warnings.length > 0 && (
-            <span className="rounded-lg bg-amber-50 px-2 py-1 font-bold text-amber-700">
+            <span className="rounded-lg bg-amber-50 px-2 py-1 font-bold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
               {warnings.length} warn
             </span>
           )}
           {failures.length > 0 && (
-            <span className="rounded-lg bg-rose-50 px-2 py-1 font-bold text-rose-700">
+            <span className="rounded-lg bg-rose-50 px-2 py-1 font-bold text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">
               {failures.length} fail
             </span>
           )}
@@ -96,7 +96,7 @@ const AtsChecklist = ({ checks = [], signals = {} }) => {
       )}
 
       {failures.length === 0 && warnings.length === 0 && (
-        <p className="flex items-center gap-2 rounded-xl bg-emerald-50 p-space-sm font-body-md text-emerald-700">
+        <p className="flex items-center gap-2 rounded-xl bg-emerald-50 p-space-sm font-body-md text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
           <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
             task_alt
           </span>

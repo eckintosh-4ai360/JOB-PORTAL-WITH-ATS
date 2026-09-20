@@ -21,45 +21,45 @@ export const scoreBand = (score) => {
  */
 export const SCORE_STYLES = {
   excellent: {
-    text: "text-emerald-700",
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
+    text: "text-emerald-700 dark:text-emerald-300",
+    bg: "bg-emerald-50 dark:bg-emerald-500/10",
+    border: "border-emerald-200 dark:border-emerald-500/25",
     ring: "#059669",
     track: "#D1FAE5",
     bar: "from-emerald-400 to-emerald-600",
     label: "Excellent match",
   },
   strong: {
-    text: "text-emerald-700",
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
+    text: "text-emerald-700 dark:text-emerald-300",
+    bg: "bg-emerald-50 dark:bg-emerald-500/10",
+    border: "border-emerald-200 dark:border-emerald-500/25",
     ring: "#10B981",
     track: "#D1FAE5",
     bar: "from-emerald-300 to-emerald-500",
     label: "Strong match",
   },
   good: {
-    text: "text-sky-700",
-    bg: "bg-sky-50",
-    border: "border-sky-200",
+    text: "text-sky-700 dark:text-sky-300",
+    bg: "bg-sky-50 dark:bg-sky-500/10",
+    border: "border-sky-200 dark:border-sky-500/25",
     ring: "#0284C7",
     track: "#DBEAFE",
     bar: "from-sky-300 to-sky-500",
     label: "Good match",
   },
   partial: {
-    text: "text-amber-700",
-    bg: "bg-amber-50",
-    border: "border-amber-200",
+    text: "text-amber-700 dark:text-amber-300",
+    bg: "bg-amber-50 dark:bg-amber-500/10",
+    border: "border-amber-200 dark:border-amber-500/25",
     ring: "#D97706",
     track: "#FEF3C7",
     bar: "from-amber-300 to-amber-500",
     label: "Partial match",
   },
   weak: {
-    text: "text-rose-700",
-    bg: "bg-rose-50",
-    border: "border-rose-200",
+    text: "text-rose-700 dark:text-rose-300",
+    bg: "bg-rose-50 dark:bg-rose-500/10",
+    border: "border-rose-200 dark:border-rose-500/25",
     ring: "#E11D48",
     track: "#FFE4E6",
     bar: "from-rose-300 to-rose-500",
@@ -104,28 +104,28 @@ export const orderedDimensions = (dimensions = {}) =>
     .sort((a, b) => (b.weight || 0) - (a.weight || 0));
 
 export const ATS_STATUS_STYLES = {
-  pass: { icon: "check_circle", text: "text-emerald-600", bg: "bg-emerald-50", label: "Pass" },
-  warn: { icon: "error", text: "text-amber-600", bg: "bg-amber-50", label: "Needs work" },
-  fail: { icon: "cancel", text: "text-rose-600", bg: "bg-rose-50", label: "Failed" },
+  pass: { icon: "check_circle", text: "text-emerald-600 dark:text-emerald-300", bg: "bg-emerald-50 dark:bg-emerald-500/10", label: "Pass" },
+  warn: { icon: "error", text: "text-amber-600 dark:text-amber-300", bg: "bg-amber-50 dark:bg-amber-500/10", label: "Needs work" },
+  fail: { icon: "cancel", text: "text-rose-600 dark:text-rose-300", bg: "bg-rose-50 dark:bg-rose-500/10", label: "Failed" },
 };
 
 export const PRIORITY_STYLES = {
-  high: { text: "text-rose-700", bg: "bg-rose-50", border: "border-rose-200", label: "High impact" },
-  medium: { text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", label: "Medium" },
-  low: { text: "text-sky-700", bg: "bg-sky-50", border: "border-sky-200", label: "Nice to have" },
+  high: { text: "text-rose-700 dark:text-rose-300", bg: "bg-rose-50 dark:bg-rose-500/10", border: "border-rose-200 dark:border-rose-500/25", label: "High impact" },
+  medium: { text: "text-amber-700 dark:text-amber-300", bg: "bg-amber-50 dark:bg-amber-500/10", border: "border-amber-200 dark:border-amber-500/25", label: "Medium" },
+  low: { text: "text-sky-700 dark:text-sky-300", bg: "bg-sky-50 dark:bg-sky-500/10", border: "border-sky-200 dark:border-sky-500/25", label: "Nice to have" },
 };
 
 export const IMPORTANCE_STYLES = {
-  critical: { text: "text-rose-700", bg: "bg-rose-50", border: "border-rose-200" },
-  high: { text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200" },
-  medium: { text: "text-sky-700", bg: "bg-sky-50", border: "border-sky-200" },
+  critical: { text: "text-rose-700 dark:text-rose-300", bg: "bg-rose-50 dark:bg-rose-500/10", border: "border-rose-200 dark:border-rose-500/25" },
+  high: { text: "text-amber-700 dark:text-amber-300", bg: "bg-amber-50 dark:bg-amber-500/10", border: "border-amber-200 dark:border-amber-500/25" },
+  medium: { text: "text-sky-700 dark:text-sky-300", bg: "bg-sky-50 dark:bg-sky-500/10", border: "border-sky-200 dark:border-sky-500/25" },
 };
 
 export const RECOMMENDATION_STYLES = {
-  shortlist: { label: "Shortlist", text: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", icon: "star" },
-  interview: { label: "Interview", text: "text-sky-700", bg: "bg-sky-50", border: "border-sky-200", icon: "event_available" },
-  hold: { label: "Hold", text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", icon: "pause_circle" },
-  reject: { label: "Not a fit", text: "text-rose-700", bg: "bg-rose-50", border: "border-rose-200", icon: "do_not_disturb_on" },
+  shortlist: { label: "Shortlist", text: "text-emerald-700 dark:text-emerald-300", bg: "bg-emerald-50 dark:bg-emerald-500/10", border: "border-emerald-200 dark:border-emerald-500/25", icon: "star" },
+  interview: { label: "Interview", text: "text-sky-700 dark:text-sky-300", bg: "bg-sky-50 dark:bg-sky-500/10", border: "border-sky-200 dark:border-sky-500/25", icon: "event_available" },
+  hold: { label: "Hold", text: "text-amber-700 dark:text-amber-300", bg: "bg-amber-50 dark:bg-amber-500/10", border: "border-amber-200 dark:border-amber-500/25", icon: "pause_circle" },
+  reject: { label: "Not a fit", text: "text-rose-700 dark:text-rose-300", bg: "bg-rose-50 dark:bg-rose-500/10", border: "border-rose-200 dark:border-rose-500/25", icon: "do_not_disturb_on" },
 };
 
 /** Format a monthly cedi salary range compactly. */
