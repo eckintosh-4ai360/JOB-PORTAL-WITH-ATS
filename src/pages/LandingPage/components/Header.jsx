@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import ThemeToggle from "../../../components/layout/ThemeToggle";
 
 const getStoredUser = () => {
   try {
@@ -39,7 +40,7 @@ const Header = () => {
       initial={{ y: -18, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.45, ease: "easeOut" }}
-      className="fixed left-0 right-0 top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur"
+      className="fixed left-0 right-0 top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-gray-800 dark:bg-gray-900/95"
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
@@ -63,23 +64,26 @@ const Header = () => {
             <button
               type="button"
               onClick={() => closeAndNavigate("/find-jobs")}
-              className="text-sm font-semibold text-slate-600 transition-colors hover:text-secondary"
+              className="text-sm font-semibold text-slate-600 transition-colors hover:text-secondary dark:text-gray-300 dark:hover:text-indigo-400"
             >
               Find Jobs
             </button>
             <button
               type="button"
               onClick={() => closeAndNavigate(employerPath)}
-              className="text-sm font-semibold text-slate-600 transition-colors hover:text-secondary"
+              className="text-sm font-semibold text-slate-600 transition-colors hover:text-secondary dark:text-gray-300 dark:hover:text-indigo-400"
             >
               For Employers
             </button>
           </nav>
 
           <div className="ml-auto hidden items-center gap-3 sm:flex">
+            {/* Mirrors the shared Navbar: available to visitors too. */}
+            <ThemeToggle />
+
             {isAuthenticated ? (
               <>
-                <span className="hidden max-w-40 truncate text-sm font-medium text-slate-600 md:inline">
+                <span className="hidden max-w-40 truncate text-sm font-medium text-slate-600 dark:text-gray-300 md:inline">
                   {user?.fullName ? `Hi, ${user.fullName}` : "Welcome back"}
                 </span>
                 <button
@@ -89,14 +93,14 @@ const Header = () => {
                       user?.role === "employer" ? "/employer-dashboard" : "/find-jobs"
                     )
                   }
-                  className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-bold text-white shadow-sm transition-colors hover:bg-orange-700"
+                  className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-bold text-white shadow-sm transition-colors hover:bg-orange-700 dark:bg-indigo-500 dark:hover:bg-indigo-400"
                 >
                   Dashboard
                 </button>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="text-sm font-bold text-slate-600 transition-colors hover:text-secondary"
+                  className="text-sm font-bold text-slate-600 transition-colors hover:text-secondary dark:text-gray-300 dark:hover:text-indigo-400"
                 >
                   Logout
                 </button>
@@ -106,14 +110,14 @@ const Header = () => {
                 <button
                   type="button"
                   onClick={() => closeAndNavigate("/login")}
-                  className="text-sm font-bold text-slate-700 transition-colors hover:text-secondary"
+                  className="text-sm font-bold text-slate-700 transition-colors hover:text-secondary dark:text-gray-200 dark:hover:text-indigo-400"
                 >
                   Login
                 </button>
                 <button
                   type="button"
                   onClick={() => closeAndNavigate("/signup")}
-                  className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-bold text-white shadow-sm transition-colors hover:bg-orange-700"
+                  className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-bold text-white shadow-sm transition-colors hover:bg-orange-700 dark:bg-indigo-500 dark:hover:bg-indigo-400"
                 >
                   Sign Up
                 </button>
@@ -121,10 +125,13 @@ const Header = () => {
             )}
           </div>
 
+          {/* The action cluster is hidden under sm, so the toggle rides along here. */}
+          <ThemeToggle className="sm:hidden" />
+
           <button
             type="button"
             onClick={() => setIsMenuOpen((value) => !value)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-secondary transition-colors hover:bg-slate-50 lg:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-secondary transition-colors hover:bg-slate-50 dark:border-gray-700 dark:hover:bg-gray-800 lg:hidden"
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={isMenuOpen}
           >
@@ -140,25 +147,25 @@ const Header = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="border-t border-slate-200 bg-white px-4 py-4 shadow-sm lg:hidden"
+            className="border-t border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 lg:hidden"
           >
             <div className="grid gap-2">
               <button
                 type="button"
                 onClick={() => closeAndNavigate("/find-jobs")}
-                className="rounded-md px-3 py-3 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
+                className="rounded-md px-3 py-3 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 Find Jobs
               </button>
               <button
                 type="button"
                 onClick={() => closeAndNavigate(employerPath)}
-                className="rounded-md px-3 py-3 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
+                className="rounded-md px-3 py-3 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 For Employers
               </button>
 
-              <div className="mt-2 grid gap-2 border-t border-slate-200 pt-4">
+              <div className="mt-2 grid gap-2 border-t border-slate-200 pt-4 dark:border-gray-800">
                 {isAuthenticated ? (
                   <>
                     <button
@@ -168,14 +175,14 @@ const Header = () => {
                           user?.role === "employer" ? "/employer-dashboard" : "/find-jobs"
                         )
                       }
-                      className="rounded-md bg-primary px-4 py-3 text-sm font-bold text-white"
+                      className="rounded-md bg-primary px-4 py-3 text-sm font-bold text-white dark:bg-indigo-500"
                     >
                       Dashboard
                     </button>
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="rounded-md border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700"
+                      className="rounded-md border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 dark:border-gray-700 dark:text-gray-200"
                     >
                       Logout
                     </button>
@@ -185,14 +192,14 @@ const Header = () => {
                     <button
                       type="button"
                       onClick={() => closeAndNavigate("/signup")}
-                      className="rounded-md bg-primary px-4 py-3 text-sm font-bold text-white"
+                      className="rounded-md bg-primary px-4 py-3 text-sm font-bold text-white dark:bg-indigo-500"
                     >
                       Create Account
                     </button>
                     <button
                       type="button"
                       onClick={() => closeAndNavigate("/login")}
-                      className="rounded-md border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700"
+                      className="rounded-md border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 dark:border-gray-700 dark:text-gray-200"
                     >
                       Login
                     </button>
