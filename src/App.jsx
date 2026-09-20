@@ -45,7 +45,6 @@ export const App = () => {
           <Route path="/browse-companies" element={<BrowseCompanies />} />
           <Route path="/salaries-insights" element={<SalariesInsights />} />
           <Route path="/resume-analyzer" element={<ResumeAnalyzer />} />
-          <Route path="/saved-jobs" element={<SavedJobs />} />
           <Route path="/job/:jobId" element={<JobDetails />} />
 
           {/* Auth Routes */}
@@ -56,8 +55,12 @@ export const App = () => {
           {/* Candidate-only routes — login required */}
           <Route element={<ProtectedRoute requiredRole="jobseeker" />}>
             <Route path="/profile" element={<UserProfile />} />
-            <Route path="/documents" element={<MyDocuments />} />
-            <Route path="/my-applications" element={<SavedJobs />} />
+            <Route path="/saved-jobs" element={<SavedJobs />} />
+            <Route path="/applications" element={<MyDocuments />} />
+            {/* Keep old bookmarks and shared links working while directing the
+                candidate to the single applications-and-documents hub. */}
+            <Route path="/documents" element={<Navigate to="/applications" replace />} />
+            <Route path="/my-applications" element={<Navigate to="/applications" replace />} />
           </Route>
 
           {/* Employer-only routes — login required */}
