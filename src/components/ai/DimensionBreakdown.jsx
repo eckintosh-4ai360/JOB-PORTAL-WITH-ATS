@@ -68,7 +68,7 @@ const DimensionBreakdown = ({ dimensions = {}, compact = false, className = "" }
                 {dimension.missing.slice(0, 6).map((item) => (
                   <span
                     key={item}
-                    className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-0.5 font-label-caps font-semibold text-rose-700"
+                    className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-0.5 font-label-caps font-semibold text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/25 dark:text-rose-300"
                   >
                     {item}
                   </span>
