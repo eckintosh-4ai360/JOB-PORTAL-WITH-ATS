@@ -122,7 +122,7 @@ const SavedJobs = () => {
 
             {/* 4 Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-space-sm md:gap-space-md">
-              <div className="rounded-3xl border border-violet-100 bg-gradient-to-br from-violet-50 via-surface-card to-surface-card p-space-md shadow-[0_10px_24px_rgba(109,40,217,0.10)] transition-transform duration-200 hover:-translate-y-1">
+              <div className="rounded-3xl border border-violet-100 bg-gradient-to-br from-violet-50 via-surface-card to-surface-card p-space-md shadow-[0_10px_24px_rgba(109,40,217,0.10)] transition-transform duration-200 hover:-translate-y-1 dark:border-violet-500/20 dark:from-violet-500/10 dark:shadow-[0_10px_24px_rgba(0,0,0,0.30)]">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps uppercase text-text-muted">Total Saved</span>
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white shadow-[0_6px_14px_rgba(89,47,174,0.25)]">
@@ -141,7 +141,7 @@ const SavedJobs = () => {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 via-surface-card to-surface-card p-space-md shadow-[0_10px_24px_rgba(14,165,233,0.10)] transition-transform duration-200 hover:-translate-y-1">
+              <div className="rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 via-surface-card to-surface-card p-space-md shadow-[0_10px_24px_rgba(14,165,233,0.10)] transition-transform duration-200 hover:-translate-y-1 dark:border-sky-500/20 dark:from-sky-500/10 dark:shadow-[0_10px_24px_rgba(0,0,0,0.30)]">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps uppercase text-text-muted">Active Applications</span>
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-500 text-white shadow-[0_6px_14px_rgba(14,165,233,0.25)]">
@@ -158,7 +158,7 @@ const SavedJobs = () => {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-surface-card to-surface-card p-space-md shadow-[0_10px_24px_rgba(16,185,129,0.10)] transition-transform duration-200 hover:-translate-y-1">
+              <div className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-surface-card to-surface-card p-space-md shadow-[0_10px_24px_rgba(16,185,129,0.10)] transition-transform duration-200 hover:-translate-y-1 dark:border-emerald-500/20 dark:from-emerald-500/10 dark:shadow-[0_10px_24px_rgba(0,0,0,0.30)]">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps uppercase text-text-muted">Interviews</span>
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-[0_6px_14px_rgba(16,185,129,0.25)]">
@@ -175,7 +175,7 @@ const SavedJobs = () => {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-amber-100 bg-gradient-to-br from-amber-50 via-surface-card to-surface-card p-space-md shadow-[0_10px_24px_rgba(245,158,11,0.10)] transition-transform duration-200 hover:-translate-y-1">
+              <div className="rounded-3xl border border-amber-100 bg-gradient-to-br from-amber-50 via-surface-card to-surface-card p-space-md shadow-[0_10px_24px_rgba(245,158,11,0.10)] transition-transform duration-200 hover:-translate-y-1 dark:border-amber-500/20 dark:from-amber-500/10 dark:shadow-[0_10px_24px_rgba(0,0,0,0.30)]">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps uppercase text-text-muted">Avg Response</span>
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-[0_6px_14px_rgba(245,158,11,0.25)]">
@@ -411,7 +411,7 @@ const SavedJobs = () => {
                   </div>
                 </div>
 
-                <div className="mt-space-md space-y-2 rounded-2xl border border-white/80 bg-white/70 p-space-sm text-body-sm shadow-sm">
+                <div className="mt-space-md space-y-2 rounded-2xl border border-white/80 bg-white/70 p-space-sm text-body-sm shadow-sm dark:border-white/10 dark:bg-white/5">
                   <div className="flex items-center gap-space-xs text-text-primary font-semibold">
                     <span className="material-symbols-outlined text-primary text-[18px]">
                       calendar_today
@@ -494,7 +494,7 @@ const SavedJobs = () => {
                   </div>
 
                   {/* Flow 2 */}
-                  <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-space-sm">
+                  <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-space-sm dark:border-sky-500/20 dark:bg-sky-500/10">
                     <div className="flex items-center justify-between">
                       <span className="font-label-lg font-bold text-text-primary">
                         MarketSquare Stores
@@ -521,7 +521,7 @@ const SavedJobs = () => {
                   </div>
 
                   {/* Flow 3 */}
-                  <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-space-sm">
+                  <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-space-sm dark:border-emerald-500/20 dark:bg-emerald-500/10">
                     <div className="flex items-center justify-between">
                       <span className="font-label-lg font-bold text-text-primary">
                         SwiftRoute Logistics
