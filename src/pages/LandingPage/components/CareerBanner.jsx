@@ -12,7 +12,7 @@ const CareerBanner = () => {
         alt="Professional interview meeting"
         className="absolute inset-0 h-full w-full object-cover opacity-35"
       />
-      <div className="absolute inset-0 bg-secondary/50" />
+      <div className="absolute inset-0 bg-secondary/50 dark:bg-slate-900/65" />
 
       <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
@@ -22,7 +22,7 @@ const CareerBanner = () => {
           transition={{ duration: 0.55, ease: "easeOut" }}
           className="max-w-3xl"
         >
-          <p className="text-sm font-bold uppercase tracking-[0.16em] text-primary-fixed">
+          <p className="text-sm font-bold uppercase tracking-[0.16em] text-primary-fixed dark:text-indigo-300">
             Move forward
           </p>
           <h2 className="mt-4 text-3xl font-bold tracking-normal text-white sm:text-4xl lg:text-5xl">
@@ -37,7 +37,7 @@ const CareerBanner = () => {
             <button
               type="button"
               onClick={() => navigate("/find-jobs")}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-white px-6 text-sm font-bold text-primary shadow-sm transition-colors hover:bg-primary-fixed"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-white px-6 text-sm font-bold text-primary shadow-sm transition-colors hover:bg-primary-fixed dark:text-indigo-700 dark:hover:bg-indigo-100"
             >
               <Search className="h-5 w-5" />
               Browse Jobs
@@ -45,7 +45,7 @@ const CareerBanner = () => {
             <button
               type="button"
               onClick={() => navigate("/login")}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-white/35 px-6 text-sm font-bold text-white transition-colors hover:bg-white hover:text-primary"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-white/35 px-6 text-sm font-bold text-white transition-colors hover:bg-white hover:text-primary dark:hover:text-indigo-700"
             >
               Employer Login
               <BriefcaseBusiness className="h-5 w-5" />

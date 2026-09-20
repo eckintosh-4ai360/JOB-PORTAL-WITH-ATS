@@ -144,7 +144,7 @@ const FieldError = ({ message }) => message ? (
 ) : null;
 
 const FieldLabel = ({ children, required = false }) => (
-  <label className="mb-1.5 block text-sm font-bold text-slate-800">
+  <label className="mb-1.5 block text-sm font-bold text-slate-800 dark:text-gray-200">
     {children}
     {required && <span className="ml-1 text-rose-500">*</span>}
   </label>
@@ -163,12 +163,12 @@ const TagEditor = ({
 }) => (
   <div>
     <FieldLabel required>{label}</FieldLabel>
-    <p className="mb-2 text-xs leading-5 text-slate-500">{hint}</p>
-    <div className={`rounded-xl border bg-white p-2 transition-colors ${error ? "border-rose-300 ring-2 ring-rose-100" : "border-slate-200 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100"}`}>
+    <p className="mb-2 text-xs leading-5 text-slate-500 dark:text-gray-400">{hint}</p>
+    <div className={`rounded-xl border bg-white p-2 transition-colors dark:bg-gray-900 ${error ? "border-rose-300 ring-2 ring-rose-100" : "border-slate-200 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100 dark:border-gray-700"}`}>
       {tags.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1.5">
           {tags.map((tag) => (
-            <span key={tag} className="inline-flex items-center gap-1 rounded-lg bg-violet-50 px-2 py-1 text-xs font-semibold text-violet-700">
+            <span key={tag} className="inline-flex items-center gap-1 rounded-lg bg-violet-50 px-2 py-1 text-xs font-semibold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
               {tag}
               <button type="button" onClick={() => onRemove(tag)} aria-label={`Remove ${tag}`} className="rounded text-violet-500 hover:text-violet-900">
                 <X className="h-3.5 w-3.5" />
@@ -188,9 +188,9 @@ const TagEditor = ({
             }
           }}
           placeholder={placeholder}
-          className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-sm text-slate-800 outline-none placeholder:text-slate-400"
+          className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-gray-100 dark:placeholder:text-gray-500"
         />
-        <button type="button" onClick={onAdd} className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-200">
+        <button type="button" onClick={onAdd} className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
           Add
         </button>
       </div>
@@ -212,10 +212,10 @@ const EmployerSetup = () => {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const inputClass = (field) => `w-full rounded-xl border bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 ${
+  const inputClass = (field) => `w-full rounded-xl border bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500 ${
     errors[field]
       ? "border-rose-300 ring-2 ring-rose-100"
-      : "border-slate-200 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+      : "border-slate-200 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 dark:border-gray-700 dark:hover:border-gray-600"
   }`;
 
   useEffect(() => {
@@ -446,15 +446,15 @@ const EmployerSetup = () => {
     <div className="space-y-6">
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-600">Step 1 of 4</p>
-        <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">Tell us about your organisation</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">These details establish a trustworthy company profile for Ghanaian jobseekers. Your registration number is kept private.</p>
+        <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 dark:text-gray-100">Tell us about your organisation</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-gray-400">These details establish a trustworthy company profile for Ghanaian jobseekers. Your registration number is kept private.</p>
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
         <div>
           <FieldLabel required>Company or trading name</FieldLabel>
           <div className="relative">
-            <Building2 className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+            <Building2 className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400 dark:text-gray-500" />
             <input value={form.name} onChange={(event) => updateField("name", event.target.value)} placeholder="e.g. Horizon Foods Ghana" className={`${inputClass("name")} pl-10`} />
           </div>
           <FieldError message={errors.name} />
@@ -496,7 +496,7 @@ const EmployerSetup = () => {
         <div className="md:col-span-2">
           <FieldLabel required>Primary hiring location</FieldLabel>
           <div className="relative">
-            <MapPin className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+            <MapPin className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400 dark:text-gray-500" />
             <select value={form.hq} onChange={(event) => updateField("hq", event.target.value)} className={`${inputClass("hq")} pl-10`}>
               <option value="">Select your Ghana office or hiring location</option>
               {GHANA_LOCATIONS.map((location) => <option key={location} value={location}>{location}</option>)}
@@ -512,24 +512,24 @@ const EmployerSetup = () => {
     <div className="space-y-6">
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-600">Step 2 of 4</p>
-        <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">Build a candidate-ready company profile</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Candidates use this information to recognise your organisation and decide whether the opportunity is right for them.</p>
+        <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 dark:text-gray-100">Build a candidate-ready company profile</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-gray-400">Candidates use this information to recognise your organisation and decide whether the opportunity is right for them.</p>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6 dark:border-gray-800 dark:bg-gray-900/50">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-          <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-violet-200 bg-white shadow-sm">
+          <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-violet-200 bg-white shadow-sm dark:border-violet-400/30 dark:bg-gray-900">
             {form.logo ? <img src={form.logo} alt="Company logo preview" className="h-full w-full object-cover" /> : <Building2 className="h-8 w-8 text-violet-300" />}
           </div>
           <div className="min-w-0 flex-1">
             <FieldLabel required>Company logo</FieldLabel>
-            <p className="mb-3 text-xs leading-5 text-slate-500">Use a square or horizontal PNG, JPG, or WebP under 5 MB. This logo appears with your job posts.</p>
+            <p className="mb-3 text-xs leading-5 text-slate-500 dark:text-gray-400">Use a square or horizontal PNG, JPG, or WebP under 5 MB. This logo appears with your job posts.</p>
             <div className="flex flex-wrap gap-2">
               <button type="button" onClick={() => logoInputRef.current?.click()} disabled={isUploadingLogo} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-3.5 py-2.5 text-sm font-bold text-white shadow-sm shadow-violet-200 transition-colors hover:bg-violet-700 disabled:cursor-wait disabled:opacity-70">
                 {isUploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                 {isUploadingLogo ? "Uploading…" : "Upload logo"}
               </button>
-              {form.logo && <button type="button" onClick={() => updateField("logo", "")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-100"><X className="h-4 w-4" />Remove</button>}
+              {form.logo && <button type="button" onClick={() => updateField("logo", "")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"><X className="h-4 w-4" />Remove</button>}
             </div>
             <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
           </div>
@@ -546,17 +546,17 @@ const EmployerSetup = () => {
         <textarea value={form.description} onChange={(event) => updateField("description", event.target.value)} rows={7} maxLength={2000} placeholder="Describe your mission, what you do, who you serve, and the work environment candidates can expect." className={`${inputClass("description")} resize-y`} />
         <div className="mt-1.5 flex items-start justify-between gap-4">
           <FieldError message={errors.description} />
-          <span className="shrink-0 text-xs text-slate-400">{form.description.length}/2,000</span>
+          <span className="shrink-0 text-xs text-slate-400 dark:text-gray-500">{form.description.length}/2,000</span>
         </div>
       </div>
 
       <div>
         <FieldLabel>Company website or careers page</FieldLabel>
         <div className="relative">
-          <Globe className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+          <Globe className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400 dark:text-gray-500" />
           <input value={form.website} onChange={(event) => updateField("website", event.target.value)} placeholder="https://yourcompany.com" className={`${inputClass("website")} pl-10`} />
         </div>
-        <p className="mt-1.5 text-xs text-slate-500">Optional, but it helps candidates verify and learn more about your organisation.</p>
+        <p className="mt-1.5 text-xs text-slate-500 dark:text-gray-400">Optional, but it helps candidates verify and learn more about your organisation.</p>
         <FieldError message={errors.website} />
       </div>
     </div>
@@ -566,29 +566,29 @@ const EmployerSetup = () => {
     <div className="space-y-6">
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-600">Step 3 of 4</p>
-        <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">Add your authorised hiring contact</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">This contact is used for platform communication and supports a transparent, professional hiring experience.</p>
+        <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 dark:text-gray-100">Add your authorised hiring contact</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-gray-400">This contact is used for platform communication and supports a transparent, professional hiring experience.</p>
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
         <div>
           <FieldLabel required>Contact name</FieldLabel>
-          <div className="relative"><User2 className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" /><input value={form.contactName} onChange={(event) => updateField("contactName", event.target.value)} placeholder="Full name" className={`${inputClass("contactName")} pl-10`} /></div>
+          <div className="relative"><User2 className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400 dark:text-gray-500" /><input value={form.contactName} onChange={(event) => updateField("contactName", event.target.value)} placeholder="Full name" className={`${inputClass("contactName")} pl-10`} /></div>
           <FieldError message={errors.contactName} />
         </div>
         <div>
           <FieldLabel required>Job title</FieldLabel>
-          <div className="relative"><Briefcase className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" /><input value={form.contactTitle} onChange={(event) => updateField("contactTitle", event.target.value)} placeholder="e.g. HR Manager" className={`${inputClass("contactTitle")} pl-10`} /></div>
+          <div className="relative"><Briefcase className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400 dark:text-gray-500" /><input value={form.contactTitle} onChange={(event) => updateField("contactTitle", event.target.value)} placeholder="e.g. HR Manager" className={`${inputClass("contactTitle")} pl-10`} /></div>
           <FieldError message={errors.contactTitle} />
         </div>
         <div>
           <FieldLabel required>Work email address</FieldLabel>
-          <div className="relative"><Mail className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" /><input type="email" value={form.contactEmail} onChange={(event) => updateField("contactEmail", event.target.value)} placeholder="hiring@company.com" className={`${inputClass("contactEmail")} pl-10`} /></div>
+          <div className="relative"><Mail className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400 dark:text-gray-500" /><input type="email" value={form.contactEmail} onChange={(event) => updateField("contactEmail", event.target.value)} placeholder="hiring@company.com" className={`${inputClass("contactEmail")} pl-10`} /></div>
           <FieldError message={errors.contactEmail} />
         </div>
         <div>
           <FieldLabel required>Ghana phone number</FieldLabel>
-          <div className="relative"><Phone className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" /><input type="tel" value={form.contactPhone} onChange={(event) => updateField("contactPhone", event.target.value)} placeholder="+233 20 123 4567" className={`${inputClass("contactPhone")} pl-10`} /></div>
+          <div className="relative"><Phone className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400 dark:text-gray-500" /><input type="tel" value={form.contactPhone} onChange={(event) => updateField("contactPhone", event.target.value)} placeholder="+233 20 123 4567" className={`${inputClass("contactPhone")} pl-10`} /></div>
           <FieldError message={errors.contactPhone} />
         </div>
       </div>
@@ -633,40 +633,40 @@ const EmployerSetup = () => {
       <div className="space-y-6">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-600">Step 4 of 4</p>
-          <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">Review and confirm your company setup</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">After you finish, your employer dashboard, job posting tools, and applicant workspace will be unlocked.</p>
+          <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 dark:text-gray-100">Review and confirm your company setup</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-gray-400">After you finish, your employer dashboard, job posting tools, and applicant workspace will be unlocked.</p>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/50">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-700"><CheckCircle className="h-5 w-5" /></div>
-            <div><p className="font-bold text-slate-900">Setup summary</p><p className="text-xs text-slate-500">Review your key company and contact details.</p></div>
+            <div><p className="font-bold text-slate-900 dark:text-gray-100">Setup summary</p><p className="text-xs text-slate-500 dark:text-gray-400">Review your key company and contact details.</p></div>
           </div>
-          <dl className="divide-y divide-slate-100 px-5">
+          <dl className="divide-y divide-slate-100 px-5 dark:divide-gray-800">
             {summary.map(([label, value]) => (
               <div key={label} className="flex flex-col gap-1 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-                <dt className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</dt>
-                <dd className="text-sm font-semibold text-slate-800 sm:text-right">{value}</dd>
+                <dt className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-gray-500">{label}</dt>
+                <dd className="text-sm font-semibold text-slate-800 sm:text-right dark:text-gray-200">{value}</dd>
               </div>
             ))}
           </dl>
         </div>
 
-        <div className="space-y-3 rounded-2xl border border-violet-100 bg-violet-50/60 p-5">
-          <p className="text-sm font-extrabold text-slate-900">Required confirmations</p>
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-white/70 p-3 transition-colors hover:bg-white">
-            <input type="checkbox" checked={form.authorityConfirmed} onChange={(event) => updateField("authorityConfirmed", event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500" />
-            <span className="text-sm leading-5 text-slate-700">I am authorised to create and manage this company’s employer account and job posts.</span>
+        <div className="space-y-3 rounded-2xl border border-violet-100 bg-violet-50/60 p-5 dark:border-violet-400/20 dark:bg-violet-500/10">
+          <p className="text-sm font-extrabold text-slate-900 dark:text-gray-100">Required confirmations</p>
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-white/70 p-3 transition-colors hover:bg-white dark:bg-gray-900/60 dark:hover:bg-gray-900">
+            <input type="checkbox" checked={form.authorityConfirmed} onChange={(event) => updateField("authorityConfirmed", event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-800" />
+            <span className="text-sm leading-5 text-slate-700 dark:text-gray-300">I am authorised to create and manage this company’s employer account and job posts.</span>
           </label>
           <FieldError message={errors.authorityConfirmed} />
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-white/70 p-3 transition-colors hover:bg-white">
-            <input type="checkbox" checked={form.termsAccepted} onChange={(event) => updateField("termsAccepted", event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500" />
-            <span className="text-sm leading-5 text-slate-700">I accept the employer terms and confirm that the information supplied is accurate.</span>
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-white/70 p-3 transition-colors hover:bg-white dark:bg-gray-900/60 dark:hover:bg-gray-900">
+            <input type="checkbox" checked={form.termsAccepted} onChange={(event) => updateField("termsAccepted", event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-800" />
+            <span className="text-sm leading-5 text-slate-700 dark:text-gray-300">I accept the employer terms and confirm that the information supplied is accurate.</span>
           </label>
           <FieldError message={errors.termsAccepted} />
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-white/70 p-3 transition-colors hover:bg-white">
-            <input type="checkbox" checked={form.fairHiringAcknowledged} onChange={(event) => updateField("fairHiringAcknowledged", event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500" />
-            <span className="text-sm leading-5 text-slate-700">I will follow fair hiring practices and will not charge candidates any fee to apply, interview, or receive a job offer.</span>
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-white/70 p-3 transition-colors hover:bg-white dark:bg-gray-900/60 dark:hover:bg-gray-900">
+            <input type="checkbox" checked={form.fairHiringAcknowledged} onChange={(event) => updateField("fairHiringAcknowledged", event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-800" />
+            <span className="text-sm leading-5 text-slate-700 dark:text-gray-300">I will follow fair hiring practices and will not charge candidates any fee to apply, interview, or receive a job offer.</span>
           </label>
           <FieldError message={errors.fairHiringAcknowledged} />
         </div>
@@ -677,14 +677,14 @@ const EmployerSetup = () => {
   const stepContent = [renderOrganisationStep, renderProfileStep, renderContactStep, renderReviewStep];
 
   return (
-    <div className="min-h-screen bg-[#f7f7fb] text-slate-900">
-      <header className="border-b border-slate-200/80 bg-white/90 px-4 py-3 backdrop-blur sm:px-6">
+    <div className="min-h-screen bg-[#f7f7fb] text-slate-900 dark:bg-gray-950 dark:text-gray-100">
+      <header className="border-b border-slate-200/80 bg-white/90 px-4 py-3 backdrop-blur sm:px-6 dark:border-gray-800 dark:bg-gray-900/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#3a1b8a] via-[#6833c4] to-[#b26ee9] text-white shadow-[0_5px_14px_rgba(90,45,180,0.35)]"><Briefcase className="h-5 w-5" /></div>
-            <div><p className="text-base font-extrabold tracking-tight text-slate-950">SPG Talent Network</p><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Employer setup</p></div>
+            <div><p className="text-base font-extrabold tracking-tight text-slate-950 dark:text-gray-100">SPG Talent Network</p><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-gray-400">Employer setup</p></div>
           </Link>
-          <button type="button" onClick={logout} className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950"><LogOut className="h-4 w-4" />Sign out</button>
+          <button type="button" onClick={logout} className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100"><LogOut className="h-4 w-4" />Sign out</button>
         </div>
       </header>
 
@@ -699,9 +699,9 @@ const EmployerSetup = () => {
           </div>
         </section>
 
-        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_12px_34px_rgba(30,41,59,0.07)] sm:p-7">
+        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_12px_34px_rgba(30,41,59,0.07)] sm:p-7 dark:border-gray-800 dark:bg-gray-900 dark:shadow-[0_12px_34px_rgba(0,0,0,0.35)]">
           <div className="relative mb-9 grid grid-cols-4 gap-2 sm:gap-4">
-            <div className="absolute left-[12.5%] right-[12.5%] top-5 hidden h-0.5 bg-slate-200 sm:block" />
+            <div className="absolute left-[12.5%] right-[12.5%] top-5 hidden h-0.5 bg-slate-200 sm:block dark:bg-gray-700" />
             <div className="absolute left-[12.5%] top-5 hidden h-0.5 bg-violet-600 transition-all duration-500 sm:block" style={{ width: `${Math.max(0, step) * (75 / 3)}%` }} />
             {STEPS.map((item, index) => {
               const Icon = item.icon;
@@ -709,25 +709,25 @@ const EmployerSetup = () => {
               const active = index === step;
               return (
                 <button key={item.label} type="button" onClick={() => index < step && moveToStep(index)} disabled={index > step} className={`relative z-10 flex min-w-0 flex-col items-center text-center ${index < step ? "cursor-pointer" : index > step ? "cursor-not-allowed" : "cursor-default"}`}>
-                  <span className={`flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm shadow-sm transition-all ${complete ? "border-violet-600 bg-violet-600 text-white" : active ? "border-violet-600 bg-white text-violet-700 ring-4 ring-violet-100" : "border-slate-200 bg-white text-slate-400"}`}>
+                  <span className={`flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm shadow-sm transition-all ${complete ? "border-violet-600 bg-violet-600 text-white" : active ? "border-violet-600 bg-white text-violet-700 ring-4 ring-violet-100" : "border-slate-200 bg-white text-slate-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"}`}>
                     {complete ? <Check className="h-4.5 w-4.5" /> : <Icon className="h-4.5 w-4.5" />}
                   </span>
-                  <span className={`mt-2 hidden text-xs font-extrabold sm:block ${active || complete ? "text-slate-900" : "text-slate-400"}`}>{item.label}</span>
-                  <span className="mt-0.5 hidden max-w-[130px] text-[10px] leading-4 text-slate-400 lg:block">{item.helper}</span>
+                  <span className={`mt-2 hidden text-xs font-extrabold sm:block ${active || complete ? "text-slate-900 dark:text-gray-100" : "text-slate-400 dark:text-gray-500"}`}>{item.label}</span>
+                  <span className="mt-0.5 hidden max-w-[130px] text-[10px] leading-4 text-slate-400 lg:block dark:text-gray-500">{item.helper}</span>
                 </button>
               );
             })}
           </div>
 
           {isLoadingProfile ? (
-            <div className="flex min-h-80 flex-col items-center justify-center text-center"><Loader2 className="h-8 w-8 animate-spin text-violet-600" /><p className="mt-3 text-sm font-medium text-slate-500">Loading your company setup…</p></div>
+            <div className="flex min-h-80 flex-col items-center justify-center text-center"><Loader2 className="h-8 w-8 animate-spin text-violet-600" /><p className="mt-3 text-sm font-medium text-slate-500 dark:text-gray-400">Loading your company setup…</p></div>
           ) : (
             <>
               <div className="mx-auto max-w-3xl">{stepContent[step]()}</div>
-              <div className="mx-auto mt-9 flex max-w-3xl flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mx-auto mt-9 flex max-w-3xl flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between dark:border-gray-800">
                 <div className="flex gap-3">
-                  {step > 0 && <button type="button" onClick={() => moveToStep(step - 1)} disabled={isSaving} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60"><ChevronLeft className="h-4 w-4" />Back</button>}
-                  <button type="button" onClick={() => saveCompany(false)} disabled={isSaving || isUploadingLogo} className="inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-60"><Save className="h-4 w-4" />Save draft</button>
+                  {step > 0 && <button type="button" onClick={() => moveToStep(step - 1)} disabled={isSaving} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"><ChevronLeft className="h-4 w-4" />Back</button>}
+                  <button type="button" onClick={() => saveCompany(false)} disabled={isSaving || isUploadingLogo} className="inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-60 dark:text-gray-400 dark:hover:bg-gray-800"><Save className="h-4 w-4" />Save draft</button>
                 </div>
                 {step < STEPS.length - 1 ? (
                   <button type="button" onClick={handleNext} disabled={isSaving || isUploadingLogo} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-sm shadow-violet-200 transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60">Continue<ChevronRight className="h-4 w-4" /></button>

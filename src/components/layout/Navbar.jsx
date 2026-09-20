@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
+import ThemeToggle from "./ThemeToggle";
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
   const needsCompanySetup =
     user?.role === "employer" && user?.employerOnboardingComplete === false;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -31,17 +30,32 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [location.pathname]);
 
-  const navLinks = [
+  const publicNavLinks = [
     { label: "Find Jobs", path: "/find-jobs" },
     { label: "Browse Companies", path: "/browse-companies" },
     { label: "Salaries & Insights", path: "/salaries-insights" },
     { label: "AI Resume Match", path: "/resume-analyzer" },
-    { label: "Saved Jobs", path: "/saved-jobs" },
   ];
+
+  // A signed-in candidate should not bounce between a public navigation and a
+  // second dashboard navigation. These destinations are the candidate's core
+  // workflow, and the Applications hub owns both application tracking and
+  // document management.
+  const candidateNavLinks = [
+    { label: "Find Jobs", path: "/find-jobs" },
+    { label: "Saved Jobs", path: "/saved-jobs" },
+    { label: "Applications & Docs", path: "/applications" },
+    { label: "AI Resume Match", path: "/resume-analyzer" },
+  ];
+
+  const navLinks = user?.role === "jobseeker" ? candidateNavLinks : publicNavLinks;
 
   const isActive = (path) => {
     if (path === "/find-jobs") {
       return location.pathname === "/" || location.pathname === "/find-jobs";
+    }
+    if (path === "/applications") {
+      return ["/applications", "/documents", "/my-applications"].includes(location.pathname);
     }
     return location.pathname.startsWith(path);
   };
@@ -64,7 +78,7 @@ const Navbar = () => {
         isVisible ? "translate-y-0" : "-translate-y-[calc(100%+1rem)]"
       }`}
     >
-      <div className="mx-auto flex h-[68px] w-full max-w-[1360px] items-center justify-between gap-3 rounded-2xl border border-white/80 bg-surface-card/90 px-3 shadow-[0_12px_32px_rgba(53,37,120,0.12)] backdrop-blur-xl sm:px-5 xl:gap-6">
+      <div className="mx-auto flex h-[68px] w-full max-w-[1360px] items-center justify-between gap-3 rounded-2xl border border-white/80 bg-surface-card/90 px-3 shadow-[0_12px_32px_rgba(53,37,120,0.12)] backdrop-blur-xl dark:border-slate-700/80 dark:shadow-[0_12px_32px_rgba(0,0,0,0.28)] sm:px-5 xl:gap-6">
         {/* Brand & Nav */}
         <div className="flex items-center gap-4 xl:gap-8 shrink-0">
           <Link
@@ -95,8 +109,8 @@ const Navbar = () => {
                   to={link.path}
                   className={`whitespace-nowrap shrink-0 transition-all text-[13px] xl:text-[14px] px-3 xl:px-4 py-2 rounded-full font-medium ${
                     active
-                      ? "bg-gradient-to-r from-[#f0e8ff] to-brand-indigo-light text-primary font-bold shadow-[0_2px_6px_rgba(82,42,173,0.10)]"
-                      : "text-text-secondary hover:bg-[#f7f3ff] hover:text-primary transition-colors"
+                      ? "bg-gradient-to-r from-[#f0e8ff] to-brand-indigo-light text-primary font-bold shadow-[0_2px_6px_rgba(82,42,173,0.10)] dark:from-indigo-950 dark:to-indigo-900"
+                      : "text-text-secondary hover:bg-[#f7f3ff] hover:text-primary transition-colors dark:hover:bg-slate-800"
                   }`}
                 >
                   {link.label}
@@ -108,29 +122,22 @@ const Navbar = () => {
 
         {/* Action Cluster */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            type="button"
-            aria-label="Toggle color mode"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-[#f5f1ff] hover:text-primary"
-          >
-            <span className="material-symbols-outlined text-[20px]">
-              {isDark ? "light_mode" : "dark_mode"}
-            </span>
-          </button>
+          {/* Always available, including for visitors. ThemeToggle persists mode. */}
+          <ThemeToggle />
 
-          {/* Saved Jobs shortcut with notification dot */}
-          <Link
-            to="/saved-jobs"
-            aria-label="Saved Jobs shortcut"
-            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-[#f5f1ff] hover:text-primary"
-          >
-            <span className="material-symbols-outlined text-[20px]">
-              bookmark
-            </span>
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border border-white bg-[#ea8d76] animate-pulse" />
-          </Link>
+          {/* A saved-jobs shortcut only makes sense for an authenticated candidate. */}
+          {isAuthenticated && user?.role === "jobseeker" && (
+            <Link
+              to="/saved-jobs"
+              aria-label="Saved Jobs shortcut"
+              className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-[#f5f1ff] hover:text-primary dark:hover:bg-slate-800"
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                bookmark
+              </span>
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border border-white bg-[#ea8d76]" />
+            </Link>
+          )}
 
           <div className="h-6 w-px bg-border-default hidden sm:block shrink-0" />
 
@@ -139,7 +146,7 @@ const Navbar = () => {
             <div className="relative">
               <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="flex items-center gap-2 rounded-xl p-1.5 transition-colors hover:bg-[#f7f3ff]"
+                className="flex items-center gap-2 rounded-xl p-1.5 transition-colors hover:bg-[#f7f3ff] dark:hover:bg-slate-800"
                 type="button"
               >
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-[#a55adc] text-sm font-bold text-on-primary shadow-sm">
@@ -160,7 +167,7 @@ const Navbar = () => {
 
               {userDropdownOpen && (
                 <div
-                  className="absolute right-0 z-50 mt-3 w-56 rounded-2xl border border-[#e6d9f7] bg-surface-card py-2 shadow-[0_18px_44px_rgba(61,31,113,0.18)]"
+                  className="absolute right-0 z-50 mt-3 w-56 rounded-2xl border border-[#e6d9f7] bg-surface-card py-2 shadow-[0_18px_44px_rgba(61,31,113,0.18)] dark:border-slate-700 dark:shadow-[0_18px_44px_rgba(0,0,0,0.38)]"
                   onMouseLeave={() => setUserDropdownOpen(false)}
                 >
                   <div className="px-4 py-2 border-b border-border-default">
@@ -264,17 +271,27 @@ const Navbar = () => {
                         <span className="material-symbols-outlined text-[18px]">
                           bookmark
                         </span>
-                        Saved & Applied
+                        Saved Jobs
                       </Link>
                       <Link
-                        to="/documents"
+                        to="/applications"
                         onClick={() => setUserDropdownOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2.5 font-label-md text-text-secondary hover:text-primary hover:bg-surface-container-low transition-colors"
                       >
                         <span className="material-symbols-outlined text-[18px]">
                           description
                         </span>
-                        My Documents
+                        Applications &amp; Docs
+                      </Link>
+                      <Link
+                        to="/resume-analyzer"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 font-label-md text-text-secondary hover:text-primary hover:bg-surface-container-low transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          auto_awesome
+                        </span>
+                        AI Resume Match
                       </Link>
                     </>
                   )}
@@ -299,7 +316,7 @@ const Navbar = () => {
           ) : (
             <Link
               to="/login"
-              className="hidden shrink-0 items-center justify-center rounded-xl px-3.5 py-2 text-sm font-medium whitespace-nowrap text-text-secondary transition-colors hover:bg-[#f7f3ff] hover:text-primary sm:inline-flex"
+              className="hidden shrink-0 items-center justify-center rounded-xl px-3.5 py-2 text-sm font-medium whitespace-nowrap text-text-secondary transition-colors hover:bg-[#f7f3ff] hover:text-primary dark:hover:bg-slate-800 sm:inline-flex"
             >
               Sign In
             </Link>
@@ -323,7 +340,7 @@ const Navbar = () => {
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             type="button"
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-text-secondary hover:bg-[#f5f1ff] lg:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-text-secondary hover:bg-[#f5f1ff] dark:hover:bg-slate-800 lg:hidden"
           >
             <span className="material-symbols-outlined text-[24px]">
               {mobileMenuOpen ? "close" : "menu"}
@@ -334,7 +351,7 @@ const Navbar = () => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="mx-auto mt-2 max-w-[1360px] rounded-2xl border border-[#e6d9f7] bg-surface-card px-margin-mobile py-space-md shadow-[0_18px_44px_rgba(61,31,113,0.18)] animate-fadeIn lg:hidden">
+        <div className="mx-auto mt-2 max-w-[1360px] rounded-2xl border border-[#e6d9f7] bg-surface-card px-margin-mobile py-space-md shadow-[0_18px_44px_rgba(61,31,113,0.18)] animate-fadeIn dark:border-slate-700 dark:shadow-[0_18px_44px_rgba(0,0,0,0.38)] lg:hidden">
           <nav className="flex flex-col gap-1">
             {navLinks.map((link) => (
               <Link
