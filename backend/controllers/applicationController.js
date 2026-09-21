@@ -13,7 +13,7 @@ const {
 const APPLICATION_STATUSES = ["Applied", "Under Review", "Interviewing", "Offered", "Rejected"];
 
 const normalizeApplication = (application) => {
-    const normalized = toClient(application);
+    const normalized  = toClient(application);
 
     const isGuest = !normalized.applicantId && !normalized.applicant;
     normalized.isGuest = isGuest;

@@ -11,6 +11,7 @@
 
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
+const fraud = require("../services/fraudModerationService");
 const groq = require("../utils/groqClient");
 const { analyzeResume } = require("../services/resumeAnalysisService");
 const matchService = require("../services/jobMatchService");
@@ -201,6 +202,8 @@ const analyzeResumeHandler = async (req, res) => {
                 degraded: Boolean(analysis.degraded),
             },
         });
+
+        fraud.screenInBackground(`resume:${saved.id}`, () => fraud.screenResume(saved.id));
 
         // Feed the parsed profile into the matching profile so job matches
         // improve immediately after an analysis.

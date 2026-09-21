@@ -9,7 +9,8 @@
     "create-admin": "node scripts/createAdmin.js",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "check:fraud": "node scripts/checkFraudSignals.js"
   },
   "keywords": [],
   "author": "",

@@ -10,13 +10,13 @@ const {
     closeJob,
     deleteJob,
 } = require("../controllers/jobController");
-const { protect } = require("../middlewares/authMiddleware");
+const { protect, optionalAuth } = require("../middlewares/authMiddleware");
 
 // Public routes
 router.get("/companies", getCompanies);
 router.get("/", getAllJobs);
 router.get("/employer/my-jobs", protect, getMyJobs);
-router.get("/:id", getJobById);
+router.get("/:id", optionalAuth, getJobById);
 
 // Private routes (Employer only)
 router.post("/", protect, createJob);

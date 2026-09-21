@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
+const fraud = require("../services/fraudModerationService");
 
 // @desc    Create a new job posting
 // @route   POST /api/jobs
@@ -34,6 +35,18 @@ const createJob = async (req, res) => {
             return res.status(403).json({
                 code: "EMPLOYER_SETUP_REQUIRED",
                 message: "Complete your company setup before posting a job.",
+            });
+        }
+
+        // A recruiter suspended by moderation cannot publish while under review.
+        const poster = await prisma.user.findUnique({
+            where: { id: req.user._id },
+            select: { trustState: true },
+        });
+        if (poster?.trustState === "suspended") {
+            return res.status(403).json({
+                code: "ACCOUNT_UNDER_REVIEW",
+                message: "This account is under review and cannot publish jobs. Contact support.",
             });
         }
 
@@ -111,6 +124,10 @@ const createJob = async (req, res) => {
         const clientJob = toClient(job);
         clientJob.companyName = job.companyProfile?.name || job.company?.companyName || job.company?.name || "Company";
         clientJob.companyLogo = job.companyProfile?.logo || job.companyLogo || job.company?.companyLogo || "";
+
+        // Screening is advisory and can call out to Groq, so it runs after the
+        // response rather than making an employer wait on it.
+        fraud.screenInBackground(`job:${job.id}`, () => fraud.screenJob(job.id));
 
         res.status(201).json({ message: "Job created successfully", job: clientJob });
     } catch (error) {
@@ -191,7 +208,9 @@ const getAllJobs = async (req, res) => {
     try {
         const { keyword, location, category, type, page = 1, limit = 50 } = req.query;
 
-        const where = { isClosed: false };
+        // `hidden` is set by moderation; `flagged` stays visible on purpose so a
+        // false positive never silently removes a real advert.
+        const where = { isClosed: false, moderationState: { not: "hidden" } };
 
         if (keyword) {
             where.OR = [
@@ -263,6 +282,16 @@ const getJobById = async (req, res) => {
 
         if (!job) {
             return res.status(404).json({ message: "Job not found" });
+        }
+
+        // A hidden job stays reachable for the employer who owns it and for
+        // admins reviewing the case, but not for the public it was pulled from.
+        if (job.moderationState === "hidden") {
+            const viewerId = req.user?._id;
+            const privileged = viewerId && (viewerId === job.companyId || req.user.role === "admin");
+            if (!privileged) {
+                return res.status(404).json({ message: "Job not found" });
+            }
         }
 
         const clientJob = toClient(job);
@@ -338,6 +367,8 @@ const updateJob = async (req, res) => {
             where: { id: req.params.id },
             data: updateData,
         });
+
+        fraud.screenInBackground(`job:${updatedJob.id}`, () => fraud.screenJob(updatedJob.id));
 
         res.status(200).json({ message: "Job updated successfully", job: toClient(updatedJob) });
     } catch (error) {
