@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
+const fraud = require("../services/fraudModerationService");
 
 const ORGANIZATION_TYPES = new Set([
     "Sole proprietorship",
@@ -569,6 +570,10 @@ const updateMyCompanyProfile = async (req, res) => {
                 } : {}),
             },
         });
+
+        if (isCompletingSetup) {
+            fraud.screenInBackground(`company:${company.id}`, () => fraud.screenCompany(company.id));
+        }
 
         // Auto-link any unlinked jobs posted by this employer
         await prisma.job.updateMany({

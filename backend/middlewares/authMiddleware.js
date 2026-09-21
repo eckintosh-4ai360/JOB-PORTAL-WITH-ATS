@@ -73,4 +73,15 @@ const emailTemplateAccess = (req, res, next) => {
     next();
 };
 
-module.exports = { protect, optionalAuth, emailTemplateAccess };
+/**
+ * Admin-only guard. Moderation decisions carry enforcement power over real
+ * accounts, so the queue is never exposed to employers.
+ */
+const adminOnly = (req, res, next) => {
+    if (req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Administrator access required" });
+    }
+    next();
+};
+
+module.exports = { protect, optionalAuth, emailTemplateAccess, adminOnly };
