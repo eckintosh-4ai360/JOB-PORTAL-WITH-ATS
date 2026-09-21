@@ -29,6 +29,14 @@ export const API_PATHS = {
     GET_SAVED_JOBS: "/api/saved-jobs",
   },
 
+  MODERATION: {
+    GET_STATS: "/api/moderation/stats",
+    GET_CASES: "/api/moderation/cases",
+    GET_CASE: (id) => `/api/moderation/cases/${id}`,
+    DECIDE_CASE: (id) => `/api/moderation/cases/${id}/decision`,
+    RESCAN: "/api/moderation/rescan",
+  },
+
   APPLICATIONS: {
     APPLY_FOR_JOB: (id) => `/api/applications/${id}`,
     GET_APPLICANT: (id) => `/api/applications/job/${id}`,
