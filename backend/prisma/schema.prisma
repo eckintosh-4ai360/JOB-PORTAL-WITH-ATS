@@ -24,6 +24,9 @@ model User {
   // only gates employers created after it is introduced.
   employerOnboardingComplete    Boolean   @default(true)
   employerOnboardingCompletedAt DateTime?
+  // clear | flagged | suspended. A suspended recruiter cannot publish jobs.
+  trustState         String        @default("clear")
+  trustReviewedAt    DateTime?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
@@ -236,6 +239,9 @@ model Company {
   hiringPolicyAcceptedAt DateTime?
   rating      Float?   @default(0)
   verified    Boolean  @default(false)
+  // clear | flagged | rejected — the automated trust signal, distinct from the
+  // editorial `verified` badge above.
+  trustState  String   @default("clear")
   stack       String[]
   perks       String[]
   createdAt   DateTime @default(now())
@@ -267,6 +273,11 @@ model Job {
   salaryMin        Float?
   salaryMax        Float?
   isClosed         Boolean       @default(false)
+  // clear | flagged | hidden. Only `hidden` removes a job from public listings;
+  // `flagged` stays live so a false positive never silently kills a real advert.
+  moderationState  String        @default("clear")
+  contentHash      String?
+  duplicateOfId    String?
   jobType          String?
   companyLogo      String?
   createdAt        DateTime      @default(now())
@@ -281,6 +292,8 @@ model Job {
   @@index([companyProfileId])
   @@index([category])
   @@index([isClosed])
+  @@index([moderationState])
+  @@index([contentHash])
 }
 
 model Application {
@@ -382,4 +395,76 @@ model SalarySubmission {
   location     String
   isVerified   Boolean  @default(false)
   createdAt    DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Trust & Safety
+//
+// Fraud detection runs in two layers. Deterministic rules in utils/fraudSignals
+// produce the signals and the base score — reproducible, explainable, and not
+// influenced by anything a fraudster writes. An AI adjudication pass may then
+// nudge that score within a hard cap and explain itself in plain language.
+// Both are recorded so a reviewer can see exactly why something was flagged.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model RiskAssessment {
+  id           String   @id @default(cuid())
+  entityType   String   // company | job | user | resume
+  entityId     String
+  category     String   // fake_company | duplicate_job | spam_recruiter | fake_resume
+  score        Int      // final 0-100 risk after any AI adjustment
+  band         String   // low | medium | high | critical
+  ruleScore    Int      // deterministic score before AI
+  aiAdjustment Int      @default(0)
+  aiVerdict    String?
+  aiConfidence Int?
+  signals      Json     // the deterministic rule hits behind ruleScore
+  aiReasons    Json?
+  model        String?
+  degraded     Boolean  @default(false) // true when AI was unavailable
+  createdAt    DateTime @default(now())
+
+  moderationCase ModerationCase?
+
+  @@index([entityType, entityId, createdAt])
+  @@index([category, band])
+}
+
+model ModerationCase {
+  id           String    @id @default(cuid())
+  entityType   String
+  entityId     String
+  category     String
+  score        Int
+  band         String
+  state        String    @default("open") // open | in_review | actioned | dismissed
+  summary      String
+  autoAction   String?   // what enforcement fired automatically, if any
+  assessmentId String?   @unique
+  assessment   RiskAssessment? @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+  decision     String?   // upheld | dismissed
+  decisionNote String?
+  decidedById  String?
+  decidedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  events       ModerationEvent[]
+
+  @@index([state, band, createdAt])
+  @@index([entityType, entityId, state])
+  @@index([category, state])
+}
+
+model ModerationEvent {
+  id        String         @id @default(cuid())
+  caseId    String
+  case      ModerationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  action    String
+  note      String?
+  actorId   String?
+  actorName String?
+  createdAt DateTime       @default(now())
+
+  @@index([caseId, createdAt])
 }
