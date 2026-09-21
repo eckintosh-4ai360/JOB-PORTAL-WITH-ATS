@@ -30,6 +30,7 @@ import ManageJobs from "./pages/Employer/ManageJobs";
 import EmployerProfilePage from "./pages/Employer/EmployerProfilePage";
 import EmployerSetup from "./pages/Employer/EmployerSetup";
 import EmailTemplates from "./pages/Admin/EmailTemplates";
+import ModerationQueue from "./pages/Admin/ModerationQueue";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import EmployerOnboardingRoute from "./routes/EmployerOnboardingRoute";
 import LandingPage from "./pages/LandingPage/LandingPage";
@@ -83,6 +84,8 @@ export const App = () => {
           {/* Admin aliases for shared email templates screen */}
           <Route element={<ProtectedRoute requiredRole="admin" />}>
             <Route path="/admin-email-templates" element={<EmailTemplates />} />
+            <Route path="/admin-moderation" element={<ModerationQueue />} />
+            <Route path="/admin/moderation" element={<ModerationQueue />} />
             <Route path="/admin/email-templates" element={<EmailTemplates />} />
           </Route>
 
