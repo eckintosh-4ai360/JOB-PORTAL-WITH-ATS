@@ -64,6 +64,23 @@ const normalizeApplication = (application) => {
     return normalized;
 };
 
+/**
+ * Whether a stored file belongs to this applicant — their profile resume, or
+ * one of their own documents. An applicant may attach something they have
+ * already uploaded rather than a fresh file, but the URL arrives from the
+ * browser, so without this an application could cite anybody's document.
+ */
+const ownsStoredFile = async (userId, url) => {
+    if (!userId || !url) return false;
+
+    const [user, document] = await Promise.all([
+        prisma.user.findUnique({ where: { id: userId }, select: { resume: true } }),
+        prisma.document.findFirst({ where: { userId, url }, select: { id: true } }),
+    ]);
+
+    return user?.resume === url || Boolean(document);
+};
+
 const getEmployerJobIds = async (employerId) => {
     const jobs = await prisma.job.findMany({
         where: { companyId: employerId, deletedAt: null },
@@ -153,6 +170,12 @@ const applyForJob = async (req, res) => {
             return res.status(400).json({ message: "A resume (file or URL) is required" });
         }
 
+        // Reusing a stored file is only offered to signed-in applicants, so it
+        // is only they who can be held to owning it.
+        if (!resumeFile && isLoggedIn && !(await ownsStoredFile(req.user._id, resume))) {
+            return res.status(403).json({ message: "That resume is not one of your saved documents." });
+        }
+
         // Cover letter file handling 
         const coverLetterFileUpload = req.files?.coverLetterFile?.[0];
         let coverLetterFileUrl = "";
@@ -168,6 +191,11 @@ const applyForJob = async (req, res) => {
                 const filename = await uploadToLocalDisk(coverLetterFileUpload.buffer, coverLetterFileUpload.originalname);
                 coverLetterFileUrl = `${req.protocol}://${req.get("host")}/uploads/${filename}`;
             }
+        } else if (req.body.coverLetterFile) {
+            if (isLoggedIn && !(await ownsStoredFile(req.user._id, req.body.coverLetterFile))) {
+                return res.status(403).json({ message: "That cover letter is not one of your saved documents." });
+            }
+            coverLetterFileUrl = req.body.coverLetterFile;
         }
 
         // Create application 
