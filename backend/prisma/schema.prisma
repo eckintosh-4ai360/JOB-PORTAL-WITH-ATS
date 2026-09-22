@@ -326,6 +326,11 @@ model Application {
 
   @@index([jobId])
   @@index([applicantId])
+  // One application per job per account. Postgres treats NULLs as distinct, so
+  // this constrains signed-in applicants only and leaves guest rows (which
+  // carry no applicantId) alone. The controller's own check gives the friendly
+  // message; this is what makes the rule true when two submits race.
+  @@unique([jobId, applicantId])
 }
 
 model SavedJob {
