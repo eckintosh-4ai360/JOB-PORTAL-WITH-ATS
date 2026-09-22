@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { useAuth } from "../../context/AuthContext";
@@ -48,6 +48,21 @@ const FindJobs = () => {
 
   //   An account can only apply once per job; show that on the card.
   const { hasApplied, markApplied } = useAppliedJobs();
+
+  //   Arriving from a company on Browse Companies narrows the list to that
+  //   employer. Held in the url so the filter survives a refresh or a shared
+  //   link, and so the back button clears it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const companyFilter = searchParams.get("company") || "";
+  const companyFilterName = searchParams.get("companyName") || "";
+
+  const clearCompanyFilter = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("company");
+    next.delete("companyName");
+    setSearchParams(next, { replace: true });
+    setPage(1);
+  };
 
   //   Until the applicant picks something, the newest saved file stands in.
   const resumeChoice = resumeAttachment.url || resumeAttachment.file
@@ -255,7 +270,16 @@ const FindJobs = () => {
       const matchSalary =
         !salaryFloor || (j.salaryMax || j.salaryMin || 0) >= salaryFloor;
 
+      // `companyId` is the employer's user id, which is what Browse Companies
+      // sends; `company.id` is the same value on the included relation.
+      const matchCompany =
+        !companyFilter ||
+        j.companyId === companyFilter ||
+        j.company?.id === companyFilter ||
+        j.company?._id === companyFilter;
+
       return (
+        matchCompany &&
         matchKeyword &&
         matchLocation &&
         matchCategory &&
@@ -275,6 +299,7 @@ const FindJobs = () => {
     });
   }, [
     jobs,
+    companyFilter,
     keyword,
     location,
     category,
@@ -766,11 +791,27 @@ const FindJobs = () => {
 
               {/* Stream Header Controls */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm bg-surface-card p-space-md rounded-2xl border border-border-default shadow-xs">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="font-headline-sm text-headline-sm font-bold text-on-surface">
                     Showing {filteredJobs.length} Verified Roles
                   </span>
                   <span className="w-2 h-2 rounded-full bg-salary-emerald animate-pulse" />
+                  {companyFilter && (
+                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-brand-indigo-light px-space-sm py-1 font-label-md font-bold text-primary">
+                      <span className="material-symbols-outlined text-[16px]">business</span>
+                      <span className="max-w-[16rem] truncate">
+                        {companyFilterName || "Selected company"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={clearCompanyFilter}
+                        aria-label="Show roles from all companies"
+                        className="text-primary hover:text-brand-indigo-dark cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">close</span>
+                      </button>
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
