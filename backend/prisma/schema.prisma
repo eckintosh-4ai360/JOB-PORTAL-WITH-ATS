@@ -273,6 +273,11 @@ model Job {
   salaryMin        Float?
   salaryMax        Float?
   isClosed         Boolean       @default(false)
+  // Soft delete. A removed advert keeps its row so applications, saved jobs
+  // and match history still point at something real — a candidate's record of
+  // applying should outlive the employer taking the advert down. `null` means
+  // live; every public read filters on it.
+  deletedAt        DateTime?
   // clear | flagged | hidden. Only `hidden` removes a job from public listings;
   // `flagged` stays live so a false positive never silently kills a real advert.
   moderationState  String        @default("clear")
@@ -294,6 +299,7 @@ model Job {
   @@index([isClosed])
   @@index([moderationState])
   @@index([contentHash])
+  @@index([deletedAt])
 }
 
 model Application {

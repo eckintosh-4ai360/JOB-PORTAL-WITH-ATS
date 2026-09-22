@@ -42,7 +42,7 @@ const normalizeApplication = (application) => {
 
 const getEmployerJobIds = async (employerId) => {
     const jobs = await prisma.job.findMany({
-        where: { companyId: employerId },
+        where: { companyId: employerId, deletedAt: null },
         select: { id: true },
     });
     return jobs.map((job) => job.id);
@@ -64,7 +64,7 @@ const applyForJob = async (req, res) => {
             where: { id: req.params.jobId },
         });
 
-        if (!job) {
+        if (!job || job.deletedAt) {
             return res.status(404).json({ message: "Job not found" });
         }
 
@@ -421,6 +421,9 @@ const getApplicationsForJob = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error", error: error.message });
+        // A soft-deleted job is intentionally still readable here: people
+        // applied to it, and the employer needs to finish reviewing or
+        // responding to them after taking the advert down.
     }
 };
 

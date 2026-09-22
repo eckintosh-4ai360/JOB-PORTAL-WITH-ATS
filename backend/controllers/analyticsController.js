@@ -14,11 +14,11 @@ const getEmployerAnalytics = async (req, res) => {
 
         // Live counts 
         const totalActiveJobs = await prisma.job.count({
-            where: { companyId: employerId, isClosed: false },
+            where: { companyId: employerId, isClosed: false, deletedAt: null },
         });
 
         const allJobs = await prisma.job.findMany({
-            where: { companyId: employerId },
+            where: { companyId: employerId, deletedAt: null },
             select: { id: true },
         });
         const jobIds = allJobs.map((j) => j.id);
@@ -40,7 +40,7 @@ const getEmployerAnalytics = async (req, res) => {
 
         // Recent jobs (last 5, newest first) 
         const recentJobs = await prisma.job.findMany({
-            where: { companyId: employerId },
+            where: { companyId: employerId, deletedAt: null },
             orderBy: { createdAt: "desc" },
             take: 5,
             select: {
@@ -115,7 +115,7 @@ const getJobAnalytics = async (req, res) => {
             where: { id: req.params.jobId },
         });
 
-        if (!job) {
+        if (!job || job.deletedAt) {
             return res.status(404).json({ message: "Job not found" });
         }
 
@@ -155,10 +155,11 @@ const getJobAnalytics = async (req, res) => {
 // @access  Public
 const getPlatformSummary = async (req, res) => {
     try {
-        const totalJobs = await prisma.job.count({ where: { isClosed: false } });
+        const totalJobs = await prisma.job.count({ where: { isClosed: false, deletedAt: null } });
         const totalApplications = await prisma.application.count();
         const companies = await prisma.job.groupBy({
             by: ["companyId"],
+            where: { deletedAt: null },
         });
         const totalEmployers = companies.length;
 

@@ -119,7 +119,7 @@ const loadJobContext = async (jobId) => {
         where: { id: String(jobId) },
         include: { company: { select: { companyName: true, name: true } } },
     });
-    if (!job) return { context: "", job: null };
+    if (!job || job.deletedAt) return { context: "", job: null };
 
     return {
         job,
@@ -495,7 +495,7 @@ const getJobMatches = async (req, res) => {
         const refresh = req.query.refresh === "true";
         const profileKey = profileKeyFor(profile);
 
-        const where = { isClosed: false };
+        const where = { isClosed: false, deletedAt: null };
         if (req.query.keyword) {
             where.OR = [
                 { title: { contains: String(req.query.keyword), mode: "insensitive" } },
@@ -626,7 +626,7 @@ const getJobMatch = async (req, res) => {
                 companyProfile: { select: { id: true, name: true, logo: true } },
             },
         });
-        if (!job) return res.status(404).json({ message: "Job not found" });
+        if (!job || job.deletedAt) return res.status(404).json({ message: "Job not found" });
 
         const { profile, resumeText } = await loadCandidateContext(req.user._id);
         if (!profile || (!profile.skills?.length && !profile.yearsOfExperience)) {
@@ -680,7 +680,11 @@ const getJobMatch = async (req, res) => {
 // Employer-facing matching
 // ---------------------------------------------------------------------------
 
-/** The employer must own the job before seeing or scoring its applicants. */
+/**
+ * The employer must own the job before seeing or scoring its applicants. A
+ * soft-deleted job still passes: taking the advert down does not end the
+ * employer's need to review the people who already applied to it.
+ */
 const assertJobOwnership = async (jobId, user) => {
     const job = await prisma.job.findUnique({ where: { id: jobId } });
     if (!job) return { error: { status: 404, message: "Job not found" } };
