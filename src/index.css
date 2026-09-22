@@ -303,6 +303,61 @@
   scrollbar-width: none;
 }
 
+/* Authentication screens are viewport-locked. Keep their compact controls
+   usable on short laptop and phone viewports without introducing a page scroll. */
+.auth-viewport,
+.auth-form-panel {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-height: 720px) {
+  .auth-viewport .auth-form-panel {
+    padding: 0.75rem;
+  }
+
+  .auth-viewport .auth-showcase {
+    padding: 1.5rem 2rem;
+  }
+
+  .auth-viewport .auth-showcase-description {
+    display: none;
+  }
+
+  .auth-viewport .auth-short-screen-optional {
+    display: none;
+  }
+
+  .auth-viewport .auth-signup-content > * + *,
+  .auth-viewport .auth-signup-form > * + * {
+    margin-top: 0.45rem;
+  }
+
+  .auth-viewport .auth-signup-form input {
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+  }
+
+  .auth-viewport .auth-login-content > * + *,
+  .auth-viewport .auth-login-content form > * + * {
+    margin-top: 0.65rem;
+  }
+}
+
+@media (max-height: 600px) {
+  .auth-viewport .auth-form-panel {
+    padding: 0.5rem;
+  }
+
+  .auth-viewport .auth-short-role-detail {
+    display: none;
+  }
+
+  .auth-viewport .auth-showcase {
+    padding: 1.25rem 1.5rem;
+  }
+}
+
 @keyframes slide-in-right {
   from {
     transform: translateX(100%);

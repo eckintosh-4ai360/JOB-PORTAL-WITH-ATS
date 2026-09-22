@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react"
+import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   User,
@@ -13,8 +13,7 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle,
-  ChevronRight,
-  Sparkles
+  ChevronRight
 } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { toast } from "react-hot-toast"
@@ -219,10 +218,10 @@ const SignUp = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex font-display text-secondary overflow-hidden dark:bg-gray-950">
+    <div className="auth-viewport flex h-dvh min-h-0 bg-gray-50 font-display text-secondary overflow-hidden dark:bg-gray-950">
       
       {/* LEFT SIDE: Brand Showcase (Hidden on Mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-[#131211] overflow-hidden flex-col justify-between p-12 xl:p-16 select-none">
+      <div className="auth-showcase relative hidden overflow-hidden bg-[#131211] p-6 select-none lg:flex lg:w-1/2 lg:flex-col lg:justify-between xl:p-8 2xl:p-16">
         {/* Ambient Warm Corner Glows */}
         <div className="absolute -bottom-36 -right-36 w-[580px] h-[580px] rounded-full bg-gradient-to-tl from-orange-600/20 via-orange-950/10 to-transparent blur-3xl pointer-events-none" />
         <div className="absolute top-0 left-0 w-80 h-80 rounded-full bg-orange-500/5 blur-3xl pointer-events-none" />
@@ -238,22 +237,22 @@ const SignUp = () => {
         </div>
 
         {/* Brand Core Value Section */}
-        <div className="relative z-10 my-auto max-w-lg space-y-7 xl:space-y-8">
+        <div className="relative z-10 my-auto max-w-lg space-y-4 2xl:space-y-8">
           <motion.div
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
-            className="space-y-5"
+            className="space-y-3 2xl:space-y-5"
           >
             <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#241a14] border border-[#f97316]/35 text-[#f97316] text-[11px] font-bold uppercase tracking-widest">
               <span>Next-Gen Job Matching</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl xl:text-[56px] font-extrabold text-white leading-[1.12] tracking-tight">
+            <h1 className="text-3xl xl:text-4xl 2xl:text-[56px] font-extrabold text-white leading-[1.12] tracking-tight">
               Start your career<br />
               journey with <span className="text-[#f97316]">Us</span><br />
               today.
             </h1>
-            <p className="text-gray-400 text-base xl:text-lg leading-relaxed max-w-md">
+            <p className="auth-showcase-description text-sm 2xl:text-lg text-gray-400 leading-relaxed max-w-md">
               Create your profile to explore curated opportunities, engage directly with premium hiring managers, and apply seamlessly with one click.
             </p>
           </motion.div>
@@ -263,9 +262,9 @@ const SignUp = () => {
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.15 }}
-            className="grid grid-cols-3 gap-3.5 xl:gap-4.5"
+            className="grid grid-cols-3 gap-2 2xl:gap-4.5"
           >
-            <div className="bg-[#1c1b1a]/85 backdrop-blur-md border border-white/5 rounded-2xl p-5 xl:p-6 hover:border-[#f97316]/30 transition-colors flex flex-col justify-between min-h-[145px]">
+            <div className="flex min-h-[104px] flex-col justify-between rounded-2xl border border-white/5 bg-[#1c1b1a]/85 p-3 backdrop-blur-md transition-colors hover:border-[#f97316]/30 2xl:min-h-[145px] 2xl:p-6">
               <div className="w-10 h-10 rounded-xl bg-[#f97316]/10 text-[#f97316] flex items-center justify-center">
                 <Briefcase className="w-5 h-5" />
               </div>
@@ -275,7 +274,7 @@ const SignUp = () => {
               </div>
             </div>
 
-            <div className="bg-[#1c1b1a]/85 backdrop-blur-md border border-white/5 rounded-2xl p-5 xl:p-6 hover:border-[#f97316]/30 transition-colors flex flex-col justify-between min-h-[145px]">
+            <div className="flex min-h-[104px] flex-col justify-between rounded-2xl border border-white/5 bg-[#1c1b1a]/85 p-3 backdrop-blur-md transition-colors hover:border-[#f97316]/30 2xl:min-h-[145px] 2xl:p-6">
               <div className="w-10 h-10 rounded-xl bg-[#f97316]/10 text-[#f97316] flex items-center justify-center">
                 <Building2 className="w-5 h-5" />
               </div>
@@ -285,7 +284,7 @@ const SignUp = () => {
               </div>
             </div>
 
-            <div className="bg-[#1c1b1a]/85 backdrop-blur-md border border-white/5 rounded-2xl p-5 xl:p-6 hover:border-[#f97316]/30 transition-colors flex flex-col justify-between min-h-[145px]">
+            <div className="flex min-h-[104px] flex-col justify-between rounded-2xl border border-white/5 bg-[#1c1b1a]/85 p-3 backdrop-blur-md transition-colors hover:border-[#f97316]/30 2xl:min-h-[145px] 2xl:p-6">
               <div className="w-10 h-10 rounded-xl bg-[#f97316]/10 text-[#f97316] flex items-center justify-center">
                 <Users className="w-5 h-5" />
               </div>
@@ -298,7 +297,7 @@ const SignUp = () => {
         </div>
 
         {/* Footer info */}
-        <div className="relative z-10 text-sm text-gray-500 flex justify-between items-center pt-6">
+        <div className="relative z-10 flex items-center justify-between pt-3 text-xs text-gray-500 2xl:pt-6 2xl:text-sm">
           <span>&copy; 2026 SPG JobPortal.</span>
           <div className="flex space-x-6">
             <a href="#" className="hover:text-white transition-colors">Privacy</a>
@@ -308,7 +307,7 @@ const SignUp = () => {
       </div>
 
       {/* RIGHT SIDE: Interactive SignUp Form Container */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative bg-white overflow-y-auto max-h-screen py-10 dark:bg-gray-950">
+      <div className="auth-form-panel relative flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-white p-3 sm:p-4 xl:p-6 2xl:p-10 lg:w-1/2 dark:bg-gray-950">
         
         {/* Subtle decorative lights for mobile */}
         <div className="lg:hidden absolute top-0 right-0 w-64 h-64 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
@@ -317,11 +316,11 @@ const SignUp = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md space-y-6"
+          className="auth-form-content auth-signup-content w-full max-w-md space-y-2.5 sm:space-y-3"
         >
           {/* Form Header */}
           <div className="space-y-2 text-center lg:text-left">
-            <h2 className="text-3xl font-extrabold text-secondary tracking-tight dark:text-gray-100">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-secondary tracking-tight dark:text-gray-100">
               Create Account
             </h2>
             <p className="text-gray-500 font-medium text-sm dark:text-gray-400">
@@ -342,7 +341,7 @@ const SignUp = () => {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="auth-signup-form space-y-2.5 sm:space-y-3">
             
             {/* Full Name */}
             <div className="space-y-1">
@@ -506,13 +505,13 @@ const SignUp = () => {
             </div>
 
             {/* Profile Picture Upload (Optional) */}
-            <div className="space-y-1.5">
+            <div className="auth-short-screen-optional space-y-1.5">
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-200">
                 Profile Picture (Optional)
               </label>
-              <div className="flex items-center space-x-4 p-1.5 border border-gray-100 rounded-xl bg-gray-50/50 dark:border-gray-800 dark:bg-gray-900/50">
+              <div className="flex items-center space-x-3 rounded-xl border border-gray-100 bg-gray-50/50 p-1 dark:border-gray-800 dark:bg-gray-900/50">
                 {/* Photo Preview */}
-                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 border border-gray-300 flex items-center justify-center shrink-0 dark:bg-gray-800 dark:border-gray-700">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-300 bg-gray-200 dark:border-gray-700 dark:bg-gray-800">
                   {avatarPreview ? (
                     <img src={avatarPreview} alt="Avatar Preview" className="w-full h-full object-cover" />
                   ) : (
@@ -536,7 +535,7 @@ const SignUp = () => {
                     <Upload className="w-3.5 h-3.5" />
                     <span>Upload Photo</span>
                   </button>
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500">JPG, PNG up to 5MB</p>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500">JPG or PNG, up to 5MB</p>
                 </div>
               </div>
             </div>
@@ -546,40 +545,40 @@ const SignUp = () => {
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-200">
                 I am a *
               </label>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2">
                 
                 {/* Job Seeker Option */}
                 <button
                   type="button"
                   onClick={() => handleRoleSelect("jobseeker")}
-                  className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                  className={`flex flex-col items-center justify-center rounded-xl border p-2 text-center transition-all cursor-pointer ${
                     formData.role === "jobseeker"
                       ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
                       : "border-gray-200 hover:border-gray-300 bg-white text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-600"
                   }`}
                 >
-                  <User className={`w-6 h-6 mb-1 transition-colors ${
+                  <User className={`mb-1 h-5 w-5 transition-colors ${
                     formData.role === "jobseeker" ? "text-primary" : "text-gray-400 dark:text-gray-500"
                   }`} />
                   <span className="text-[13px] font-bold block">Job Seeker</span>
-                  <span className="text-[10px] text-gray-400 mt-0.5 dark:text-gray-500">Looking for opportunities</span>
+                  <span className="auth-short-role-detail mt-0.5 text-[10px] text-gray-400 dark:text-gray-500">Looking for opportunities</span>
                 </button>
 
                 {/* Employer Option */}
                 <button
                   type="button"
                   onClick={() => handleRoleSelect("employer")}
-                  className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                  className={`flex flex-col items-center justify-center rounded-xl border p-2 text-center transition-all cursor-pointer ${
                     formData.role === "employer"
                       ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
                       : "border-gray-200 hover:border-gray-300 bg-white text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-600"
                   }`}
                 >
-                  <Building2 className={`w-6 h-6 mb-1 transition-colors ${
+                  <Building2 className={`mb-1 h-5 w-5 transition-colors ${
                     formData.role === "employer" ? "text-primary" : "text-gray-400 dark:text-gray-500"
                   }`} />
                   <span className="text-[13px] font-bold block">Employer</span>
-                  <span className="text-[10px] text-gray-400 mt-0.5 dark:text-gray-500">Hiring talent</span>
+                  <span className="auth-short-role-detail mt-0.5 text-[10px] text-gray-400 dark:text-gray-500">Hiring talent</span>
                 </button>
 
               </div>
@@ -589,7 +588,7 @@ const SignUp = () => {
             <button
               type="submit"
               disabled={formState.loading || formState.success}
-              className={`w-full py-3.5 rounded-xl font-bold text-[15px] text-white transition-all transform active:scale-[0.98] shadow-md shadow-primary/20 flex items-center justify-center space-x-2 cursor-pointer ${
+              className={`w-full py-2.5 rounded-xl font-bold text-[15px] text-white transition-all transform active:scale-[0.98] shadow-md shadow-primary/20 flex items-center justify-center space-x-2 cursor-pointer ${
                 formState.success
                   ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
                   : "bg-primary hover:bg-orange-600"
@@ -614,7 +613,7 @@ const SignUp = () => {
             </button>
 
             {/* Link to Login */}
-            <div className="text-center pt-2 text-sm text-gray-500 font-semibold dark:text-gray-400">
+            <div className="pt-1 text-center text-sm text-gray-500 font-semibold dark:text-gray-400">
               Already have an account?{" "}
               <Link 
                 to="/login" 
@@ -627,7 +626,7 @@ const SignUp = () => {
           </form>
 
           {/* Footer Text */}
-          <div className="text-center text-[11px] text-gray-400 font-semibold pt-1">
+          <div className="auth-short-screen-optional pt-1 text-center text-[11px] font-semibold text-gray-400">
             JobPortal. Spagad Technologies Limited
           </div>
         </motion.div>
