@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Briefcase,
+  ChevronsLeft,
+  ChevronsRight,
   LogOut,
   Menu,
   X,
@@ -18,7 +20,11 @@ const NavigationItem = ({ item, isActive, onClick, isCollapsed, isAdmin }) => {
   return (
     <button
       onClick={() => onClick(item.id)}
-      className={`w-full flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200 group ${
+      aria-label={isCollapsed ? item.name : undefined}
+      title={isCollapsed ? item.name : undefined}
+      className={`w-full flex items-center py-3 text-sm font-semibold rounded-xl transition-all duration-200 group ${
+        isCollapsed ? "justify-center px-3" : "px-4"
+      } ${
         isAdmin
           ? isActive
             ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[0_8px_18px_rgba(79,70,229,0.22)]"
@@ -55,6 +61,9 @@ const DashboardLayout = ({ children, activeMenu }) => {
   const navigationMenu = isAdmin ? ADMIN_NAVIGATION_MENU : NAVIGATION_MENU;
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return window.localStorage.getItem("dashboard-sidebar-collapsed") === "true";
+  });
   const [activeNavItem, setActiveNavItem] = useState(
     activeMenu || (user?.role === "admin" ? "admin-email-templates" : "employer-dashboard")
   );
@@ -113,17 +122,33 @@ const DashboardLayout = ({ children, activeMenu }) => {
   };
 
   const firstName = user?.name?.split(" ")[0] ?? (isAdmin ? "Admin" : "Employer");
+  const isCollapsed = !isMobile && isSidebarCollapsed;
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed((current) => {
+      const next = !current;
+      window.localStorage.setItem("dashboard-sidebar-collapsed", String(next));
+      return next;
+    });
+  };
   const sidebarClass = isAdmin
     ? isMobile
       ? `fixed inset-y-0 left-0 z-50 w-[280px] transform border-r border-violet-100 bg-white p-4 shadow-[16px_0_40px_rgba(76,55,143,0.14)] dark:border-slate-800 dark:bg-slate-900 transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`
-      : "h-full w-64 shrink-0 rounded-[22px] border border-violet-100/90 bg-white/95 p-4 shadow-[0_16px_36px_rgba(76,55,143,0.10)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 dark:shadow-[0_16px_36px_rgba(0,0,0,0.38)]"
+      : `h-full shrink-0 rounded-[22px] border border-violet-100/90 shadow-[0_16px_36px_rgba(76,55,143,0.10)] backdrop-blur transition-[width,padding] duration-300 ${
+          isCollapsed
+            ? "w-20 p-3"
+            : "w-64 p-4"
+        } bg-[linear-gradient(155deg,rgba(255,255,255,0.98)_0%,rgba(245,243,255,0.96)_52%,rgba(238,242,255,0.94)_100%)] dark:border-slate-800 dark:bg-[linear-gradient(155deg,rgba(15,23,42,0.98)_0%,rgba(30,27,75,0.96)_54%,rgba(30,41,59,0.98)_100%)] dark:shadow-[0_16px_36px_rgba(0,0,0,0.38)]`
     : isMobile
-      ? `fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ${
+      ? `fixed inset-y-0 left-0 z-50 w-64 transform bg-[linear-gradient(155deg,#0f3a5c_0%,#1e3a8a_42%,#3730a3_100%)] p-5 shadow-[16px_0_42px_rgba(15,23,42,0.32)] transition-transform duration-300 dark:bg-[linear-gradient(155deg,#0f172a_0%,#1e1b4b_54%,#312e81_100%)] ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } w-64 bg-secondary p-5 dark:bg-gray-900`
-      : "w-64 h-full flex flex-col shrink-0 bg-transparent p-5";
+        }`
+      : `h-full shrink-0 rounded-[22px] shadow-[0_16px_36px_rgba(15,23,42,0.18)] transition-[width,padding] duration-300 ${
+          isCollapsed
+            ? "w-20 p-3"
+            : "w-64 p-5"
+        } bg-[linear-gradient(155deg,#0f3a5c_0%,#1e3a8a_42%,#3730a3_100%)] dark:bg-[linear-gradient(155deg,#0f172a_0%,#1e1b4b_54%,#312e81_100%)]`;
 
   return (
     <div className={`h-screen w-screen flex overflow-hidden font-display ${isAdmin ? "bg-[radial-gradient(circle_at_top_left,_#ede9fe_0%,_#f8fafc_42%,_#eef2ff_100%)] dark:bg-none dark:bg-slate-950" : "bg-secondary dark:bg-gray-900"} ${isMobile ? "p-0" : "p-3"}`}>
@@ -136,11 +161,23 @@ const DashboardLayout = ({ children, activeMenu }) => {
       )}
 
       {/*  Sidebar   */}
-      <aside className={`${sidebarClass} flex flex-col justify-between`}>
+      <aside className={`${sidebarClass} relative isolate flex flex-col justify-between overflow-hidden`}>
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute -right-20 -top-16 h-48 w-48 rounded-full blur-3xl ${
+            isAdmin ? "bg-violet-300/35 dark:bg-indigo-500/20" : "bg-cyan-300/20"
+          }`}
+        />
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute -bottom-20 -left-16 h-44 w-44 rounded-full blur-3xl ${
+            isAdmin ? "bg-indigo-200/35 dark:bg-violet-500/15" : "bg-violet-300/20"
+          }`}
+        />
         {/* Top Branding Section */}
-        <div className="space-y-8">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center space-x-3 group">
+        <div className="relative z-10 space-y-8">
+          <div className={`relative flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
+            <Link to="/" className={`flex min-w-0 items-center group ${isCollapsed ? "justify-center" : "space-x-3"}`} title={isCollapsed ? (isAdmin ? "SPG Admin" : "SPG Portal") : undefined}>
               <div className={`h-9 w-9 flex items-center justify-center shadow-md transition-transform group-hover:scale-105 active:scale-100 ${
                 isAdmin
                   ? "rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 shadow-violet-200"
@@ -148,12 +185,12 @@ const DashboardLayout = ({ children, activeMenu }) => {
               }`}>
                 <Briefcase className="h-5 w-5 text-white" />
               </div>
-              <div>
+              {!isCollapsed && <div>
                 <span className={`block text-xl font-bold tracking-tight ${isAdmin ? "text-slate-900 dark:text-white" : "text-white"}`}>
                   {isAdmin ? "SPG Admin" : "SPG Portal"}
                 </span>
                 {isAdmin && <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-violet-500 dark:text-violet-300">Platform control</span>}
-              </div>
+              </div>}
             </Link>
 
             {isMobile && (
@@ -164,10 +201,25 @@ const DashboardLayout = ({ children, activeMenu }) => {
                 <X className="h-5 w-5" />
               </button>
             )}
+            {!isMobile && (
+              <button
+                type="button"
+                onClick={toggleSidebarCollapse}
+                aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                className={`rounded-lg p-1.5 transition-colors ${
+                  isAdmin
+                    ? "bg-violet-100/70 text-violet-600 hover:bg-violet-200 dark:bg-slate-800/80 dark:text-violet-300 dark:hover:bg-slate-700"
+                    : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
+                } ${isCollapsed ? "absolute right-0 top-1/2 -translate-y-1/2" : ""}`}
+              >
+                {isCollapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
+              </button>
+            )}
           </div>
 
           {/* Navigation Links */}
-          {isAdmin && <p className="mb-2 px-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Workspace</p>}
+          {isAdmin && !isCollapsed && <p className="mb-2 px-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Workspace</p>}
           <nav className="space-y-1.5">
             {navigationMenu.map((item) => (
               <NavigationItem
@@ -175,7 +227,7 @@ const DashboardLayout = ({ children, activeMenu }) => {
                 item={item}
                 isActive={activeNavItem === item.id}
                 onClick={handleNavigation}
-                isCollapsed={false}
+                isCollapsed={isCollapsed}
                 isAdmin={isAdmin}
               />
             ))}
@@ -183,11 +235,13 @@ const DashboardLayout = ({ children, activeMenu }) => {
         </div>
 
         {/* Bottom Profile section matching image layout */}
-        <div className={`border-t pt-4 ${isAdmin ? "border-violet-100 dark:border-slate-800" : "border-white/15"}`}>
+        <div className={`relative z-10 border-t pt-4 ${isAdmin ? "border-violet-100 dark:border-slate-800" : "border-white/15"}`}>
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center gap-3 rounded-xl p-2 text-left transition-all duration-200 group ${isAdmin ? "hover:bg-rose-50 dark:hover:bg-rose-500/10" : "hover:bg-white/10"}`}
-            title="Click to logout"
+            title={isCollapsed ? "Log out" : "Click to logout"}
+            className={`w-full flex rounded-xl p-2 text-left transition-all duration-200 group ${
+              isCollapsed ? "justify-center" : "gap-3"
+            } ${isAdmin ? "hover:bg-rose-50 dark:hover:bg-rose-500/10" : "hover:bg-white/10"}`}
           >
             {user?.avatar ? (
               <img
@@ -200,11 +254,11 @@ const DashboardLayout = ({ children, activeMenu }) => {
                 {firstName.charAt(0).toUpperCase()}
               </div>
             )}
-            <div className="flex-1 min-w-0">
+            {!isCollapsed && <div className="flex-1 min-w-0">
               <p className={`text-sm font-semibold truncate ${isAdmin ? "text-slate-800 dark:text-slate-100" : "text-white"}`}>{user?.name || (isAdmin ? "Administrator" : "Employer")}</p>
               <p className={`text-xs truncate capitalize ${isAdmin ? "text-slate-400 dark:text-slate-500" : "text-slate-200"}`}>{isAdmin ? "Administrator" : user?.role || "employer"}</p>
-            </div>
-            <LogOut className={`h-4 w-4 transition-colors ${isAdmin ? "text-slate-400 dark:text-slate-500 group-hover:text-rose-500" : "text-slate-200 group-hover:text-rose-200"}`} />
+            </div>}
+            {!isCollapsed && <LogOut className={`h-4 w-4 transition-colors ${isAdmin ? "text-slate-400 dark:text-slate-500 group-hover:text-rose-500" : "text-slate-200 group-hover:text-rose-200"}`} />}
           </button>
         </div>
       </aside>
