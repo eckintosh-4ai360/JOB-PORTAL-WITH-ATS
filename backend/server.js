@@ -17,6 +17,7 @@ const companyRoutes = require("./routes/companyRoutes");
 const salaryRoutes = require("./routes/salaryRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const moderationRoutes = require("./routes/moderationRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 
 const app = express();
@@ -45,6 +46,7 @@ app.use('/api/saved-jobs', savedJobRoutes);
 app.use('/api/email-templates', emailTemplateRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/moderation', moderationRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Serve uploads folder.
 //
