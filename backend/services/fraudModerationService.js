@@ -297,9 +297,10 @@ const screenJob = async (jobId) => {
     });
     if (!job) return null;
 
-    // Compare against live adverts only; a closed job being reposted is normal.
+    // Compare against live adverts only; a closed or deleted job being
+    // reposted is normal.
     const siblings = await prisma.job.findMany({
-        where: { id: { not: job.id }, isClosed: false },
+        where: { id: { not: job.id }, isClosed: false, deletedAt: null },
         select: {
             id: true, title: true, description: true, requirements: true,
             companyId: true, contentHash: true,
@@ -327,7 +328,7 @@ const screenJob = async (jobId) => {
     }
 
     const recruiterJobs = await prisma.job.findMany({
-        where: { companyId: job.companyId },
+        where: { companyId: job.companyId, deletedAt: null },
         select: { id: true, title: true, description: true, requirements: true, salaryMin: true, createdAt: true },
         take: 60,
         orderBy: { createdAt: "desc" },
@@ -358,7 +359,7 @@ const screenCompany = async (companyId) => {
     });
     if (!company) return null;
 
-    const jobCount = await prisma.job.count({ where: { companyId: company.userId } });
+    const jobCount = await prisma.job.count({ where: { companyId: company.userId, deletedAt: null } });
     const accountAgeHours = company.user?.createdAt
         ? (Date.now() - new Date(company.user.createdAt).getTime()) / 3600_000
         : null;

@@ -210,7 +210,7 @@ const getAllJobs = async (req, res) => {
 
         // `hidden` is set by moderation; `flagged` stays visible on purpose so a
         // false positive never silently removes a real advert.
-        const where = { isClosed: false, moderationState: { not: "hidden" } };
+        const where = { isClosed: false, moderationState: { not: "hidden" }, deletedAt: null };
 
         if (keyword) {
             where.OR = [
@@ -280,7 +280,7 @@ const getJobById = async (req, res) => {
             }
         });
 
-        if (!job) {
+        if (!job || job.deletedAt) {
             return res.status(404).json({ message: "Job not found" });
         }
 
@@ -323,7 +323,7 @@ const getMyJobs = async (req, res) => {
         }
 
         const jobs = await prisma.job.findMany({
-            where: { companyId: req.user._id },
+            where: { companyId: req.user._id, deletedAt: null },
             include: {
                 company: { select: { id: true, name: true } },
                 _count: { select: { applications: true } },
@@ -350,7 +350,7 @@ const updateJob = async (req, res) => {
     try {
         const job = await prisma.job.findUnique({ where: { id: req.params.id } });
 
-        if (!job) {
+        if (!job || job.deletedAt) {
             return res.status(404).json({ message: "Job not found" });
         }
 
@@ -384,7 +384,7 @@ const closeJob = async (req, res) => {
     try {
         const job = await prisma.job.findUnique({ where: { id: req.params.id } });
 
-        if (!job) {
+        if (!job || job.deletedAt) {
             return res.status(404).json({ message: "Job not found" });
         }
 
@@ -407,14 +407,14 @@ const closeJob = async (req, res) => {
     }
 };
 
-// @desc    Delete a job posting
+// @desc    Soft delete a job posting — the row is kept, not removed
 // @route   DELETE /api/jobs/:id
 // @access  Private (Employer only — must be the owner)
 const deleteJob = async (req, res) => {
     try {
         const job = await prisma.job.findUnique({ where: { id: req.params.id } });
 
-        if (!job) {
+        if (!job || job.deletedAt) {
             return res.status(404).json({ message: "Job not found" });
         }
 
@@ -422,7 +422,13 @@ const deleteJob = async (req, res) => {
             return res.status(403).json({ message: "Not authorized to delete this job" });
         }
 
-        await prisma.job.delete({ where: { id: req.params.id } });
+        // Stamping `deletedAt` rather than deleting the row: every dependent
+        // record cascades on delete, so removing the job would take its
+        // applications, saved-job entries and match history with it.
+        await prisma.job.update({
+            where: { id: req.params.id },
+            data: { deletedAt: new Date() },
+        });
 
         res.status(200).json({ message: "Job deleted successfully" });
     } catch (error) {
