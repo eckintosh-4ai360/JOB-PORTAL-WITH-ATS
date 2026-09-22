@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
+import { resolveFileUrl, downloadFileUrl } from "../../utils/fileUrl";
 
 //   Status Config  
 const STATUS_CONFIG = {
@@ -1006,7 +1007,7 @@ const ApplicationViewer = () => {
                             </div>
                             <div className="flex gap-2 flex-wrap justify-center">
                               <a
-                                href={selectedApp.resume}
+                                href={resolveFileUrl(selectedApp.resume)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-colors"
@@ -1015,8 +1016,7 @@ const ApplicationViewer = () => {
                                 View
                               </a>
                               <a
-                                href={selectedApp.resume}
-                                download
+                                href={downloadFileUrl(selectedApp.resume)}
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 dark:border-indigo-500/30 bg-white dark:bg-gray-900 px-3.5 py-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
                               >
                                 <Download className="h-3.5 w-3.5" />
@@ -1065,7 +1065,7 @@ const ApplicationViewer = () => {
                           </div>
                           <div className="flex gap-2 shrink-0">
                             <a
-                              href={selectedApp.coverLetterFile}
+                              href={resolveFileUrl(selectedApp.coverLetterFile)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition"
@@ -1074,8 +1074,7 @@ const ApplicationViewer = () => {
                               View
                             </a>
                             <a
-                              href={selectedApp.coverLetterFile}
-                              download
+                              href={downloadFileUrl(selectedApp.coverLetterFile)}
                               className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 dark:border-indigo-500/30 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition"
                             >
                               <Download className="h-3 w-3" />
