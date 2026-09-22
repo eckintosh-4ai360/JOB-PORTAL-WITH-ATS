@@ -20,17 +20,31 @@ const FILTERS = [
 const JobMatchList = ({ matches = [], isLoading, onRefresh, isRefreshing, needsProfile }) => {
   const [filter, setFilter] = useState("all");
   const [expanded, setExpanded] = useState(null);
+  const [showAllMatches, setShowAllMatches] = useState(false);
 
   const filtered = useMemo(() => {
-    if (filter === "strong") return matches.filter((match) => match.matchScore >= 80);
+    const rankedMatches = [...matches].sort(
+      (left, right) => (right.matchScore || 0) - (left.matchScore || 0)
+    );
+
+    if (filter === "strong") return rankedMatches.filter((match) => match.matchScore >= 80);
     if (filter === "remote") {
-      return matches.filter((match) => {
+      return rankedMatches.filter((match) => {
         const haystack = `${match.job?.location || ""} ${match.job?.workModel || ""} ${match.job?.type || ""}`;
         return /remote|anywhere|work from home/i.test(haystack);
       });
     }
-    return matches;
+    return rankedMatches;
   }, [matches, filter]);
+
+  const featuredMatches = filtered.slice(0, 5);
+  const remainingMatchCount = Math.max(filtered.length - featuredMatches.length, 0);
+  const visibleMatches = showAllMatches ? filtered : featuredMatches;
+
+  const handleFilterChange = (nextFilter) => {
+    setFilter(nextFilter);
+    setShowAllMatches(false);
+  };
 
   if (needsProfile) {
     return (
@@ -67,7 +81,7 @@ const JobMatchList = ({ matches = [], isLoading, onRefresh, isRefreshing, needsP
               <button
                 key={option.id}
                 type="button"
-                onClick={() => setFilter(option.id)}
+                onClick={() => handleFilterChange(option.id)}
                 className={`rounded-lg px-3 py-1 font-label-md font-bold transition-colors ${
                   filter === option.id
                     ? "bg-surface-card text-primary shadow-xs"
@@ -130,7 +144,7 @@ const JobMatchList = ({ matches = [], isLoading, onRefresh, isRefreshing, needsP
         </div>
       ) : (
         <div className="flex flex-col gap-space-md">
-          {filtered.map((match) => {
+          {visibleMatches.map((match) => {
             const job = match.job || {};
             const jobId = match.jobId || job._id || job.id;
             const isOpen = expanded === jobId;
@@ -290,6 +304,22 @@ const JobMatchList = ({ matches = [], isLoading, onRefresh, isRefreshing, needsP
               </article>
             );
           })}
+
+          {remainingMatchCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowAllMatches((current) => !current)}
+              aria-expanded={showAllMatches}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-brand-indigo-light px-space-md py-3 font-label-lg font-bold text-primary transition-colors hover:bg-brand-indigo-subtle"
+            >
+              <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+                {showAllMatches ? "expand_less" : "expand_more"}
+              </span>
+              {showAllMatches
+                ? "Show fewer matches"
+                : `View ${remainingMatchCount} more job match${remainingMatchCount === 1 ? "" : "es"}`}
+            </button>
+          )}
         </div>
       )}
     </div>

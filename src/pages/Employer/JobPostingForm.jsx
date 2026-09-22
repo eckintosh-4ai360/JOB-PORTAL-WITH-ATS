@@ -5,6 +5,7 @@ import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
+import { LocationPicker } from "../../components/input/LocationPicker";
 
 const DEPARTMENT_OPTIONS = [
   "Business & Professional Services",
@@ -40,12 +41,14 @@ const JobPostingForm = () => {
   const [workModel, setWorkModel] = useState("Hybrid");
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
   const [jobType, setJobType] = useState("Full-Time");
   const [experienceLevel, setExperienceLevel] = useState("Mid-level");
   const [deadline, setDeadline] = useState("");
 
-  // Set elsewhere (the map picker, custom category/type entries). The form has
-  // no input for them, so hold them and write them back untouched on save.
+  // Custom category/type entries have no direct editor in this version of the
+  // form, so preserve their stored values when an employer edits a posting.
   const [passthrough, setPassthrough] = useState({});
 
   // Step 2
@@ -78,6 +81,8 @@ const JobPostingForm = () => {
 
         setTitle(job.title || "");
         setLocation(job.location || "");
+        setLatitude(job.latitude ?? null);
+        setLongitude(job.longitude ?? null);
         setDepartment(job.category || "Business & Professional Services");
         setJobType(job.type || job.jobType || "Full-Time");
         setWorkModel(job.workModel || "Hybrid");
@@ -91,8 +96,6 @@ const JobPostingForm = () => {
         setPassthrough({
           customCategory: job.customCategory ?? undefined,
           customJobType: job.customJobType ?? undefined,
-          latitude: job.latitude ?? undefined,
-          longitude: job.longitude ?? undefined,
         });
       } catch (err) {
         console.error("Failed to load job for editing:", err);
@@ -139,6 +142,8 @@ const JobPostingForm = () => {
       const payload = {
         title,
         location,
+        latitude,
+        longitude,
         category: department || "Other",
         type: jobType,
         jobType,
@@ -407,18 +412,23 @@ const JobPostingForm = () => {
                         />
                       </div>
 
-                      <div className="flex flex-col gap-1">
-                        <label className="font-label-lg font-semibold text-text-primary">
-                          Location / Primary City
-                        </label>
-                        <input
-                          type="text"
+                      <div>
+                        <LocationPicker
+                          label="Job location"
                           required
                           value={location}
-                          onChange={(e) => setLocation(e.target.value)}
-                          placeholder="e.g. Accra, Ghana (Hybrid)"
-                          className="h-12 px-4 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface focus:outline-none"
+                          latitude={latitude}
+                          longitude={longitude}
+                          placeholder="Search an address or pin the exact workplace"
+                          onChange={({ location: nextLocation, latitude: nextLatitude, longitude: nextLongitude }) => {
+                            setLocation(nextLocation);
+                            setLatitude(nextLatitude);
+                            setLongitude(nextLongitude);
+                          }}
                         />
+                        <p className="mt-1.5 font-body-sm text-text-muted">
+                          Pin the workplace on the map so candidates can view the exact location.
+                        </p>
                       </div>
 
                       <div className="flex flex-col gap-1">

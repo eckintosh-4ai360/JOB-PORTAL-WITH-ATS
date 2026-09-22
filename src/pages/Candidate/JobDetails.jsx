@@ -6,6 +6,13 @@ import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
 import JobMatchPanel from "../../components/ai/JobMatchPanel";
+import AttachmentPicker from "../../components/apply/AttachmentPicker";
+import {
+  useSavedAttachments,
+  emptyAttachment,
+  defaultAttachment,
+} from "../../hooks/useSavedAttachments";
+import { useAppliedJobs } from "../../hooks/useAppliedJobs";
 import toast from "react-hot-toast";
 
 const parseList = (val, defaultList = []) => {
@@ -55,11 +62,31 @@ const JobDetails = () => {
 
   // Application Modal state
   const [showApplyModal, setShowApplyModal] = useState(false);
-  const [applyResume, setApplyResume] = useState(null);
+  const [resumeAttachment, setResumeAttachment] = useState(emptyAttachment);
+  const [coverAttachment, setCoverAttachment] = useState(emptyAttachment);
   const [coverNote, setCoverNote] = useState("");
   const [applicantName, setApplicantName] = useState("");
   const [applicantEmail, setApplicantEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  //   Files this applicant has already uploaded, so the form can offer them
+  //   instead of asking for the same CV on every job.
+  const { resumeOptions, coverLetterOptions } = useSavedAttachments(showApplyModal);
+
+  //   An account can only apply once, so say so before the form is filled in
+  //   rather than after the CV has been uploaded.
+  const { hasApplied, markApplied } = useAppliedJobs();
+  const alreadyApplied = hasApplied(jobId);
+
+  //   Until the applicant picks something, the newest saved file stands in.
+  //   Derived rather than written into state, so the saved files arriving does
+  //   not overwrite a choice already made.
+  const resumeChoice = resumeAttachment.url || resumeAttachment.file
+    ? resumeAttachment
+    : defaultAttachment(resumeOptions);
+  const coverChoice = coverAttachment.url || coverAttachment.file
+    ? coverAttachment
+    : defaultAttachment(coverLetterOptions);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -138,8 +165,18 @@ const JobDetails = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      if (!resumeChoice.url && !resumeChoice.file) {
+        toast.error("Please attach a resume or pick one you have already uploaded.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const formData = new FormData();
-      if (applyResume) formData.append("resume", applyResume);
+      // A saved file travels as its URL; a fresh one as the file itself.
+      formData.append("resume", resumeChoice.file || resumeChoice.url);
+      if (coverChoice.file || coverChoice.url) {
+        formData.append("coverLetterFile", coverChoice.file || coverChoice.url);
+      }
       if (coverNote) formData.append("coverLetter", coverNote);
 
       if (!isAuthenticated) {
@@ -154,9 +191,11 @@ const JobDetails = () => {
 
       await axiosInstance.post(API_PATHS.APPLICATIONS.APPLY_FOR_JOB(jobId), formData);
       toast.success("Application successfully submitted!");
+      markApplied(jobId);
       setShowApplyModal(false);
       setCoverNote("");
-      setApplyResume(null);
+      setResumeAttachment(emptyAttachment);
+      setCoverAttachment(emptyAttachment);
     } catch (err) {
       toast.error(
         err.response?.data?.message || "Failed to submit application. Please try again."
@@ -223,6 +262,23 @@ const JobDetails = () => {
     job.companyProfile?.description ||
     job.company?.companyDescription ||
     `${companyName} has opportunities for qualified candidates.`;
+  const hasExactLocation =
+    job.latitude !== null &&
+    job.latitude !== undefined &&
+    job.latitude !== "" &&
+    job.longitude !== null &&
+    job.longitude !== undefined &&
+    job.longitude !== "" &&
+    Number.isFinite(Number(job.latitude)) &&
+    Number.isFinite(Number(job.longitude));
+  const latitude = hasExactLocation ? Number(job.latitude) : null;
+  const longitude = hasExactLocation ? Number(job.longitude) : null;
+  const googleMapsUrl = hasExactLocation
+    ? `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
+    : "";
+  const googleMapsEmbedUrl = hasExactLocation
+    ? `https://www.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`
+    : "";
 
   const responsibilitiesList = parseList(job.responsibilities, [
     "Deliver high-quality work that supports the team and the organisation's goals.",
@@ -352,25 +408,42 @@ const JobDetails = () => {
 
               {/* Right Action Cluster */}
               <div className="flex flex-col sm:flex-row lg:flex-col shrink-0 gap-space-sm items-stretch lg:min-w-[220px]">
-                <button
-                  onClick={() => setShowApplyModal(true)}
-                  type="button"
-                  className="w-full h-12 px-6 rounded-xl bg-primary-container text-on-primary font-label-lg font-bold flex items-center justify-center gap-2 shadow-md hover:bg-brand-indigo-dark transition-all transform active:scale-98 cursor-pointer"
-                >
-                  <span>Apply Now</span>
-                  <span className="material-symbols-outlined text-[20px]">
-                    arrow_forward
-                  </span>
-                </button>
+                {alreadyApplied ? (
+                  <div className="w-full rounded-xl border border-border-default bg-surface-container-low px-5 py-4 text-center">
+                    <p className="flex items-center justify-center gap-2 font-label-lg font-bold text-on-surface">
+                      <span className="material-symbols-outlined text-[20px] text-primary">task_alt</span>
+                      Already applied
+                    </p>
+                    <Link
+                      to="/applications"
+                      className="mt-1 inline-block font-body-sm text-primary hover:underline"
+                    >
+                      Track your application
+                    </Link>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setShowApplyModal(true)}
+                      type="button"
+                      className="w-full h-12 px-6 rounded-xl bg-primary-container text-on-primary font-label-lg font-bold flex items-center justify-center gap-2 shadow-md hover:bg-brand-indigo-dark transition-all transform active:scale-98 cursor-pointer"
+                    >
+                      <span>Apply Now</span>
+                      <span className="material-symbols-outlined text-[20px]">
+                        arrow_forward
+                      </span>
+                    </button>
 
-                <button
-                  onClick={() => setShowApplyModal(true)}
-                  type="button"
-                  className="w-full h-11 px-5 rounded-xl bg-brand-indigo-light text-primary font-label-lg font-bold flex items-center justify-center gap-2 hover:bg-brand-indigo-subtle transition-colors cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[18px]">bolt</span>
-                  <span>Quick Apply with CV</span>
-                </button>
+                    <button
+                      onClick={() => setShowApplyModal(true)}
+                      type="button"
+                      className="w-full h-11 px-5 rounded-xl bg-brand-indigo-light text-primary font-label-lg font-bold flex items-center justify-center gap-2 hover:bg-brand-indigo-subtle transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">bolt</span>
+                      <span>Quick Apply with CV</span>
+                    </button>
+                  </>
+                )}
 
                 <div className="grid grid-cols-2 gap-space-xs pt-1">
                   <button
@@ -534,6 +607,46 @@ const JobDetails = () => {
                   candidate's analysed resume across six dimensions. */}
               <JobMatchPanel jobId={jobId} isAuthenticated={isAuthenticated} />
 
+              {hasExactLocation && (
+                <section className="overflow-hidden rounded-2xl border border-border-default bg-surface-card shadow-sm">
+                  <div className="flex items-start gap-3 px-space-md pb-space-sm pt-space-md md:px-space-lg">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-indigo-light text-primary">
+                      <span className="material-symbols-outlined text-[22px]" aria-hidden="true">
+                        location_on
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="font-headline-sm font-bold text-text-primary">Exact job location</h2>
+                      <p className="truncate font-body-sm text-text-muted">
+                        {job.location || "Pinned workplace"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <iframe
+                    title={`Map showing the location for ${job.title}`}
+                    src={googleMapsEmbedUrl}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="h-52 w-full border-y border-border-default bg-surface-container"
+                  />
+
+                  <div className="p-space-sm md:px-space-lg md:py-space-md">
+                    <a
+                      href={googleMapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-surface-container px-3 py-2.5 font-label-md font-bold text-primary transition-colors hover:bg-surface-container-high"
+                    >
+                      <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
+                        directions
+                      </span>
+                      Open directions in Google Maps
+                    </a>
+                  </div>
+                </section>
+              )}
+
               {/* Company Profile Card */}
               <div className="bg-surface-card rounded-2xl p-space-md md:p-space-lg border border-border-default shadow-sm flex flex-col gap-space-sm">
                 <div className="flex items-center gap-3">
@@ -657,18 +770,22 @@ const JobDetails = () => {
                 </>
               )}
 
-              <div className="flex flex-col gap-2">
-                <label className="font-label-caps uppercase text-text-muted">
-                  Attach Resume / CV (PDF, DOCX) *
-                </label>
-                <input
-                  type="file"
-                  accept=".pdf,.docx,.doc"
-                  required
-                  onChange={(e) => setApplyResume(e.target.files[0])}
-                  className="font-body-sm text-text-secondary file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-indigo-light file:text-primary hover:file:bg-brand-indigo-subtle cursor-pointer"
+              <AttachmentPicker
+                label="Resume / CV"
+                required
+                options={resumeOptions}
+                value={resumeChoice}
+                onChange={setResumeAttachment}
+              />
+
+              {coverLetterOptions.length > 0 && (
+                <AttachmentPicker
+                  label="Cover letter document (optional)"
+                  options={coverLetterOptions}
+                  value={coverChoice}
+                  onChange={setCoverAttachment}
                 />
-              </div>
+              )}
 
               <div className="flex flex-col gap-2">
                 <label className="font-label-caps uppercase text-text-muted">

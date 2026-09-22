@@ -5,6 +5,15 @@ import { MapPin, Navigation, Search, Map, X, Check, Loader2, ExternalLink, Locat
 // keystroke-driven search is debounced by this much before it hits the network.
 const SEARCH_DEBOUNCE_MS = 600;
 const GHANA_BOUNDS = [[4.5, -3.3], [11.2, 1.3]];
+const hasValidCoordinates = (latitude, longitude) =>
+  latitude !== null &&
+  latitude !== undefined &&
+  latitude !== "" &&
+  longitude !== null &&
+  longitude !== undefined &&
+  longitude !== "" &&
+  Number.isFinite(Number(latitude)) &&
+  Number.isFinite(Number(longitude));
 
 export const LocationPicker = ({
   label = "Location",
@@ -24,14 +33,18 @@ export const LocationPicker = ({
   
   // Coords state
   const [selectedCoords, setSelectedCoords] = useState(
-    latitude && longitude ? { lat: Number(latitude), lng: Number(longitude) } : null
+    hasValidCoordinates(latitude, longitude)
+      ? { lat: Number(latitude), lng: Number(longitude) }
+      : null
   );
 
   // Modal State
   const [showMapModal, setShowMapModal] = useState(false);
   const [modalQuery, setModalQuery] = useState(value || "");
   const [modalCoords, setModalCoords] = useState(
-    latitude && longitude ? { lat: Number(latitude), lng: Number(longitude) } : { lat: 5.6037, lng: -0.1870 } // Default Accra
+    hasValidCoordinates(latitude, longitude)
+      ? { lat: Number(latitude), lng: Number(longitude) }
+      : { lat: 5.6037, lng: -0.1870 } // Default Accra
   );
   const [modalSuggestions, setModalSuggestions] = useState([]);
   const [isModalSearching, setIsModalSearching] = useState(false);
@@ -50,8 +63,10 @@ export const LocationPicker = ({
   }, [value]);
 
   useEffect(() => {
-    if (latitude && longitude) {
+    if (hasValidCoordinates(latitude, longitude)) {
       setSelectedCoords({ lat: Number(latitude), lng: Number(longitude) });
+    } else {
+      setSelectedCoords(null);
     }
   }, [latitude, longitude]);
 
@@ -154,12 +169,13 @@ export const LocationPicker = ({
   const handleInputChange = (e) => {
     const text = e.target.value;
     setQuery(text);
+    setSelectedCoords(null);
     setShowDropdown(true);
     if (onChange) {
       onChange({
         location: text,
-        latitude: selectedCoords?.lat || null,
-        longitude: selectedCoords?.lng || null,
+        latitude: null,
+        longitude: null,
       });
     }
   };
@@ -329,11 +345,11 @@ export const LocationPicker = ({
     }
   };
 
-  const googleMapsSearchUrl = query
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
-    : selectedCoords
+  const googleMapsSearchUrl = selectedCoords
     ? `https://www.google.com/maps/search/?api=1&query=${selectedCoords.lat},${selectedCoords.lng}`
-    : "https://maps.google.com";
+    : query
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+      : "https://maps.google.com";
 
   return (
     <div className="flex flex-col gap-1.5" ref={containerRef}>
@@ -364,6 +380,7 @@ export const LocationPicker = ({
 
         <input
           type="text"
+          required={required}
           value={query}
           onChange={handleInputChange}
           onFocus={() => setShowDropdown(true)}

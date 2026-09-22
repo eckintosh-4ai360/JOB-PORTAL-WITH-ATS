@@ -1,11 +1,18 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { useAuth } from "../../context/AuthContext";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import MatchBadge from "../../components/ai/MatchBadge";
+import AttachmentPicker from "../../components/apply/AttachmentPicker";
+import {
+  useSavedAttachments,
+  emptyAttachment,
+  defaultAttachment,
+} from "../../hooks/useSavedAttachments";
+import { useAppliedJobs } from "../../hooks/useAppliedJobs";
 
 import toast from "react-hot-toast";
 
@@ -31,9 +38,39 @@ const FindJobs = () => {
   const [needsResumeAnalysis, setNeedsResumeAnalysis] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [quickApplyJob, setQuickApplyJob] = useState(null);
-  const [applyResume, setApplyResume] = useState(null);
+  const [resumeAttachment, setResumeAttachment] = useState(emptyAttachment);
+  const [coverAttachment, setCoverAttachment] = useState(emptyAttachment);
   const [applyNote, setApplyNote] = useState("");
   const [isSubmittingApply, setIsSubmittingApply] = useState(false);
+
+  //   Quick Apply is only quick if it stops asking for a CV already on file.
+  const { resumeOptions, coverLetterOptions } = useSavedAttachments(Boolean(quickApplyJob));
+
+  //   An account can only apply once per job; show that on the card.
+  const { hasApplied, markApplied } = useAppliedJobs();
+
+  //   Arriving from a company on Browse Companies narrows the list to that
+  //   employer. Held in the url so the filter survives a refresh or a shared
+  //   link, and so the back button clears it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const companyFilter = searchParams.get("company") || "";
+  const companyFilterName = searchParams.get("companyName") || "";
+
+  const clearCompanyFilter = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("company");
+    next.delete("companyName");
+    setSearchParams(next, { replace: true });
+    setPage(1);
+  };
+
+  //   Until the applicant picks something, the newest saved file stands in.
+  const resumeChoice = resumeAttachment.url || resumeAttachment.file
+    ? resumeAttachment
+    : defaultAttachment(resumeOptions);
+  const coverChoice = coverAttachment.url || coverAttachment.file
+    ? coverAttachment
+    : defaultAttachment(coverLetterOptions);
 
   // Pagination State
   const [page, setPage] = useState(1);
@@ -167,15 +204,27 @@ const FindJobs = () => {
 
     setIsSubmittingApply(true);
     try {
+      if (!resumeChoice.url && !resumeChoice.file) {
+        toast.error("Please attach a resume or pick one you have already uploaded.");
+        setIsSubmittingApply(false);
+        return;
+      }
+
       const jobId = quickApplyJob._id || quickApplyJob.id;
       const formData = new FormData();
-      if (applyResume) formData.append("resume", applyResume);
+      // A saved file travels as its URL; a fresh one as the file itself.
+      formData.append("resume", resumeChoice.file || resumeChoice.url);
+      if (coverChoice.file || coverChoice.url) {
+        formData.append("coverLetterFile", coverChoice.file || coverChoice.url);
+      }
       if (applyNote) formData.append("coverLetter", applyNote);
 
       await axiosInstance.post(API_PATHS.APPLICATIONS.APPLY_FOR_JOB(jobId), formData);
       toast.success(`Application sent to ${quickApplyJob.company?.companyName || quickApplyJob.companyName || "Employer"}!`);
+      markApplied(jobId);
       setQuickApplyJob(null);
-      setApplyResume(null);
+      setResumeAttachment(emptyAttachment);
+      setCoverAttachment(emptyAttachment);
       setApplyNote("");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to submit quick application");
@@ -221,7 +270,16 @@ const FindJobs = () => {
       const matchSalary =
         !salaryFloor || (j.salaryMax || j.salaryMin || 0) >= salaryFloor;
 
+      // `companyId` is the employer's user id, which is what Browse Companies
+      // sends; `company.id` is the same value on the included relation.
+      const matchCompany =
+        !companyFilter ||
+        j.companyId === companyFilter ||
+        j.company?.id === companyFilter ||
+        j.company?._id === companyFilter;
+
       return (
+        matchCompany &&
         matchKeyword &&
         matchLocation &&
         matchCategory &&
@@ -241,6 +299,7 @@ const FindJobs = () => {
     });
   }, [
     jobs,
+    companyFilter,
     keyword,
     location,
     category,
@@ -732,11 +791,27 @@ const FindJobs = () => {
 
               {/* Stream Header Controls */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm bg-surface-card p-space-md rounded-2xl border border-border-default shadow-xs">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="font-headline-sm text-headline-sm font-bold text-on-surface">
                     Showing {filteredJobs.length} Verified Roles
                   </span>
                   <span className="w-2 h-2 rounded-full bg-salary-emerald animate-pulse" />
+                  {companyFilter && (
+                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-brand-indigo-light px-space-sm py-1 font-label-md font-bold text-primary">
+                      <span className="material-symbols-outlined text-[16px]">business</span>
+                      <span className="max-w-[16rem] truncate">
+                        {companyFilterName || "Selected company"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={clearCompanyFilter}
+                        aria-label="Show roles from all companies"
+                        className="text-primary hover:text-brand-indigo-dark cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">close</span>
+                      </button>
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -945,16 +1020,25 @@ const FindJobs = () => {
                           </div>
 
                           <div className="flex items-center gap-space-sm">
-                            <button
-                              onClick={() => setQuickApplyJob(job)}
-                              type="button"
-                              className="inline-flex items-center justify-center gap-1 px-space-md py-2.5 rounded-xl bg-brand-indigo-light text-primary hover:bg-brand-indigo-subtle font-label-md font-bold transition-colors"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">
-                                bolt
+                            {hasApplied(job._id || job.id) ? (
+                              <span className="inline-flex items-center justify-center gap-1 px-space-md py-2.5 rounded-xl bg-surface-container text-text-secondary font-label-md font-bold">
+                                <span className="material-symbols-outlined text-[16px] text-primary">
+                                  task_alt
+                                </span>
+                                <span>Applied</span>
                               </span>
-                              <span>Quick Apply</span>
-                            </button>
+                            ) : (
+                              <button
+                                onClick={() => setQuickApplyJob(job)}
+                                type="button"
+                                className="inline-flex items-center justify-center gap-1 px-space-md py-2.5 rounded-xl bg-brand-indigo-light text-primary hover:bg-brand-indigo-subtle font-label-md font-bold transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">
+                                  bolt
+                                </span>
+                                <span>Quick Apply</span>
+                              </button>
+                            )}
 
                             <Link
                               to={`/job/${job._id || job.id}`}
@@ -1056,18 +1140,22 @@ const FindJobs = () => {
 
             <form onSubmit={handleQuickApplySubmit} className="flex min-h-0 flex-1 flex-col">
               <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6 md:px-8 md:py-8">
-              <div className="flex flex-col gap-2">
-                <label className="font-label-caps uppercase text-text-muted">
-                  Attach CV / Resume (PDF, DOCX)
-                </label>
-                <input
-                  type="file"
-                  accept=".pdf,.docx,.doc"
-                  required
-                  onChange={(e) => setApplyResume(e.target.files[0])}
-                  className="font-body-sm text-text-secondary file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-indigo-light file:text-primary hover:file:bg-brand-indigo-subtle cursor-pointer"
+              <AttachmentPicker
+                label="CV / Resume"
+                required
+                options={resumeOptions}
+                value={resumeChoice}
+                onChange={setResumeAttachment}
+              />
+
+              {coverLetterOptions.length > 0 && (
+                <AttachmentPicker
+                  label="Cover letter document (optional)"
+                  options={coverLetterOptions}
+                  value={coverChoice}
+                  onChange={setCoverAttachment}
                 />
-              </div>
+              )}
 
               <div className="flex flex-col gap-2">
                 <label className="font-label-caps uppercase text-text-muted">

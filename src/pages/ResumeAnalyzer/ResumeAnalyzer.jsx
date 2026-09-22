@@ -240,14 +240,6 @@ const ResumeAnalyzer = () => {
             </nav>
 
             <div className="flex flex-col gap-space-sm">
-              {aiStatus?.enabled && (
-                <span className="inline-flex w-fit items-center gap-2 rounded-full bg-brand-indigo-light px-space-md py-1 font-label-caps uppercase tracking-wider text-primary shadow-xs">
-                  <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
-                    auto_awesome
-                  </span>
-                  <span>Powered by {aiStatus.model}</span>
-                </span>
-              )}
 
               <h1 className="font-headline-xl text-headline-xl tracking-tight text-text-primary">
                 AI Resume Analyzer &amp;{" "}
