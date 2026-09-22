@@ -406,8 +406,18 @@ const BrowseCompanies = () => {
               <span className="font-body-sm text-text-muted">
                 {activeCompanyModal.openRoles} active positions available
               </span>
+              {/*
+                Carry the employer through to the jobs page. `userId` is the one
+                id present on both a registered company profile and an employer
+                without one, and it is what a job's `companyId` holds — company
+                names are not unique, so matching on those would mix employers.
+              */}
               <Link
-                to="/find-jobs"
+                to={`/find-jobs?company=${encodeURIComponent(
+                  activeCompanyModal.userId || ""
+                )}&companyName=${encodeURIComponent(
+                  activeCompanyModal.name || activeCompanyModal.companyName || ""
+                )}`}
                 onClick={() => setActiveCompanyModal(null)}
                 className="px-space-md py-2 bg-primary-container text-on-primary font-label-md font-bold rounded-xl hover:bg-brand-indigo-dark transition-all"
               >
