@@ -5,8 +5,12 @@ import { BASE_URL } from "./apiPath"
 const axiosInstance = axios.create({
     baseURL : BASE_URL,
     timeout : 80000,
+    // No default Content-Type. Axios sets "application/json" by itself for
+    // plain-object bodies, but a default one is never reconsidered: posting a
+    // FormData through an instance that already declares JSON makes axios
+    // convert the form to JSON instead (transformRequest), so an attached file
+    // serialises to {} and the upload silently never leaves the browser.
     headers : {
-        "Content-Type" : "application/json",
         "Accept" : "application/json"
     }
 })
