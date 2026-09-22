@@ -6,6 +6,12 @@ import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
 import JobMatchPanel from "../../components/ai/JobMatchPanel";
+import AttachmentPicker from "../../components/apply/AttachmentPicker";
+import {
+  useSavedAttachments,
+  emptyAttachment,
+  defaultAttachment,
+} from "../../hooks/useSavedAttachments";
 import toast from "react-hot-toast";
 
 const parseList = (val, defaultList = []) => {
@@ -55,11 +61,26 @@ const JobDetails = () => {
 
   // Application Modal state
   const [showApplyModal, setShowApplyModal] = useState(false);
-  const [applyResume, setApplyResume] = useState(null);
+  const [resumeAttachment, setResumeAttachment] = useState(emptyAttachment);
+  const [coverAttachment, setCoverAttachment] = useState(emptyAttachment);
   const [coverNote, setCoverNote] = useState("");
   const [applicantName, setApplicantName] = useState("");
   const [applicantEmail, setApplicantEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  //   Files this applicant has already uploaded, so the form can offer them
+  //   instead of asking for the same CV on every job.
+  const { resumeOptions, coverLetterOptions } = useSavedAttachments(showApplyModal);
+
+  //   Until the applicant picks something, the newest saved file stands in.
+  //   Derived rather than written into state, so the saved files arriving does
+  //   not overwrite a choice already made.
+  const resumeChoice = resumeAttachment.url || resumeAttachment.file
+    ? resumeAttachment
+    : defaultAttachment(resumeOptions);
+  const coverChoice = coverAttachment.url || coverAttachment.file
+    ? coverAttachment
+    : defaultAttachment(coverLetterOptions);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -138,8 +159,18 @@ const JobDetails = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      if (!resumeChoice.url && !resumeChoice.file) {
+        toast.error("Please attach a resume or pick one you have already uploaded.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const formData = new FormData();
-      if (applyResume) formData.append("resume", applyResume);
+      // A saved file travels as its URL; a fresh one as the file itself.
+      formData.append("resume", resumeChoice.file || resumeChoice.url);
+      if (coverChoice.file || coverChoice.url) {
+        formData.append("coverLetterFile", coverChoice.file || coverChoice.url);
+      }
       if (coverNote) formData.append("coverLetter", coverNote);
 
       if (!isAuthenticated) {
@@ -156,7 +187,8 @@ const JobDetails = () => {
       toast.success("Application successfully submitted!");
       setShowApplyModal(false);
       setCoverNote("");
-      setApplyResume(null);
+      setResumeAttachment(emptyAttachment);
+      setCoverAttachment(emptyAttachment);
     } catch (err) {
       toast.error(
         err.response?.data?.message || "Failed to submit application. Please try again."
@@ -657,18 +689,22 @@ const JobDetails = () => {
                 </>
               )}
 
-              <div className="flex flex-col gap-2">
-                <label className="font-label-caps uppercase text-text-muted">
-                  Attach Resume / CV (PDF, DOCX) *
-                </label>
-                <input
-                  type="file"
-                  accept=".pdf,.docx,.doc"
-                  required
-                  onChange={(e) => setApplyResume(e.target.files[0])}
-                  className="font-body-sm text-text-secondary file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-indigo-light file:text-primary hover:file:bg-brand-indigo-subtle cursor-pointer"
+              <AttachmentPicker
+                label="Resume / CV"
+                required
+                options={resumeOptions}
+                value={resumeChoice}
+                onChange={setResumeAttachment}
+              />
+
+              {coverLetterOptions.length > 0 && (
+                <AttachmentPicker
+                  label="Cover letter document (optional)"
+                  options={coverLetterOptions}
+                  value={coverChoice}
+                  onChange={setCoverAttachment}
                 />
-              </div>
+              )}
 
               <div className="flex flex-col gap-2">
                 <label className="font-label-caps uppercase text-text-muted">
