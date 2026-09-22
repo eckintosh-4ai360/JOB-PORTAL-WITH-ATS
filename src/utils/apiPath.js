@@ -1,4 +1,32 @@
-export const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const CONFIGURED_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+const LOOPBACK_HOSTS = ["localhost", "127.0.0.1", "[::1]", "::1"];
+
+// The API host is baked into the bundle at build time. A loopback host works
+// from this machine but points every other device on the LAN at *itself*, so
+// opening the dev server at http://192.168.x.x:5173 from a phone fails with a
+// refused connection. When the configured host is loopback but the page is not
+// being served from one, reuse the hostname the page came from, keeping the
+// configured port: http://192.168.x.x:5173 then calls http://192.168.x.x:8000.
+// Deployed builds set VITE_API_URL to a real host and are left alone.
+function resolveBaseUrl(configured) {
+  if (typeof window === "undefined") return configured;
+  if (LOOPBACK_HOSTS.includes(window.location.hostname)) return configured;
+
+  let url;
+  try {
+    url = new URL(configured);
+  } catch {
+    return configured;
+  }
+
+  if (!LOOPBACK_HOSTS.includes(url.hostname)) return configured;
+
+  url.hostname = window.location.hostname;
+  return url.origin;
+}
+
+export const BASE_URL = resolveBaseUrl(CONFIGURED_API_URL);
 
 export const API_PATHS = {
   AUTH: {

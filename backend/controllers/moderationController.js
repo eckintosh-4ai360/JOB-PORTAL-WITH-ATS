@@ -34,6 +34,10 @@ const ACTIONS = {
  * Cases point at an entity by type and id rather than through a foreign key,
  * because one queue spans four unrelated tables. That costs a lookup here and
  * buys a single uniform workflow.
+ *
+ * Soft-deleted jobs are loaded on purpose. A case raised against an advert the
+ * employer has since taken down still has to open and resolve, or the queue
+ * fills with entries no reviewer can ever clear.
  */
 const loadSubject = async (entityType, entityId) => {
     try {
@@ -307,7 +311,7 @@ const getStats = async (req, res) => {
                     _count: { _all: true },
                     where: { state: { in: ["open", "in_review"] } },
                 }),
-                prisma.job.count({ where: { moderationState: "hidden" } }),
+                prisma.job.count({ where: { moderationState: "hidden", deletedAt: null } }),
                 prisma.user.count({ where: { trustState: "suspended" } }),
                 prisma.riskAssessment.count({ where: { createdAt: { gte: since } } }),
             ]);

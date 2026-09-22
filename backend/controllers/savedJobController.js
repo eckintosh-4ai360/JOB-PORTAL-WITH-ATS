@@ -14,7 +14,7 @@ const saveJob = async (req, res) => {
             where: { id: req.params.jobId },
         });
 
-        if (!job) {
+        if (!job || job.deletedAt) {
             return res.status(404).json({ message: "Job not found" });
         }
 
@@ -56,7 +56,7 @@ const getSavedJobs = async (req, res) => {
         }
 
         const savedJobs = await prisma.savedJob.findMany({
-            where: { jobSeekerId: req.user._id },
+            where: { jobSeekerId: req.user._id, job: { deletedAt: null } },
             include: {
                 job: {
                     select: {

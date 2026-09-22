@@ -5,13 +5,14 @@ import {
   MapPin, Calendar, Clock, ChevronRight, ArrowLeft,
   CheckCircle2, XCircle, Loader2, Eye, Download,
   RefreshCw, SlidersHorizontal, X, Star, TrendingUp,
-  ExternalLink, ChevronDown, AlertCircle, Inbox,
+  ExternalLink, ChevronDown, AlertCircle, Inbox, Lock,
 } from "lucide-react";
 import moment from "moment";
 import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
+import { resolveFileUrl, downloadFileUrl } from "../../utils/fileUrl";
 
 //   Status Config  
 const STATUS_CONFIG = {
@@ -64,6 +65,23 @@ const STATUS_CONFIG = {
 };
 
 const STATUS_OPTIONS = ["Applied", "Under Review", "Interviewing", "Offered", "Rejected"];
+
+// Mirrors the rule the API enforces (applicationController.canTransition): the
+// pipeline runs forwards only, rejection is reachable from anywhere, and a
+// rejected application is settled. Greying out the impossible buttons is a
+// courtesy — the server is what actually holds the line.
+const STATUS_PIPELINE = ["Applied", "Under Review", "Interviewing", "Offered"];
+const TERMINAL_STATUS = "Rejected";
+
+const canMoveTo = (from, to) => {
+  if (from === to) return false;
+  if (from === TERMINAL_STATUS) return false;
+  if (to === TERMINAL_STATUS) return true;
+
+  const fromIndex = STATUS_PIPELINE.indexOf(from);
+  const toIndex = STATUS_PIPELINE.indexOf(to);
+  return fromIndex !== -1 && toIndex > fromIndex;
+};
 
 //   Avatar Gradients  
 const AVATAR_GRADIENTS = [
@@ -413,6 +431,8 @@ const ApplicationViewer = () => {
   const [resumePreviewOpen, setResumePreviewOpen] = useState(false);
   const [isSchedulingModalOpen, setIsSchedulingModalOpen] = useState(false);
   const [interviewDetails, setInterviewDetails] = useState({ date: "", time: "", location: "", notes: "" });
+  //   The status awaiting confirmation, or null when no dialog is open
+  const [pendingStatus, setPendingStatus] = useState(null);
 
   //   AI fit scoring, keyed by application id
   const [aiScores, setAiScores] = useState({});
@@ -531,6 +551,37 @@ const ApplicationViewer = () => {
     }
   };
   
+  //   Ask before moving  
+  //   A move is one-way, so nothing is sent until it has been confirmed.
+  //   "Interviewing" is confirmed by the scheduling dialog instead, which
+  //   cannot be submitted without real interview details.
+  const requestStatusChange = (next) => {
+    if (!selectedApp || !canMoveTo(selectedApp.status, next)) return;
+
+    if (next === "Interviewing") {
+      if (selectedApp.isGuest) {
+        toast.error("Interviews can only be scheduled for candidates with registered accounts.");
+        return;
+      }
+      setInterviewDetails({
+        date: selectedApp.interview?.date ? moment(selectedApp.interview.date).format("YYYY-MM-DD") : "",
+        time: selectedApp.interview?.time || "",
+        location: selectedApp.interview?.location || "",
+        notes: selectedApp.interview?.notes || "",
+      });
+      setIsSchedulingModalOpen(true);
+      return;
+    }
+
+    setPendingStatus(next);
+  };
+
+  const confirmStatusChange = async () => {
+    const next = pendingStatus;
+    setPendingStatus(null);
+    if (next) await handleUpdateStatus(next);
+  };
+
   //   Schedule/Update Interview  
   const handleScheduleSubmit = async (e) => {
     e.preventDefault();
@@ -842,42 +893,42 @@ const ApplicationViewer = () => {
                       <SlidersHorizontal className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                       <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">Update Application Status</h3>
                     </div>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 -mt-2 mb-4">
+                      Each move is confirmed first and cannot be undone — an application only ever moves forward.
+                    </p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {STATUS_OPTIONS.map((s) => {
                         const cfg = STATUS_CONFIG[s];
-                        const Icon = cfg.icon;
                         const isActive = selectedApp.status === s;
+                        const isLocked = !isActive && !canMoveTo(selectedApp.status, s);
+                        const Icon = isLocked ? Lock : cfg.icon;
                         return (
                           <button
                             key={s}
-                            disabled={isUpdatingStatus}
-                            onClick={() => {
-                              if (s === "Interviewing") {
-                                if (selectedApp.isGuest) {
-                                  toast.error("Interviews can only be scheduled for candidates with registered accounts.");
-                                  return;
-                                }
-                                setInterviewDetails({
-                                  date: selectedApp.interview?.date ? moment(selectedApp.interview.date).format("YYYY-MM-DD") : "",
-                                  time: selectedApp.interview?.time || "",
-                                  location: selectedApp.interview?.location || "",
-                                  notes: selectedApp.interview?.notes || "",
-                                });
-                                setIsSchedulingModalOpen(true);
-                              } else {
-                                handleUpdateStatus(s);
-                              }
-                            }}
+                            disabled={isUpdatingStatus || isActive || isLocked}
+                            title={
+                              isLocked
+                                ? selectedApp.status === TERMINAL_STATUS
+                                  ? `This application was ${TERMINAL_STATUS.toLowerCase()} and can no longer be moved`
+                                  : `Already past "${s}" — the pipeline only moves forward`
+                                : undefined
+                            }
+                            onClick={() => requestStatusChange(s)}
                             className={`flex flex-col items-center gap-1.5 rounded-xl p-3 border-2 text-xs font-bold transition-all duration-200 ${
                               isActive
-                                ? `${cfg.bg} ${cfg.text} ${cfg.ring} border-current shadow-sm`
-                                : "bg-gray-50 text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600 hover:bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:border-gray-600 dark:hover:text-gray-300 dark:hover:bg-gray-800"
+                                ? `${cfg.bg} ${cfg.text} ${cfg.ring} border-current shadow-sm cursor-default`
+                                : isLocked
+                                  ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed dark:bg-gray-800/50 dark:border-gray-800 dark:text-gray-600"
+                                  : "bg-gray-50 text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600 hover:bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:border-gray-600 dark:hover:text-gray-300 dark:hover:bg-gray-800"
                             } ${isUpdatingStatus ? "opacity-60 cursor-not-allowed" : ""}`}
                           >
                             <Icon className={`h-4.5 w-4.5 ${isActive && cfg.spin ? "animate-spin" : ""}`} />
                             {s}
                             {isActive && (
                               <span className="text-[10px] font-normal opacity-70">Current</span>
+                            )}
+                            {isLocked && (
+                              <span className="text-[10px] font-normal opacity-70">Locked</span>
                             )}
                           </button>
                         );
@@ -1006,7 +1057,7 @@ const ApplicationViewer = () => {
                             </div>
                             <div className="flex gap-2 flex-wrap justify-center">
                               <a
-                                href={selectedApp.resume}
+                                href={resolveFileUrl(selectedApp.resume)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-colors"
@@ -1015,8 +1066,7 @@ const ApplicationViewer = () => {
                                 View
                               </a>
                               <a
-                                href={selectedApp.resume}
-                                download
+                                href={downloadFileUrl(selectedApp.resume)}
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 dark:border-indigo-500/30 bg-white dark:bg-gray-900 px-3.5 py-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
                               >
                                 <Download className="h-3.5 w-3.5" />
@@ -1065,7 +1115,7 @@ const ApplicationViewer = () => {
                           </div>
                           <div className="flex gap-2 shrink-0">
                             <a
-                              href={selectedApp.coverLetterFile}
+                              href={resolveFileUrl(selectedApp.coverLetterFile)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition"
@@ -1074,8 +1124,7 @@ const ApplicationViewer = () => {
                               View
                             </a>
                             <a
-                              href={selectedApp.coverLetterFile}
-                              download
+                              href={downloadFileUrl(selectedApp.coverLetterFile)}
                               className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 dark:border-indigo-500/30 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition"
                             >
                               <Download className="h-3 w-3" />
@@ -1157,6 +1206,11 @@ const ApplicationViewer = () => {
               <div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Schedule Interview</h3>
                 <p className="text-xs text-gray-400 dark:text-gray-500">Specify details for candidate: <span className="font-semibold text-gray-700 dark:text-gray-300">{selectedApp?.applicantName || selectedApp?.applicant?.name}</span></p>
+                {selectedApp?.status !== "Interviewing" && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    Confirming moves this application to Interviewing for good — it cannot go back to {selectedApp?.status}.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -1224,6 +1278,63 @@ const ApplicationViewer = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/*  Status Change Confirmation  */}
+      {pendingStatus && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full border border-gray-100 dark:border-gray-800 shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${STATUS_CONFIG[pendingStatus]?.bg}`}>
+                <AlertCircle className={`h-5 w-5 ${STATUS_CONFIG[pendingStatus]?.text}`} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  Move to {pendingStatus}?
+                </h3>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {selectedApp?.applicantName || selectedApp?.applicant?.name || "This applicant"}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-800 p-4 mb-4">
+              <div className="flex items-center justify-center gap-3 text-xs font-bold">
+                <span className={`px-2.5 py-1 rounded-lg ${STATUS_CONFIG[selectedApp?.status]?.badge}`}>
+                  {selectedApp?.status}
+                </span>
+                <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600" />
+                <span className={`px-2.5 py-1 rounded-lg ${STATUS_CONFIG[pendingStatus]?.badge}`}>
+                  {pendingStatus}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-5">
+              {pendingStatus === TERMINAL_STATUS
+                ? "The candidate will be emailed. This settles the application — no further status changes will be possible."
+                : `The candidate will be emailed. Once confirmed, this application can no longer be moved back to ${selectedApp?.status}.`}
+            </p>
+
+            <div className="flex justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setPendingStatus(null)}
+                className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-300 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isUpdatingStatus}
+                onClick={confirmStatusChange}
+                className="rounded-xl bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 text-xs font-semibold text-white shadow-md shadow-indigo-100 dark:shadow-none transition disabled:opacity-50"
+              >
+                {isUpdatingStatus ? "Updating..." : `Confirm ${pendingStatus}`}
+              </button>
+            </div>
           </div>
         </div>
       )}
