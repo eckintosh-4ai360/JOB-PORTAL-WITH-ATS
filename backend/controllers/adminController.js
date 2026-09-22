@@ -1,5 +1,9 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
+const {
+    sendCompanyApprovedEmail,
+    sendCompanyRejectedEmail,
+} = require("../utils/emailService");
 
 const APPROVAL_STATES = ["pending", "approved", "rejected"];
 
@@ -197,10 +201,35 @@ const decideCompany = async (req, res) => {
             select: companyDetailSelect,
         });
 
+        // Tell the employer. The hiring contact is who asked to be reviewed, but
+        // fall back to the account holder so a decision is never silently made
+        // against a company that hears nothing. Not awaited: a mail outage must
+        // not lose a decision that is already written.
+        const recipient = updated.contactEmail || updated.user?.email;
+        if (recipient) {
+            const contactName = updated.contactName || updated.user?.name;
+            if (decision === "approved") {
+                sendCompanyApprovedEmail({
+                    to: recipient,
+                    contactName,
+                    companyName: updated.name,
+                    note: updated.approvalNote,
+                });
+            } else {
+                sendCompanyRejectedEmail({
+                    to: recipient,
+                    contactName,
+                    companyName: updated.name,
+                    reason: updated.approvalNote,
+                });
+            }
+        }
+
         res.status(200).json({
             message: decision === "approved"
                 ? `${updated.name} approved and can now post jobs.`
                 : `${updated.name} rejected.`,
+            emailedTo: recipient || null,
             company: toClient(updated),
         });
     } catch (error) {

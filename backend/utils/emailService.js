@@ -117,6 +117,36 @@ const DEFAULT_EMAIL_TEMPLATES = [
             <p>We encourage you to keep exploring other opportunities on our platform. Don't be discouraged — the right role is out there!</p>
         `),
     },
+    {
+        key: "company-approved",
+        name: "Company approved",
+        description: "Sent to an employer when a reviewer approves their company.",
+        subject: "{{companyName}} is approved — you can start posting",
+        variables: ["contactName", "companyName", "note"],
+        html: emailShell(`
+            <h2 style="color: #059669;">Your company has been approved</h2>
+            <p>Hi <strong>{{contactName}}</strong>,</p>
+            <p>We have reviewed the registration details for <strong>{{companyName}}</strong> and approved your account.</p>
+            <p>You can now publish job postings, and your company carries the verified badge on your public profile.</p>
+            <p>{{note}}</p>
+        `),
+    },
+    {
+        key: "company-rejected",
+        name: "Company not approved",
+        description: "Sent to an employer when a reviewer rejects their company. The reviewer's reason is the body of the message.",
+        subject: "We could not approve {{companyName}} yet",
+        variables: ["contactName", "companyName", "reason"],
+        html: emailShell(`
+            <h2 style="color: #dc2626;">We could not approve your company yet</h2>
+            <p>Hi <strong>{{contactName}}</strong>,</p>
+            <p>We reviewed the registration details for <strong>{{companyName}}</strong> and could not approve the account as it stands.</p>
+            <p style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 12px 16px; margin: 16px 0; color: #7f1d1d;">
+                <strong>What needs attention:</strong><br />{{reason}}
+            </p>
+            <p>Update your company setup with the corrected details and submit again — your account goes straight back into the review queue.</p>
+        `),
+    },
 ];
 
 const escapeHtml = (value) => String(value ?? "")
@@ -212,6 +242,24 @@ const sendRejectionEmail = async ({ to, applicantName, jobTitle }) => sendTempla
     key: "application-rejected", to, data: { applicantName, jobTitle },
 });
 
+const sendCompanyApprovedEmail = async ({ to, contactName, companyName, note }) => sendTemplatedEmail({
+    key: "company-approved",
+    to,
+    data: { contactName: contactName || "there", companyName, note: note || "" },
+});
+
+// The reviewer's reason is the whole point of this message — an employer who is
+// told "no" without being told what to fix cannot do anything about it.
+const sendCompanyRejectedEmail = async ({ to, contactName, companyName, reason }) => sendTemplatedEmail({
+    key: "company-rejected",
+    to,
+    data: {
+        contactName: contactName || "there",
+        companyName,
+        reason: reason || "No reason was recorded. Please contact support.",
+    },
+});
+
 module.exports = {
     DEFAULT_EMAIL_TEMPLATES,
     sendEmail,
@@ -222,4 +270,6 @@ module.exports = {
     sendInterviewScheduledEmail,
     sendOfferEmail,
     sendRejectionEmail,
+    sendCompanyApprovedEmail,
+    sendCompanyRejectedEmail,
 };
