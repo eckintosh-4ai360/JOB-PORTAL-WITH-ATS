@@ -12,6 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import moment from "moment";
 import CandidateHeader from "../../components/layout/CandidateHeader";
+import { resolveFileUrl, downloadFileUrl } from "../../utils/fileUrl";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
@@ -1217,7 +1218,7 @@ export const MyDocuments = () => {
 
                           <div className="flex items-center gap-1.5 shrink-0">
                             <a
-                              href={doc.url}
+                              href={resolveFileUrl(doc.url)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="h-8 w-8 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50/50 flex items-center justify-center transition shadow-2xs"
@@ -1226,8 +1227,7 @@ export const MyDocuments = () => {
                               <Eye className="h-3.5 w-3.5" />
                             </a>
                             <a
-                              href={doc.url}
-                              download
+                              href={downloadFileUrl(doc.url)}
                               className="h-8 w-8 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50/50 flex items-center justify-center transition shadow-2xs"
                               title="Download File"
                             >

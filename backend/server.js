@@ -46,8 +46,22 @@ app.use('/api/email-templates', emailTemplateRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/moderation', moderationRoutes);
 
-//Serve UPloads folder
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {}));
+// Serve uploads folder.
+//
+// A link's `download` attribute is honoured only for same-origin URLs, and the
+// SPA runs on a different port — so "Download" silently degrades to "View"
+// unless the server declares the attachment itself. `?download=1` is how the
+// client asks for that. Without it a file is offered inline, which lets a PDF
+// open in the browser's viewer rather than landing in the downloads folder.
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+    setHeaders: (res, filePath) => {
+        const disposition = res.req?.query?.download === "1" ? "attachment" : "inline";
+        res.setHeader(
+            "Content-Disposition",
+            `${disposition}; filename="${path.basename(filePath)}"`
+        );
+    },
+}));
 
 //Error handling for routes
 app.use((err, req, res, next) => {
