@@ -72,6 +72,11 @@ const validateCompanySetup = (data) => {
     if (text(data.registrationNumber).length < 4 || text(data.registrationNumber).length > 100) {
         errors.registrationNumber = "Enter the business registration number or TIN.";
     }
+    // The certificate is what a reviewer actually checks the other details
+    // against, so setup is not complete without it.
+    if (!text(data.registrationDocUrl)) {
+        errors.registrationDocUrl = "Upload your business registration certificate.";
+    }
     if (!text(data.industry)) {
         errors.industry = "Choose the industry your organisation works in.";
     }
@@ -414,6 +419,11 @@ const getMyCompanyProfile = async (req, res) => {
                 verified: false,
                 rating: 0,
                 jobs: [],
+                // Nothing has been submitted yet, so there is nothing to review.
+                approvalState: "setup_incomplete",
+                approvalNote: null,
+                registrationDocUrl: "",
+                registrationDocName: "",
                 onboardingComplete: req.user.employerOnboardingComplete !== false,
             }));
         }
@@ -457,6 +467,8 @@ const updateMyCompanyProfile = async (req, res) => {
             contactTitle,
             contactEmail,
             contactPhone,
+            registrationDocUrl,
+            registrationDocName,
             completeSetup,
             authorityConfirmed,
             termsAccepted,
@@ -478,6 +490,7 @@ const updateMyCompanyProfile = async (req, res) => {
                 legalName,
                 organizationType,
                 registrationNumber,
+                registrationDocUrl,
                 contactName,
                 contactTitle,
                 contactEmail,
@@ -502,6 +515,20 @@ const updateMyCompanyProfile = async (req, res) => {
         const parsedPerks = perks === undefined ? undefined : parseArray(perks);
         const completionTime = isCompletingSetup ? new Date() : null;
 
+        // Submitting setup is what puts a company in front of a reviewer. A
+        // company that was rejected and has come back with corrections goes to
+        // the back of the queue rather than staying rejected forever.
+        const reviewFields = isCompletingSetup
+            ? {
+                approvalState: "pending",
+                approvalNote: null,
+                reviewedAt: null,
+                reviewedById: null,
+                submittedForReviewAt: completionTime,
+                verified: false,
+            }
+            : {};
+
         const company = await prisma.company.upsert({
             where: { userId: req.user._id },
             create: {
@@ -522,8 +549,11 @@ const updateMyCompanyProfile = async (req, res) => {
                 contactTitle: nullableField(contactTitle),
                 contactEmail: nullableField(contactEmail),
                 contactPhone: nullableField(contactPhone),
+                registrationDocUrl: nullableField(registrationDocUrl),
+                registrationDocName: nullableField(registrationDocName),
                 stack: parsedStack || [],
                 perks: parsedPerks || [],
+                ...reviewFields,
                 ...(isCompletingSetup ? {
                     authorityConfirmedAt: completionTime,
                     termsAcceptedAt: completionTime,
@@ -547,8 +577,11 @@ const updateMyCompanyProfile = async (req, res) => {
                 contactTitle: nullableField(contactTitle),
                 contactEmail: nullableField(contactEmail),
                 contactPhone: nullableField(contactPhone),
+                registrationDocUrl: nullableField(registrationDocUrl),
+                registrationDocName: nullableField(registrationDocName),
                 stack: parsedStack,
                 perks: parsedPerks,
+                ...reviewFields,
                 ...(isCompletingSetup ? {
                     authorityConfirmedAt: completionTime,
                     termsAcceptedAt: completionTime,

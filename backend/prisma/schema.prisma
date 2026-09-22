@@ -238,7 +238,23 @@ model Company {
   termsAcceptedAt DateTime?
   hiringPolicyAcceptedAt DateTime?
   rating      Float?   @default(0)
+  // The public badge. Driven by `approvalState` rather than set by hand — a
+  // company is "verified" precisely because a reviewer approved it.
   verified    Boolean  @default(false)
+
+  // pending | approved | rejected. A company must be approved before it can
+  // publish jobs. Unapproved companies still appear in the public directory,
+  // they simply carry no badge and cannot post. New rows start pending; the
+  // companies that existed before review was introduced were approved in bulk.
+  approvalState      String    @default("pending")
+  approvalNote       String?
+  reviewedAt         DateTime?
+  reviewedById       String?
+  submittedForReviewAt DateTime?
+  // Business registration certificate, supplied at onboarding and the main
+  // thing a reviewer is looking at.
+  registrationDocUrl   String?
+  registrationDocName  String?
   // clear | flagged | rejected — the automated trust signal, distinct from the
   // editorial `verified` badge above.
   trustState  String   @default("clear")
@@ -249,6 +265,7 @@ model Company {
   jobs        Job[]    @relation("CompanyJobs")
 
   @@index([industry])
+  @@index([approvalState])
 }
 
 model Job {

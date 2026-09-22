@@ -50,6 +50,34 @@ const createJob = async (req, res) => {
             });
         }
 
+        // A company publishes only once a reviewer has checked its registration
+        // details. Admins are exempt — they are the reviewers. An employer with
+        // no company profile has nothing to have been reviewed.
+        if (req.user.role === "employer") {
+            const reviewed = await prisma.company.findUnique({
+                where: { userId: req.user._id },
+                select: { approvalState: true, approvalNote: true },
+            });
+
+            if (!reviewed) {
+                return res.status(403).json({
+                    code: "EMPLOYER_SETUP_REQUIRED",
+                    message: "Complete your company setup before posting a job.",
+                });
+            }
+
+            if (reviewed.approvalState !== "approved") {
+                return res.status(403).json({
+                    code: reviewed.approvalState === "rejected"
+                        ? "COMPANY_REJECTED"
+                        : "COMPANY_PENDING_REVIEW",
+                    message: reviewed.approvalState === "rejected"
+                        ? `Your company was not approved${reviewed.approvalNote ? `: ${reviewed.approvalNote}` : "."} Update your details and resubmit for review.`
+                        : "Your company is awaiting review. You can post jobs once it has been approved.",
+                });
+            }
+        }
+
         const effectiveType = type || jobType || "Full-Time";
         const effectiveLogo = companyLogo || req.user.companyLogo || "";
 
