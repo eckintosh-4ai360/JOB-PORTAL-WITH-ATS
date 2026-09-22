@@ -25,6 +25,7 @@ import toast from "react-hot-toast";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import uploadImage from "../../utils/uploadingImage";
+import { resolveFileUrl } from "../../utils/fileUrl";
 import { useAuth } from "../../context/AuthContext";
 
 const STEPS = [
@@ -112,6 +113,8 @@ const EMPTY_FORM = {
   legalName: "",
   organizationType: "",
   registrationNumber: "",
+  registrationDocUrl: "",
+  registrationDocName: "",
   industry: "",
   employees: "",
   hq: "",
@@ -130,7 +133,7 @@ const EMPTY_FORM = {
 };
 
 const STEP_FIELDS = [
-  ["name", "legalName", "organizationType", "registrationNumber", "industry", "employees", "hq"],
+  ["name", "legalName", "organizationType", "registrationNumber", "registrationDocUrl", "industry", "employees", "hq"],
   ["logo", "description", "website"],
   ["contactName", "contactTitle", "contactEmail", "contactPhone", "stack", "perks"],
   ["authorityConfirmed", "termsAccepted", "fairHiringAcknowledged"],
@@ -210,6 +213,7 @@ const EmployerSetup = () => {
   const [tagInputs, setTagInputs] = useState({ stack: "", perks: "" });
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingCertificate, setIsUploadingCertificate] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const inputClass = (field) => `w-full rounded-xl border bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500 ${
@@ -233,6 +237,8 @@ const EmployerSetup = () => {
           legalName: profile.legalName || "",
           organizationType: profile.organizationType || "",
           registrationNumber: profile.registrationNumber || "",
+          registrationDocUrl: profile.registrationDocUrl || "",
+          registrationDocName: profile.registrationDocName || "",
           industry: profile.industry || "",
           employees: profile.employees || "",
           hq: profile.hq || "",
@@ -292,6 +298,9 @@ const EmployerSetup = () => {
       if (clean(form.legalName).length < 2) nextErrors.legalName = "Enter the company’s registered legal name.";
       if (!form.organizationType) nextErrors.organizationType = "Select the organisation type.";
       if (clean(form.registrationNumber).length < 4) nextErrors.registrationNumber = "Enter the registration number or TIN.";
+      // A reviewer checks the details above against this document, so the
+      // company cannot be submitted without it.
+      if (!clean(form.registrationDocUrl)) nextErrors.registrationDocUrl = "Upload your business registration certificate.";
       if (!form.industry) nextErrors.industry = "Select an industry.";
       if (!form.employees) nextErrors.employees = "Select a company size.";
       if (!form.hq || !form.hq.toLowerCase().includes("ghana")) nextErrors.hq = "Select a Ghana-based location.";
@@ -394,6 +403,46 @@ const EmployerSetup = () => {
     }
   };
 
+  /**
+   * The business registration certificate. Filed through the documents
+   * endpoint so it also lands in the employer's own document library rather
+   * than existing only as a URL on the company row.
+   */
+  const handleCertificateUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("The certificate must be 10 MB or smaller.");
+      event.target.value = "";
+      return;
+    }
+
+    setIsUploadingCertificate(true);
+    const toastId = toast.loading("Uploading certificate…");
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      data.append("name", file.name);
+      data.append("category", "Certificate");
+
+      const response = await axiosInstance.post(API_PATHS.DOCUMENTS.UPLOAD_DOCUMENT, data);
+      const uploaded = (response.data?.documents || []).find((doc) => doc.name === file.name);
+      const url = uploaded?.url || response.data?.document?.url;
+      if (!url) throw new Error("No document URL was returned");
+
+      updateField("registrationDocUrl", url);
+      updateField("registrationDocName", file.name);
+      toast.success("Certificate uploaded.", { id: toastId });
+    } catch (error) {
+      console.error("Certificate upload failed:", error);
+      toast.error("The certificate could not be uploaded. Please try again.", { id: toastId });
+    } finally {
+      setIsUploadingCertificate(false);
+      event.target.value = "";
+    }
+  };
+
   const firstStepWithError = (nextErrors) => {
     const index = STEP_FIELDS.findIndex((fields) => fields.some((field) => nextErrors[field]));
     return index === -1 ? 0 : index;
@@ -476,6 +525,52 @@ const EmployerSetup = () => {
           <FieldLabel required>Business registration number or TIN</FieldLabel>
           <input value={form.registrationNumber} onChange={(event) => updateField("registrationNumber", event.target.value)} placeholder="e.g. CS123456789" className={inputClass("registrationNumber")} />
           <FieldError message={errors.registrationNumber} />
+        </div>
+
+        <div className="sm:col-span-2">
+          <FieldLabel required>Business registration certificate</FieldLabel>
+          <p className="mb-2 text-xs text-slate-500 dark:text-gray-400">
+            A reviewer checks this against the details above before your company can post jobs. PDF, DOCX or an image, up to 10&nbsp;MB.
+          </p>
+
+          {form.registrationDocUrl ? (
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+              <span className="material-symbols-outlined text-[20px] text-emerald-600 dark:text-emerald-400">task_alt</span>
+              <span className="min-w-0 flex-1 truncate text-sm font-bold text-emerald-800 dark:text-emerald-300">
+                {form.registrationDocName || "Certificate uploaded"}
+              </span>
+              <a
+                href={resolveFileUrl(form.registrationDocUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold text-emerald-700 underline dark:text-emerald-300"
+              >
+                View
+              </a>
+              <label className="cursor-pointer text-xs font-bold text-slate-600 underline dark:text-gray-300">
+                Replace
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                  className="hidden"
+                  disabled={isUploadingCertificate}
+                  onChange={handleCertificateUpload}
+                />
+              </label>
+            </div>
+          ) : (
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+              disabled={isUploadingCertificate}
+              onChange={handleCertificateUpload}
+              className="w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-violet-100 file:px-4 file:py-2 file:text-xs file:font-bold file:text-violet-700 hover:file:bg-violet-200 dark:text-gray-300"
+            />
+          )}
+          {isUploadingCertificate && (
+            <p className="mt-1.5 text-xs font-semibold text-violet-600 dark:text-violet-300">Uploading…</p>
+          )}
+          <FieldError message={errors.registrationDocUrl} />
         </div>
         <div>
           <FieldLabel required>Industry</FieldLabel>
