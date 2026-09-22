@@ -262,6 +262,23 @@ const JobDetails = () => {
     job.companyProfile?.description ||
     job.company?.companyDescription ||
     `${companyName} has opportunities for qualified candidates.`;
+  const hasExactLocation =
+    job.latitude !== null &&
+    job.latitude !== undefined &&
+    job.latitude !== "" &&
+    job.longitude !== null &&
+    job.longitude !== undefined &&
+    job.longitude !== "" &&
+    Number.isFinite(Number(job.latitude)) &&
+    Number.isFinite(Number(job.longitude));
+  const latitude = hasExactLocation ? Number(job.latitude) : null;
+  const longitude = hasExactLocation ? Number(job.longitude) : null;
+  const googleMapsUrl = hasExactLocation
+    ? `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
+    : "";
+  const googleMapsEmbedUrl = hasExactLocation
+    ? `https://www.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`
+    : "";
 
   const responsibilitiesList = parseList(job.responsibilities, [
     "Deliver high-quality work that supports the team and the organisation's goals.",
@@ -589,6 +606,46 @@ const JobDetails = () => {
               {/* Real AI match score for this role, scored against the
                   candidate's analysed resume across six dimensions. */}
               <JobMatchPanel jobId={jobId} isAuthenticated={isAuthenticated} />
+
+              {hasExactLocation && (
+                <section className="overflow-hidden rounded-2xl border border-border-default bg-surface-card shadow-sm">
+                  <div className="flex items-start gap-3 px-space-md pb-space-sm pt-space-md md:px-space-lg">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-indigo-light text-primary">
+                      <span className="material-symbols-outlined text-[22px]" aria-hidden="true">
+                        location_on
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="font-headline-sm font-bold text-text-primary">Exact job location</h2>
+                      <p className="truncate font-body-sm text-text-muted">
+                        {job.location || "Pinned workplace"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <iframe
+                    title={`Map showing the location for ${job.title}`}
+                    src={googleMapsEmbedUrl}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="h-52 w-full border-y border-border-default bg-surface-container"
+                  />
+
+                  <div className="p-space-sm md:px-space-lg md:py-space-md">
+                    <a
+                      href={googleMapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-surface-container px-3 py-2.5 font-label-md font-bold text-primary transition-colors hover:bg-surface-container-high"
+                    >
+                      <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
+                        directions
+                      </span>
+                      Open directions in Google Maps
+                    </a>
+                  </div>
+                </section>
+              )}
 
               {/* Company Profile Card */}
               <div className="bg-surface-card rounded-2xl p-space-md md:p-space-lg border border-border-default shadow-sm flex flex-col gap-space-sm">
