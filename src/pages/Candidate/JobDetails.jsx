@@ -12,6 +12,7 @@ import {
   emptyAttachment,
   defaultAttachment,
 } from "../../hooks/useSavedAttachments";
+import { useAppliedJobs } from "../../hooks/useAppliedJobs";
 import toast from "react-hot-toast";
 
 const parseList = (val, defaultList = []) => {
@@ -71,6 +72,11 @@ const JobDetails = () => {
   //   Files this applicant has already uploaded, so the form can offer them
   //   instead of asking for the same CV on every job.
   const { resumeOptions, coverLetterOptions } = useSavedAttachments(showApplyModal);
+
+  //   An account can only apply once, so say so before the form is filled in
+  //   rather than after the CV has been uploaded.
+  const { hasApplied, markApplied } = useAppliedJobs();
+  const alreadyApplied = hasApplied(jobId);
 
   //   Until the applicant picks something, the newest saved file stands in.
   //   Derived rather than written into state, so the saved files arriving does
@@ -185,6 +191,7 @@ const JobDetails = () => {
 
       await axiosInstance.post(API_PATHS.APPLICATIONS.APPLY_FOR_JOB(jobId), formData);
       toast.success("Application successfully submitted!");
+      markApplied(jobId);
       setShowApplyModal(false);
       setCoverNote("");
       setResumeAttachment(emptyAttachment);
@@ -384,25 +391,42 @@ const JobDetails = () => {
 
               {/* Right Action Cluster */}
               <div className="flex flex-col sm:flex-row lg:flex-col shrink-0 gap-space-sm items-stretch lg:min-w-[220px]">
-                <button
-                  onClick={() => setShowApplyModal(true)}
-                  type="button"
-                  className="w-full h-12 px-6 rounded-xl bg-primary-container text-on-primary font-label-lg font-bold flex items-center justify-center gap-2 shadow-md hover:bg-brand-indigo-dark transition-all transform active:scale-98 cursor-pointer"
-                >
-                  <span>Apply Now</span>
-                  <span className="material-symbols-outlined text-[20px]">
-                    arrow_forward
-                  </span>
-                </button>
+                {alreadyApplied ? (
+                  <div className="w-full rounded-xl border border-border-default bg-surface-container-low px-5 py-4 text-center">
+                    <p className="flex items-center justify-center gap-2 font-label-lg font-bold text-on-surface">
+                      <span className="material-symbols-outlined text-[20px] text-primary">task_alt</span>
+                      Already applied
+                    </p>
+                    <Link
+                      to="/applications"
+                      className="mt-1 inline-block font-body-sm text-primary hover:underline"
+                    >
+                      Track your application
+                    </Link>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setShowApplyModal(true)}
+                      type="button"
+                      className="w-full h-12 px-6 rounded-xl bg-primary-container text-on-primary font-label-lg font-bold flex items-center justify-center gap-2 shadow-md hover:bg-brand-indigo-dark transition-all transform active:scale-98 cursor-pointer"
+                    >
+                      <span>Apply Now</span>
+                      <span className="material-symbols-outlined text-[20px]">
+                        arrow_forward
+                      </span>
+                    </button>
 
-                <button
-                  onClick={() => setShowApplyModal(true)}
-                  type="button"
-                  className="w-full h-11 px-5 rounded-xl bg-brand-indigo-light text-primary font-label-lg font-bold flex items-center justify-center gap-2 hover:bg-brand-indigo-subtle transition-colors cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[18px]">bolt</span>
-                  <span>Quick Apply with CV</span>
-                </button>
+                    <button
+                      onClick={() => setShowApplyModal(true)}
+                      type="button"
+                      className="w-full h-11 px-5 rounded-xl bg-brand-indigo-light text-primary font-label-lg font-bold flex items-center justify-center gap-2 hover:bg-brand-indigo-subtle transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">bolt</span>
+                      <span>Quick Apply with CV</span>
+                    </button>
+                  </>
+                )}
 
                 <div className="grid grid-cols-2 gap-space-xs pt-1">
                   <button

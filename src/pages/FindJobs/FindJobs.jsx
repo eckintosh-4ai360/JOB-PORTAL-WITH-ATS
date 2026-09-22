@@ -12,6 +12,7 @@ import {
   emptyAttachment,
   defaultAttachment,
 } from "../../hooks/useSavedAttachments";
+import { useAppliedJobs } from "../../hooks/useAppliedJobs";
 
 import toast from "react-hot-toast";
 
@@ -44,6 +45,9 @@ const FindJobs = () => {
 
   //   Quick Apply is only quick if it stops asking for a CV already on file.
   const { resumeOptions, coverLetterOptions } = useSavedAttachments(Boolean(quickApplyJob));
+
+  //   An account can only apply once per job; show that on the card.
+  const { hasApplied, markApplied } = useAppliedJobs();
 
   //   Until the applicant picks something, the newest saved file stands in.
   const resumeChoice = resumeAttachment.url || resumeAttachment.file
@@ -202,6 +206,7 @@ const FindJobs = () => {
 
       await axiosInstance.post(API_PATHS.APPLICATIONS.APPLY_FOR_JOB(jobId), formData);
       toast.success(`Application sent to ${quickApplyJob.company?.companyName || quickApplyJob.companyName || "Employer"}!`);
+      markApplied(jobId);
       setQuickApplyJob(null);
       setResumeAttachment(emptyAttachment);
       setCoverAttachment(emptyAttachment);
@@ -974,16 +979,25 @@ const FindJobs = () => {
                           </div>
 
                           <div className="flex items-center gap-space-sm">
-                            <button
-                              onClick={() => setQuickApplyJob(job)}
-                              type="button"
-                              className="inline-flex items-center justify-center gap-1 px-space-md py-2.5 rounded-xl bg-brand-indigo-light text-primary hover:bg-brand-indigo-subtle font-label-md font-bold transition-colors"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">
-                                bolt
+                            {hasApplied(job._id || job.id) ? (
+                              <span className="inline-flex items-center justify-center gap-1 px-space-md py-2.5 rounded-xl bg-surface-container text-text-secondary font-label-md font-bold">
+                                <span className="material-symbols-outlined text-[16px] text-primary">
+                                  task_alt
+                                </span>
+                                <span>Applied</span>
                               </span>
-                              <span>Quick Apply</span>
-                            </button>
+                            ) : (
+                              <button
+                                onClick={() => setQuickApplyJob(job)}
+                                type="button"
+                                className="inline-flex items-center justify-center gap-1 px-space-md py-2.5 rounded-xl bg-brand-indigo-light text-primary hover:bg-brand-indigo-subtle font-label-md font-bold transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">
+                                  bolt
+                                </span>
+                                <span>Quick Apply</span>
+                              </button>
+                            )}
 
                             <Link
                               to={`/job/${job._id || job.id}`}
