@@ -10,7 +10,31 @@ const {
     sendRejectionEmail,
 } = require("../utils/emailService");
 
-const APPLICATION_STATUSES = ["Applied", "Under Review", "Interviewing", "Offered", "Rejected"];
+// The hiring pipeline only runs forwards. Every step already emails the
+// candidate ("you are under review", "you have an offer"), so walking a status
+// backwards would contradict something they have already been told — the
+// history, not just the label, would become a lie. Rejection is the one exit
+// available at any point, and it settles the application for good.
+const STATUS_PIPELINE = ["Applied", "Under Review", "Interviewing", "Offered"];
+const TERMINAL_STATUS = "Rejected";
+const APPLICATION_STATUSES = [...STATUS_PIPELINE, TERMINAL_STATUS];
+
+/**
+ * Whether an employer may move an application from one status to another.
+ * Forward along the pipeline, or out to rejection; never back, and never out
+ * of rejection. Equal statuses are not a transition — the caller decides
+ * whether re-submitting the current status is meaningful (rescheduling an
+ * interview is; re-applying a label is not).
+ */
+const canTransition = (from, to) => {
+    if (from === to) return false;
+    if (from === TERMINAL_STATUS) return false;
+    if (to === TERMINAL_STATUS) return true;
+
+    const fromIndex = STATUS_PIPELINE.indexOf(from);
+    const toIndex = STATUS_PIPELINE.indexOf(to);
+    return fromIndex !== -1 && toIndex > fromIndex;
+};
 
 const normalizeApplication = (application) => {
     const normalized  = toClient(application);
@@ -397,6 +421,9 @@ const getApplicationsForJob = async (req, res) => {
             return res.status(404).json({ message: "Job not found" });
         }
 
+        // A soft-deleted job is intentionally still readable here: people
+        // applied to it, and the employer needs to finish reviewing or
+        // responding to them after taking the advert down.
         if (job.companyId !== req.user._id) {
             return res.status(403).json({ message: "Not authorized to view applications for this job" });
         }
@@ -421,9 +448,6 @@ const getApplicationsForJob = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error", error: error.message });
-        // A soft-deleted job is intentionally still readable here: people
-        // applied to it, and the employer needs to finish reviewing or
-        // responding to them after taking the advert down.
     }
 };
 
@@ -491,10 +515,9 @@ const updateApplicationStatus = async (req, res) => {
         }
 
         const { status, interview } = req.body;
-        const allowedStatuses = ["Applied", "Under Review", "Interviewing", "Offered", "Rejected"];
 
-        if (!allowedStatuses.includes(status)) {
-            return res.status(400).json({ message: `Status must be one of: ${allowedStatuses.join(", ")}` });
+        if (!APPLICATION_STATUSES.includes(status)) {
+            return res.status(400).json({ message: `Status must be one of: ${APPLICATION_STATUSES.join(", ")}` });
         }
 
         const application = await prisma.application.findUnique({
@@ -511,6 +534,19 @@ const updateApplicationStatus = async (req, res) => {
 
         if (!application.job || application.job.companyId !== req.user._id) {
             return res.status(403).json({ message: "Not authorized to update this application" });
+        }
+
+        // Re-sending "Interviewing" while already interviewing is a reschedule,
+        // not a move, so it is the one same-status update worth accepting.
+        const isReschedule = status === application.status && status === "Interviewing";
+
+        if (!isReschedule && !canTransition(application.status, status)) {
+            return res.status(409).json({
+                message: application.status === TERMINAL_STATUS
+                    ? `This application was ${TERMINAL_STATUS.toLowerCase()} and can no longer be moved.`
+                    : `An application cannot move from "${application.status}" back to "${status}".`,
+                currentStatus: application.status,
+            });
         }
 
         const updateData = { status };
