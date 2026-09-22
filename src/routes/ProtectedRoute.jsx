@@ -18,7 +18,7 @@ const ProtectedRoute = ({ requiredRole, redirectTo = "/login" }) => {
   if (requiredRole && user?.role !== requiredRole) {
     const fallback =
       user?.role === "admin"
-        ? "/admin-email-templates"
+        ? "/admin-overview"
         : user?.role === "employer"
           ? user?.employerOnboardingComplete === false
             ? "/company-setup"

@@ -9,7 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 // SSOCallback
 
 const getPostLoginPath = (user) => {
-    if (user.role === "admin") return "/admin-email-templates";
+    if (user.role === "admin") return "/admin-overview";
     if (user.role === "employer") {
         return user.employerOnboardingComplete === false
             ? "/company-setup"

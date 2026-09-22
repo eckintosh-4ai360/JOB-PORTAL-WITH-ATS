@@ -57,6 +57,16 @@ export const API_PATHS = {
     GET_SAVED_JOBS: "/api/saved-jobs",
   },
 
+  // Platform control — company review, accounts and postings oversight.
+  ADMIN: {
+    OVERVIEW: "/api/admin/overview",
+    GET_COMPANIES: "/api/admin/companies",
+    GET_COMPANY: (id) => `/api/admin/companies/${id}`,
+    DECIDE_COMPANY: (id) => `/api/admin/companies/${id}/decision`,
+    GET_ACCOUNTS: "/api/admin/accounts",
+    GET_JOBS: "/api/admin/jobs",
+  },
+
   MODERATION: {
     GET_STATS: "/api/moderation/stats",
     GET_CASES: "/api/moderation/cases",
