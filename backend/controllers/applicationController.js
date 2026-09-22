@@ -230,6 +230,14 @@ const applyForJob = async (req, res) => {
 
         res.status(201).json({ message: "Application submitted successfully", application: normalizeApplication(application) });
     } catch (error) {
+        // The duplicate check above is a read followed by a write, so two
+        // submits arriving together can both pass it. The unique index is what
+        // actually stops the second one; translate it into the same answer the
+        // check would have given rather than a bare 500.
+        if (error?.code === "P2002") {
+            return res.status(400).json({ message: "You have already applied for this job" });
+        }
+
         console.error(error);
         res.status(500).json({ message: "Server error", error: error.message });
     }
