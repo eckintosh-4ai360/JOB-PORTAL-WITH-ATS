@@ -1013,17 +1013,34 @@ const FindJobs = () => {
 
       {/* ================= QUICK APPLY MODAL ================= */}
       {quickApplyJob && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-surface-card rounded-2xl max-w-lg w-full p-space-lg shadow-2xl border border-border-default relative">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="quick-apply-modal-title"
+            className="animate-slide-in-right ml-auto flex h-full w-full flex-col overflow-hidden bg-surface-card shadow-2xl md:w-1/2"
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-border-default px-6 py-5 md:px-8 md:py-7">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-brand-indigo-light text-primary flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-[26px]">bolt</span>
+                </div>
+                <div className="min-w-0">
+                  <h3 id="quick-apply-modal-title" className="font-headline-md font-bold text-on-surface">Quick Apply</h3>
+                  <p className="font-body-md text-text-secondary truncate">{quickApplyJob.title} &bull; {quickApplyJob.company?.companyName}</p>
+                </div>
+              </div>
             <button
               onClick={() => setQuickApplyJob(null)}
               type="button"
-              className="absolute top-4 right-4 text-text-muted hover:text-on-surface p-1 rounded-lg"
+              aria-label="Close quick application form"
+              className="shrink-0 text-text-muted hover:text-on-surface p-1 rounded-lg cursor-pointer"
             >
               <span className="material-symbols-outlined text-[24px]">close</span>
             </button>
+            </div>
 
-            <div className="flex items-center gap-3 mb-4">
+            <div className="hidden">
               <div className="w-12 h-12 rounded-xl bg-brand-indigo-light text-primary flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined text-[26px]">bolt</span>
               </div>
@@ -1037,8 +1054,9 @@ const FindJobs = () => {
               </div>
             </div>
 
-            <form onSubmit={handleQuickApplySubmit} className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
+            <form onSubmit={handleQuickApplySubmit} className="flex min-h-0 flex-1 flex-col">
+              <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6 md:px-8 md:py-8">
+              <div className="flex flex-col gap-2">
                 <label className="font-label-caps uppercase text-text-muted">
                   Attach CV / Resume (PDF, DOCX)
                 </label>
@@ -1051,7 +1069,7 @@ const FindJobs = () => {
                 />
               </div>
 
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
                 <label className="font-label-caps uppercase text-text-muted">
                   Personal Intro or Portfolio Link
                 </label>
@@ -1060,22 +1078,23 @@ const FindJobs = () => {
                   value={applyNote}
                   onChange={(e) => setApplyNote(e.target.value)}
                   placeholder="Share your GitHub, LinkedIn, or a brief note explaining why you're a great fit..."
-                  className="w-full p-3 rounded-xl bg-surface-container-low border border-border-default font-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full min-h-32 resize-y p-3 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
+              </div>
+              <div className="flex flex-col-reverse gap-3 border-t border-border-default px-6 py-5 sm:flex-row sm:items-center sm:justify-end md:px-8">
                 <button
                   type="button"
                   onClick={() => setQuickApplyJob(null)}
-                  className="px-4 py-2.5 rounded-xl font-label-md text-text-secondary hover:bg-surface-container"
+                  className="w-full px-4 py-3 rounded-xl font-label-md text-text-secondary hover:bg-surface-container cursor-pointer sm:w-auto"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingApply}
-                  className="px-space-lg py-2.5 rounded-xl bg-primary-container text-on-primary font-label-md font-bold hover:bg-brand-indigo-dark shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                  className="w-full px-space-lg py-3 rounded-xl bg-primary-container text-on-primary font-label-md font-bold hover:bg-brand-indigo-dark shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer sm:w-auto"
                 >
                   {isSubmittingApply ? "Submitting..." : "Send Application"}
                   <span className="material-symbols-outlined text-[16px]">
