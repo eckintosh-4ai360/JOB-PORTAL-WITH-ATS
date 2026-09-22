@@ -15,7 +15,7 @@ dist-ssr
 backend/.env
 backend/uploads/*
 !backend/uploads/.gitkeep
-
+CLAUDE.md
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -26,3 +26,4 @@ backend/uploads/*
 *.njsproj
 *.sln
 *.sw?
+
