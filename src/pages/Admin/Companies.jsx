@@ -179,16 +179,39 @@ const Companies = () => {
               value={overview.companies?.pending ?? 0}
               tone={overview.companies?.pending ? "warn" : "default"}
               hint="waiting to be picked up"
+              icon={FileText}
             />
-            <StatTile label="Under review" value={overview.companies?.in_review ?? 0} hint="cannot post yet" />
-            <StatTile label="Verified" value={overview.companies?.approved ?? 0} />
+            <StatTile
+              label="Under review"
+              value={overview.companies?.in_review ?? 0}
+              tone="info"
+              hint="cannot post yet"
+              icon={ShieldCheck}
+            />
+            <StatTile
+              label="Verified"
+              value={overview.companies?.approved ?? 0}
+              tone="success"
+              icon={Check}
+            />
             <StatTile
               label="Rejected"
               value={overview.companies?.rejected ?? 0}
               tone={overview.companies?.rejected ? "danger" : "default"}
+              icon={X}
             />
-            <StatTile label="Unverified" value={overview.companies?.awaitingSetup ?? 0} hint="never submitted" />
-            <StatTile label="Companies" value={overview.companies?.total ?? 0} hint="total on platform" />
+            <StatTile
+              label="Unverified"
+              value={overview.companies?.awaitingSetup ?? 0}
+              hint="never submitted"
+              icon={Inbox}
+            />
+            <StatTile
+              label="Companies"
+              value={overview.companies?.total ?? 0}
+              hint="total on platform"
+              icon={Building2}
+            />
           </div>
         )}
 
@@ -215,68 +238,91 @@ const Companies = () => {
             description="Nothing matches this filter. New companies land in Submitted the moment an employer submits their setup."
           />
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {companies.map((company) => (
               <button
                 key={company.id}
                 type="button"
                 onClick={() => openCompany(company)}
-                className="flex w-full items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4 text-left transition-colors hover:border-violet-200 hover:bg-violet-50/30 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-violet-500/30 dark:hover:bg-violet-500/5"
+                className="group relative flex w-full overflow-hidden rounded-3xl border border-border-default bg-surface-card p-space-md text-left shadow-[0_10px_24px_rgba(40,34,86,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_16px_32px_rgba(89,47,174,0.12)] md:p-space-lg"
               >
+                <span
+                  className={`absolute inset-y-0 left-0 w-1 ${
+                    company.approvalState === "approved"
+                      ? "bg-emerald-500"
+                      : company.approvalState === "rejected"
+                        ? "bg-rose-500"
+                        : company.approvalState === "in_review"
+                          ? "bg-sky-500"
+                          : "bg-amber-500"
+                  }`}
+                />
                 {company.logo ? (
-                  <img src={company.logo} alt="" className="h-11 w-11 shrink-0 rounded-xl object-cover" />
+                  <img
+                    src={company.logo}
+                    alt=""
+                    className="ml-1 h-12 w-12 shrink-0 rounded-2xl border border-primary/10 bg-surface-card object-cover p-1 shadow-sm"
+                  />
                 ) : (
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-500 dark:bg-violet-500/10">
+                  <span className="ml-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-indigo-light text-primary shadow-sm">
                     <Building2 className="h-5 w-5" />
                   </span>
                 )}
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="truncate text-sm font-extrabold text-gray-900 dark:text-gray-100">
+                  <div className="flex flex-wrap items-center gap-space-xs">
+                    <span className="truncate font-label-lg font-bold text-text-primary">
                       {company.name}
                     </span>
                     <StatePill state={company.approvalState} />
                     {company.verified && (
-                      <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-500" aria-label="Verified" />
+                      <ShieldCheck className="h-4 w-4 shrink-0 text-verified-badge" aria-label="Verified" />
                     )}
                   </div>
-                  <p className="mt-0.5 truncate text-xs text-gray-400 dark:text-gray-500">
+                  <p className="mt-1 truncate font-body-sm text-text-muted">
                     {company.user?.email} · {company.registrationNumber || "no registration number"} ·{" "}
                     {company._count?.jobs ?? 0} job{(company._count?.jobs ?? 0) === 1 ? "" : "s"}
                   </p>
                 </div>
 
-                <div className="hidden shrink-0 text-right sm:block">
+                <div className="hidden shrink-0 items-center gap-space-sm sm:flex">
+                  <div className="text-right">
                   {company.registrationDocUrl ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="inline-flex items-center gap-1 font-label-md font-bold text-emerald-600 dark:text-emerald-400">
                       <FileText className="h-3.5 w-3.5" />
                       Certificate
                     </span>
                   ) : (
-                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400">No certificate</span>
+                    <span className="font-label-md font-bold text-amber-600 dark:text-amber-400">No certificate</span>
                   )}
-                  <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                  <p className="mt-0.5 font-body-sm text-text-muted">
                     {moment(company.submittedForReviewAt || company.createdAt).fromNow()}
                   </p>
+                  </div>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container text-text-muted transition-colors group-hover:bg-brand-indigo-light group-hover:text-primary">
+                    <ExternalLink className="h-4 w-4" />
+                  </span>
                 </div>
               </button>
             ))}
 
             {incompleteSetups.length > 0 && (
-              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 p-4 dark:border-gray-800 dark:bg-gray-900/40">
-                <p className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              <div className="rounded-3xl border border-dashed border-border-default bg-surface-container-low p-space-md shadow-xs dark:bg-gray-900/40">
+                <p className="font-label-caps font-bold uppercase tracking-wider text-text-muted">
                   Signed up but never submitted
                 </p>
-                <div className="mt-2 space-y-2">
+                <div className="mt-space-sm space-y-space-xs">
                   {incompleteSetups.map((entry) => (
-                    <div key={entry.id} className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-gray-400 dark:bg-gray-800">
+                    <div
+                      key={entry.id}
+                      className="flex items-center gap-space-sm rounded-2xl border border-border-default bg-surface-card p-space-sm"
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-container text-text-muted">
                         <Building2 className="h-4 w-4" />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-bold text-gray-700 dark:text-gray-200">{entry.name}</p>
-                        <p className="truncate text-xs text-gray-400 dark:text-gray-500">{entry.user?.email}</p>
+                        <p className="truncate font-label-md font-bold text-text-primary">{entry.name}</p>
+                        <p className="truncate font-body-sm text-text-muted">{entry.user?.email}</p>
                       </div>
                       <StatePill state="setup_incomplete" />
                     </div>

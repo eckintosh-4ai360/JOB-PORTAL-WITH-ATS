@@ -4,23 +4,57 @@
  * three separately-built pages.
  */
 
-export const StatTile = ({ label, value, hint, tone = "default" }) => (
-  <div className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-    <p className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500">{label}</p>
-    <p
-      className={`mt-1 text-2xl font-extrabold ${
-        tone === "danger"
-          ? "text-rose-600 dark:text-rose-400"
-          : tone === "warn"
-            ? "text-amber-600 dark:text-amber-400"
-            : "text-gray-900 dark:text-gray-100"
-      }`}
-    >
-      {value}
-    </p>
-    {hint && <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{hint}</p>}
-  </div>
-);
+const STAT_TONES = {
+  default: {
+    accent: "bg-slate-500",
+    icon: "bg-slate-100 text-slate-600 dark:bg-slate-500/10 dark:text-slate-300",
+    value: "text-gray-900 dark:text-gray-100",
+  },
+  info: {
+    accent: "bg-sky-500",
+    icon: "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-300",
+    value: "text-sky-700 dark:text-sky-300",
+  },
+  success: {
+    accent: "bg-emerald-500",
+    icon: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300",
+    value: "text-emerald-700 dark:text-emerald-300",
+  },
+  warn: {
+    accent: "bg-amber-500",
+    icon: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300",
+    value: "text-amber-700 dark:text-amber-300",
+  },
+  danger: {
+    accent: "bg-rose-500",
+    icon: "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300",
+    value: "text-rose-700 dark:text-rose-300",
+  },
+};
+
+export const StatTile = ({ label, value, hint, tone = "default", icon: Icon }) => {
+  const style = STAT_TONES[tone] || STAT_TONES.default;
+
+  return (
+    <div className="group relative overflow-hidden rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_10px_24px_rgba(40,34,86,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_16px_30px_rgba(89,47,174,0.10)]">
+      <span className={`absolute inset-x-0 top-0 h-1 ${style.accent}`} />
+      <div className="flex items-start justify-between gap-3 pt-1">
+        <div className="min-w-0">
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            {label}
+          </p>
+          <p className={`mt-2 text-3xl font-extrabold tracking-tight ${style.value}`}>{value}</p>
+        </div>
+        {Icon && (
+          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${style.icon}`}>
+            <Icon className="h-4.5 w-4.5" />
+          </span>
+        )}
+      </div>
+      {hint && <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">{hint}</p>}
+    </div>
+  );
+};
 
 const PILL_STYLES = {
   in_review: "bg-sky-50 text-sky-700 ring-1 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30",
