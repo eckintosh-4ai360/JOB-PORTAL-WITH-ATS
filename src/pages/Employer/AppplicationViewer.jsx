@@ -6,6 +6,7 @@ import {
   CheckCircle2, XCircle, Loader2, Eye, Download,
   RefreshCw, SlidersHorizontal, X, Star, TrendingUp,
   ExternalLink, ChevronDown, AlertCircle, Inbox, Lock,
+  Hourglass, Award, Workflow, ClipboardList,
 } from "lucide-react";
 import moment from "moment";
 import toast from "react-hot-toast";
@@ -13,49 +14,56 @@ import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { resolveFileUrl, downloadFileUrl } from "../../utils/fileUrl";
+import PipelineEditor from "../../components/employer/PipelineEditor";
 
-//   Status Config  
-const STATUS_CONFIG = {
-  Applied: {
-    label: "Applied",
-    icon: Clock,
+//   Stage styling
+//   Stages are the employer's own, so their look comes from what they mean —
+//   the candidate phase they map to, and whether they are an outcome — rather
+//   than from their names.
+const TONES = {
+  slate: {
     bg: "bg-slate-100 dark:bg-slate-500/10",
     text: "text-slate-600 dark:text-slate-400",
     ring: "ring-slate-200 dark:ring-slate-500/30",
     dot: "bg-slate-400",
     badge: "bg-slate-50 text-slate-600 ring-1 ring-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-500/30",
   },
-  "Under Review": {
-    label: "Under Review",
-    icon: Loader2,
+  blue: {
     bg: "bg-blue-50 dark:bg-blue-500/10",
     text: "text-blue-600 dark:text-blue-400",
     ring: "ring-blue-200 dark:ring-blue-500/30",
     dot: "bg-blue-500",
     badge: "bg-blue-50 text-blue-600 ring-1 ring-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/30",
-    spin: true,
   },
-  Interviewing: {
-    label: "Interviewing",
-    icon: Calendar,
+  violet: {
+    bg: "bg-violet-50 dark:bg-violet-500/10",
+    text: "text-violet-600 dark:text-violet-400",
+    ring: "ring-violet-200 dark:ring-violet-500/30",
+    dot: "bg-violet-500",
+    badge: "bg-violet-50 text-violet-600 ring-1 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:ring-violet-500/30",
+  },
+  amber: {
     bg: "bg-amber-50 dark:bg-amber-500/10",
     text: "text-amber-600 dark:text-amber-400",
     ring: "ring-amber-200 dark:ring-amber-500/30",
     dot: "bg-amber-500",
     badge: "bg-amber-50 text-amber-600 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/30",
   },
-  Offered: {
-    label: "Offered",
-    icon: CheckCircle2,
+  indigo: {
+    bg: "bg-indigo-50 dark:bg-indigo-500/10",
+    text: "text-indigo-600 dark:text-indigo-400",
+    ring: "ring-indigo-200 dark:ring-indigo-500/30",
+    dot: "bg-indigo-500",
+    badge: "bg-indigo-50 text-indigo-600 ring-1 ring-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:ring-indigo-500/30",
+  },
+  emerald: {
     bg: "bg-emerald-50 dark:bg-emerald-500/10",
     text: "text-emerald-600 dark:text-emerald-400",
     ring: "ring-emerald-200 dark:ring-emerald-500/30",
     dot: "bg-emerald-500",
     badge: "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30",
   },
-  Rejected: {
-    label: "Rejected",
-    icon: XCircle,
+  red: {
     bg: "bg-red-50 dark:bg-red-500/10",
     text: "text-red-500 dark:text-red-400",
     ring: "ring-red-200 dark:ring-red-500/30",
@@ -64,23 +72,60 @@ const STATUS_CONFIG = {
   },
 };
 
-const STATUS_OPTIONS = ["Applied", "Under Review", "Interviewing", "Offered", "Rejected"];
+const PHASE_TONE = {
+  received: "slate",
+  under_review: "blue",
+  shortlisted: "violet",
+  interview: "amber",
+  decision: "indigo",
+};
 
-// Mirrors the rule the API enforces (applicationController.canTransition): the
+const PHASE_ICON = {
+  received: Clock,
+  under_review: Search,
+  shortlisted: Star,
+  interview: Calendar,
+  decision: Hourglass,
+};
+
+const stageStyle = (stage) => {
+  if (!stage) return { ...TONES.slate, icon: Clock };
+  if (stage.type === "rejected") return { ...TONES.red, icon: XCircle };
+  if (stage.type === "offer" || stage.type === "hired") return { ...TONES.emerald, icon: stage.type === "hired" ? Award : CheckCircle2 };
+  if (stage.type === "interview") return { ...TONES.amber, icon: Calendar };
+  return { ...TONES[PHASE_TONE[stage.phase]] || TONES.slate, icon: PHASE_ICON[stage.phase] || Clock };
+};
+
+// Mirrors the rule the API enforces (utils/hiringPipeline.canTransition): the
 // pipeline runs forwards only, rejection is reachable from anywhere, and a
-// rejected application is settled. Greying out the impossible buttons is a
-// courtesy — the server is what actually holds the line.
-const STATUS_PIPELINE = ["Applied", "Under Review", "Interviewing", "Offered"];
-const TERMINAL_STATUS = "Rejected";
-
-const canMoveTo = (from, to) => {
+// rejected or hired application is settled. Greying out the impossible buttons
+// is a courtesy — the server is what actually holds the line.
+const canMoveTo = (stages, from, to) => {
   if (from === to) return false;
-  if (from === TERMINAL_STATUS) return false;
-  if (to === TERMINAL_STATUS) return true;
+  const fromStage = stages.find((stage) => stage.id === from);
+  if (!fromStage || fromStage.type === "rejected" || fromStage.type === "hired") return false;
+  if (to === "rejected") return true;
 
-  const fromIndex = STATUS_PIPELINE.indexOf(from);
-  const toIndex = STATUS_PIPELINE.indexOf(to);
+  const fromIndex = stages.findIndex((stage) => stage.id === from);
+  const toIndex = stages.findIndex((stage) => stage.id === to);
   return fromIndex !== -1 && toIndex > fromIndex;
+};
+
+// Mirrors notifyCandidate in the application controller: what a move looks
+// like from the candidate's side, and whether it emails them.
+const candidateEffect = (phases, fromStage, toStage) => {
+  const phaseLabel = (stage) => phases.find((phase) => phase.key === stage?.phase)?.label || "Application received";
+  const outcomeLabel = { rejected: "Not selected", offer: "Offer made", hired: "Hired" }[toStage?.type];
+  const sees = outcomeLabel ? `${phaseLabel(toStage)} · ${outcomeLabel}` : phaseLabel(toStage);
+  const alwaysEmails = ["rejected", "interview", "offer", "hired"].includes(toStage?.type);
+  return { sees, emails: alwaysEmails || fromStage?.phase !== toStage?.phase };
+};
+
+const formatAnswer = (entry) => {
+  if (entry.type === "yes_no") return entry.answer ? "Yes" : "No";
+  if (entry.type === "salary") return `GH₵ ${Number(entry.answer).toLocaleString()}`;
+  if (entry.type === "date") return moment(entry.answer).format("D MMM YYYY");
+  return String(entry.answer);
 };
 
 //   Avatar Gradients  
@@ -97,8 +142,8 @@ const getInitials = (name = "") =>
   name.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
 
 //  Status Badge 
-const StatusBadge = ({ status, size = "sm" }) => {
-  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG["Applied"];
+const StatusBadge = ({ stage, size = "sm" }) => {
+  const cfg = stageStyle(stage);
   const Icon = cfg.icon;
   return (
     <span
@@ -106,8 +151,8 @@ const StatusBadge = ({ status, size = "sm" }) => {
         size === "sm" ? "px-2.5 py-0.5 text-xs" : "px-3 py-1 text-sm"
       }`}
     >
-      <Icon className={`${size === "sm" ? "h-3 w-3" : "h-3.5 w-3.5"} ${cfg.spin ? "animate-spin" : ""}`} />
-      {cfg.label}
+      <Icon className={size === "sm" ? "h-3 w-3" : "h-3.5 w-3.5"} />
+      {stage?.name || "…"}
     </span>
   );
 };
@@ -350,11 +395,11 @@ const AiFitPanel = ({ score, isLoading, jobSpec }) => {
   );
 };
 
-const ApplicantListItem = ({ app, index, isSelected, onClick, aiScore }) => {
+const ApplicantListItem = ({ app, stage, index, isSelected, onClick, aiScore }) => {
   const name = app.applicantName || app.applicant?.name || "Unknown Applicant";
   const initials = getInitials(name);
   const gradient = AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length];
-  const cfg = STATUS_CONFIG[app.status] ?? STATUS_CONFIG["Applied"];
+  const cfg = stageStyle(stage);
 
   return (
     <button
@@ -433,6 +478,12 @@ const ApplicationViewer = () => {
   const [interviewDetails, setInterviewDetails] = useState({ date: "", time: "", location: "", notes: "" });
   //   The status awaiting confirmation, or null when no dialog is open
   const [pendingStatus, setPendingStatus] = useState(null);
+  //   The interview stage the scheduling dialog will move the application to
+  const [interviewStageId, setInterviewStageId] = useState(null);
+
+  //   The employer's stages, and what each one shows the candidate
+  const [pipeline, setPipeline] = useState(null);
+  const [isPipelineOpen, setIsPipelineOpen] = useState(false);
 
   //   AI fit scoring, keyed by application id
   const [aiScores, setAiScores] = useState({});
@@ -463,6 +514,26 @@ const ApplicationViewer = () => {
   useEffect(() => {
     fetchApplications();
   }, [fetchApplications]);
+
+  useEffect(() => {
+    let cancelled = false;
+    axiosInstance
+      .get(API_PATHS.APPLICATIONS.GET_PIPELINE)
+      .then((res) => {
+        if (!cancelled) setPipeline(res.data);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Could not load your hiring pipeline.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const stages = pipeline?.stages || [];
+  const allStages = pipeline ? [...pipeline.stages, pipeline.rejectedStage] : [];
+  const phases = pipeline?.phases || [];
+  const stageById = (id) => allStages.find((stage) => stage.id === id);
 
   /**
    * Load AI fit scores for this job's applicants.
@@ -522,10 +593,13 @@ const ApplicationViewer = () => {
     });
 
   //   Summary counts   
-  const counts = STATUS_OPTIONS.reduce((acc, s) => {
-    acc[s] = applications.filter((a) => a.status === s).length;
+  const counts = allStages.reduce((acc, stage) => {
+    acc[stage.id] = applications.filter((a) => a.status === stage.id).length;
     return acc;
   }, {});
+  const offerCount = allStages
+    .filter((stage) => stage.type === "offer" || stage.type === "hired")
+    .reduce((sum, stage) => sum + (counts[stage.id] || 0), 0);
 
   //   Update Status   
   const handleUpdateStatus = async (newStatus) => {
@@ -537,7 +611,7 @@ const ApplicationViewer = () => {
         status: newStatus,
       });
       toast.dismiss(id);
-      toast.success(`Status updated to "${newStatus}"`);
+      toast.success(`Moved to ${stageById(newStatus)?.name || newStatus}`);
       const updated = applications.map((a) =>
         a._id === selectedApp._id ? { ...a, status: newStatus } : a
       );
@@ -553,12 +627,12 @@ const ApplicationViewer = () => {
   
   //   Ask before moving  
   //   A move is one-way, so nothing is sent until it has been confirmed.
-  //   "Interviewing" is confirmed by the scheduling dialog instead, which
+  //   An interview stage is confirmed by the scheduling dialog instead, which
   //   cannot be submitted without real interview details.
   const requestStatusChange = (next) => {
-    if (!selectedApp || !canMoveTo(selectedApp.status, next)) return;
+    if (!selectedApp || !canMoveTo(allStages, selectedApp.status, next)) return;
 
-    if (next === "Interviewing") {
+    if (stageById(next)?.type === "interview") {
       if (selectedApp.isGuest) {
         toast.error("Interviews can only be scheduled for candidates with registered accounts.");
         return;
@@ -569,6 +643,7 @@ const ApplicationViewer = () => {
         location: selectedApp.interview?.location || "",
         notes: selectedApp.interview?.notes || "",
       });
+      setInterviewStageId(next);
       setIsSchedulingModalOpen(true);
       return;
     }
@@ -590,11 +665,12 @@ const ApplicationViewer = () => {
       return;
     }
 
+    const targetStatus = interviewStageId || selectedApp.status;
     setIsUpdatingStatus(true);
     const id = toast.loading("Saving interview schedule…");
     try {
       const res = await axiosInstance.patch(API_PATHS.APPLICATIONS.UPDATE_STATUS(selectedApp._id), {
-        status: "Interviewing",
+        status: targetStatus,
         interview: interviewDetails,
       });
       toast.dismiss(id);
@@ -602,7 +678,7 @@ const ApplicationViewer = () => {
       
       const updatedApp = res.data.application || {
         ...selectedApp,
-        status: "Interviewing",
+        status: targetStatus,
         interview: {
           date: new Date(interviewDetails.date),
           time: interviewDetails.time,
@@ -612,7 +688,7 @@ const ApplicationViewer = () => {
       };
       
       const updated = applications.map((a) =>
-        a._id === selectedApp._id ? { ...a, status: "Interviewing", interview: updatedApp.interview } : a
+        a._id === selectedApp._id ? { ...a, status: targetStatus, interview: updatedApp.interview } : a
       );
       setApplications(updated);
       setSelectedApp(updatedApp);
@@ -686,9 +762,19 @@ const ApplicationViewer = () => {
             </div>
             <div className="flex items-center gap-1.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 px-3.5 py-2 shadow-sm">
               <TrendingUp className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
-              <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{counts["Offered"] || 0}</span>
-              <span className="text-xs text-gray-400 dark:text-gray-500">Offered</span>
+              <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{offerCount}</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">Offers</span>
             </div>
+            <button
+              type="button"
+              onClick={() => setIsPipelineOpen(true)}
+              disabled={!pipeline}
+              title="Customise the stages applications move through"
+              className="flex items-center gap-1.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 px-3.5 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 shadow-sm hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all disabled:opacity-50"
+            >
+              <Workflow className="h-4 w-4" />
+              Pipeline
+            </button>
             <button
               onClick={fetchApplications}
               title="Refresh"
@@ -701,10 +787,10 @@ const ApplicationViewer = () => {
 
         {/*    Status Filter Pills   */}
         <div className="mb-4 flex items-center gap-2 flex-wrap">
-          {["All", ...STATUS_OPTIONS].map((s) => {
+          {["All", ...allStages.map((stage) => stage.id)].map((s) => {
             const count = s === "All" ? applications.length : (counts[s] || 0);
             const isActive = statusFilter === s;
-            const cfg = s !== "All" ? STATUS_CONFIG[s] : null;
+            const cfg = s !== "All" ? stageStyle(stageById(s)) : null;
             return (
               <button
                 key={s}
@@ -718,7 +804,7 @@ const ApplicationViewer = () => {
                 {cfg && (
                   <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-white" : cfg.dot}`} />
                 )}
-                {s}
+                {s === "All" ? "All" : stageById(s)?.name}
                 <span
                   className={`rounded-full px-1.5 py-0.5 text-[10px] leading-none font-bold ${
                     isActive ? "bg-white/20 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
@@ -775,7 +861,7 @@ const ApplicationViewer = () => {
               <div className="px-4 py-2 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between gap-2">
                 <p className="text-xs font-semibold text-gray-400 dark:text-gray-500">
                   {filtered.length} applicant{filtered.length !== 1 ? "s" : ""}
-                  {statusFilter !== "All" && ` · ${statusFilter}`}
+                  {statusFilter !== "All" && ` · ${stageById(statusFilter)?.name || statusFilter}`}
                 </p>
 
                 <div className="flex items-center gap-1 shrink-0">
@@ -827,6 +913,7 @@ const ApplicationViewer = () => {
                     <ApplicantListItem
                       key={app._id}
                       app={app}
+                      stage={stageById(app.status)}
                       index={i}
                       isSelected={selectedApp?._id === app._id}
                       onClick={() => setSelectedApp(app)}
@@ -872,7 +959,7 @@ const ApplicationViewer = () => {
 
                     {/* Current Status */}
                     <div className="shrink-0">
-                      <StatusBadge status={selectedApp.status} size="md" />
+                      <StatusBadge stage={stageById(selectedApp.status)} size="md" />
                     </div>
                   </div>
                 </div>
@@ -895,23 +982,28 @@ const ApplicationViewer = () => {
                     </div>
                     <p className="text-xs text-gray-400 dark:text-gray-500 -mt-2 mb-4">
                       Each move is confirmed first and cannot be undone — an application only ever moves forward.
+                      Candidates never see these stage names, only the step shown under each one.
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {STATUS_OPTIONS.map((s) => {
-                        const cfg = STATUS_CONFIG[s];
+                    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2">
+                      {allStages.map((stage) => {
+                        const s = stage.id;
+                        const cfg = stageStyle(stage);
                         const isActive = selectedApp.status === s;
-                        const isLocked = !isActive && !canMoveTo(selectedApp.status, s);
+                        const isLocked = !isActive && !canMoveTo(allStages, selectedApp.status, s);
+                        const currentStage = stageById(selectedApp.status);
+                        const isSettled = currentStage?.type === "rejected" || currentStage?.type === "hired";
                         const Icon = isLocked ? Lock : cfg.icon;
+                        const seen = phases.find((phase) => phase.key === stage.phase)?.label;
                         return (
                           <button
                             key={s}
                             disabled={isUpdatingStatus || isActive || isLocked}
                             title={
                               isLocked
-                                ? selectedApp.status === TERMINAL_STATUS
-                                  ? `This application was ${TERMINAL_STATUS.toLowerCase()} and can no longer be moved`
-                                  : `Already past "${s}" — the pipeline only moves forward`
-                                : undefined
+                                ? isSettled
+                                  ? `This application is settled as "${currentStage.name}" and can no longer be moved`
+                                  : `Already past "${stage.name}" — the pipeline only moves forward`
+                                : `Candidate sees: ${seen}`
                             }
                             onClick={() => requestStatusChange(s)}
                             className={`flex flex-col items-center gap-1.5 rounded-xl p-3 border-2 text-xs font-bold transition-all duration-200 ${
@@ -922,8 +1014,13 @@ const ApplicationViewer = () => {
                                   : "bg-gray-50 text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600 hover:bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:border-gray-600 dark:hover:text-gray-300 dark:hover:bg-gray-800"
                             } ${isUpdatingStatus ? "opacity-60 cursor-not-allowed" : ""}`}
                           >
-                            <Icon className={`h-4.5 w-4.5 ${isActive && cfg.spin ? "animate-spin" : ""}`} />
-                            {s}
+                            <Icon className="h-4.5 w-4.5" />
+                            <span className="text-center leading-tight">{stage.name}</span>
+                            {!isActive && !isLocked && seen && (
+                              <span className="text-[10px] font-normal opacity-70 text-center leading-tight">
+                                Sees: {seen}
+                              </span>
+                            )}
                             {isActive && (
                               <span className="text-[10px] font-normal opacity-70">Current</span>
                             )}
@@ -937,7 +1034,7 @@ const ApplicationViewer = () => {
                   </div>
 
                   {/*  Scheduled Interview Details ─ */}
-                  {selectedApp.status === "Interviewing" && selectedApp.interview && (
+                  {stageById(selectedApp.status)?.phase === "interview" && selectedApp.interview && (
                     <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50/20 dark:bg-amber-500/5 p-5 shadow-sm relative overflow-hidden">
                       <div className="absolute top-0 right-0 p-4 hidden md:block">
                         <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-500/10 dark:text-amber-400">
@@ -994,6 +1091,7 @@ const ApplicationViewer = () => {
                           </p>
                         </div>
                       )}
+                      {stageById(selectedApp.status)?.type === "interview" && (
                       <button
                         onClick={() => {
                           setInterviewDetails({
@@ -1002,6 +1100,7 @@ const ApplicationViewer = () => {
                             location: selectedApp.interview.location,
                             notes: selectedApp.interview.notes || "",
                           });
+                          setInterviewStageId(selectedApp.status);
                           setIsSchedulingModalOpen(true);
                         }}
                         className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-gray-900 hover:bg-amber-50 dark:hover:bg-amber-500/10 px-4 py-2.5 text-xs font-semibold text-amber-700 dark:text-amber-400 transition"
@@ -1009,6 +1108,7 @@ const ApplicationViewer = () => {
                         <SlidersHorizontal className="h-3.5 w-3.5" />
                         Edit Interview Details
                       </button>
+                      )}
                     </div>
                   )}
 
@@ -1084,6 +1184,26 @@ const ApplicationViewer = () => {
                     </div>
                   </div>
 
+                  {/*  Screening answers  */}
+                  {Array.isArray(selectedApp.screeningAnswers) && selectedApp.screeningAnswers.length > 0 && (
+                    <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
+                      <div className="flex items-center gap-2 mb-3">
+                        <ClipboardList className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">Screening answers</h3>
+                      </div>
+                      <dl className="divide-y divide-gray-50 dark:divide-gray-800">
+                        {selectedApp.screeningAnswers.map((entry) => (
+                          <div key={entry.questionId} className="py-2.5 grid gap-1 sm:grid-cols-[1fr_auto] sm:gap-4">
+                            <dt className="text-xs text-gray-500 dark:text-gray-400">{entry.prompt}</dt>
+                            <dd className="text-sm font-semibold text-gray-900 dark:text-gray-100 sm:text-right whitespace-pre-wrap">
+                              {formatAnswer(entry)}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                  )}
+
                   {/*  Cover Letter  */}
                   {(selectedApp.coverLetter || selectedApp.coverLetterFile) && (
                     <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
@@ -1155,14 +1275,14 @@ const ApplicationViewer = () => {
                           </div>
                         </div>
 
-                        {selectedApp.status !== "Applied" && (
+                        {selectedApp.status !== stages[0]?.id && (
                           <div className="flex items-start gap-3">
-                            <span className={`relative z-10 h-3.5 w-3.5 shrink-0 rounded-full ring-2 ring-white dark:ring-gray-900 shadow-sm mt-0.5 ${STATUS_CONFIG[selectedApp.status]?.dot || "bg-gray-400"}`} />
+                            <span className={`relative z-10 h-3.5 w-3.5 shrink-0 rounded-full ring-2 ring-white dark:ring-gray-900 shadow-sm mt-0.5 ${stageStyle(stageById(selectedApp.status)).dot}`} />
                             <div>
                               <p className="text-xs font-bold text-gray-800 dark:text-gray-200">
-                                Status Changed to{" "}
-                                <span className={STATUS_CONFIG[selectedApp.status]?.text}>
-                                  {selectedApp.status}
+                                Moved to{" "}
+                                <span className={stageStyle(stageById(selectedApp.status)).text}>
+                                  {stageById(selectedApp.status)?.name || selectedApp.status}
                                 </span>
                               </p>
                               <p className="text-xs text-gray-400 dark:text-gray-500">{moment(selectedApp.updatedAt).format("MMM D, YYYY · h:mm A")}</p>
@@ -1206,9 +1326,10 @@ const ApplicationViewer = () => {
               <div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Schedule Interview</h3>
                 <p className="text-xs text-gray-400 dark:text-gray-500">Specify details for candidate: <span className="font-semibold text-gray-700 dark:text-gray-300">{selectedApp?.applicantName || selectedApp?.applicant?.name}</span></p>
-                {selectedApp?.status !== "Interviewing" && (
+                {selectedApp?.status !== interviewStageId && (
                   <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                    Confirming moves this application to Interviewing for good — it cannot go back to {selectedApp?.status}.
+                    Confirming moves this application to {stageById(interviewStageId)?.name} for good — it cannot go
+                    back to {stageById(selectedApp?.status)?.name}. The candidate is emailed the details.
                   </p>
                 )}
               </div>
@@ -1287,12 +1408,12 @@ const ApplicationViewer = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full border border-gray-100 dark:border-gray-800 shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
             <div className="flex items-center gap-2.5 mb-4">
-              <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${STATUS_CONFIG[pendingStatus]?.bg}`}>
-                <AlertCircle className={`h-5 w-5 ${STATUS_CONFIG[pendingStatus]?.text}`} />
+              <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${stageStyle(stageById(pendingStatus)).bg}`}>
+                <AlertCircle className={`h-5 w-5 ${stageStyle(stageById(pendingStatus)).text}`} />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                  Move to {pendingStatus}?
+                  Move to {stageById(pendingStatus)?.name}?
                 </h3>
                 <p className="text-xs text-gray-400 dark:text-gray-500">
                   {selectedApp?.applicantName || selectedApp?.applicant?.name || "This applicant"}
@@ -1302,21 +1423,29 @@ const ApplicationViewer = () => {
 
             <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-800 p-4 mb-4">
               <div className="flex items-center justify-center gap-3 text-xs font-bold">
-                <span className={`px-2.5 py-1 rounded-lg ${STATUS_CONFIG[selectedApp?.status]?.badge}`}>
-                  {selectedApp?.status}
+                <span className={`px-2.5 py-1 rounded-lg ${stageStyle(stageById(selectedApp?.status)).badge}`}>
+                  {stageById(selectedApp?.status)?.name}
                 </span>
                 <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600" />
-                <span className={`px-2.5 py-1 rounded-lg ${STATUS_CONFIG[pendingStatus]?.badge}`}>
-                  {pendingStatus}
+                <span className={`px-2.5 py-1 rounded-lg ${stageStyle(stageById(pendingStatus)).badge}`}>
+                  {stageById(pendingStatus)?.name}
                 </span>
               </div>
             </div>
 
-            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-5">
-              {pendingStatus === TERMINAL_STATUS
-                ? "The candidate will be emailed. This settles the application — no further status changes will be possible."
-                : `The candidate will be emailed. Once confirmed, this application can no longer be moved back to ${selectedApp?.status}.`}
-            </p>
+            {(() => {
+              const effect = candidateEffect(phases, stageById(selectedApp?.status), stageById(pendingStatus));
+              const settles = ["rejected", "hired"].includes(stageById(pendingStatus)?.type);
+              return (
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-5">
+                  The candidate {effect.emails ? "will be emailed and" : "is not notified —"} will see{" "}
+                  <span className="font-bold text-gray-700 dark:text-gray-200">{effect.sees}</span>.{" "}
+                  {settles
+                    ? "This settles the application — no further moves will be possible."
+                    : `Once confirmed, this application can no longer be moved back to ${stageById(selectedApp?.status)?.name}.`}
+                </p>
+              );
+            })()}
 
             <div className="flex justify-end gap-2.5">
               <button
@@ -1332,11 +1461,28 @@ const ApplicationViewer = () => {
                 onClick={confirmStatusChange}
                 className="rounded-xl bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 text-xs font-semibold text-white shadow-md shadow-indigo-100 dark:shadow-none transition disabled:opacity-50"
               >
-                {isUpdatingStatus ? "Updating..." : `Confirm ${pendingStatus}`}
+                {isUpdatingStatus ? "Updating..." : `Confirm ${stageById(pendingStatus)?.name || ""}`}
               </button>
             </div>
           </div>
         </div>
+      )}
+      {isPipelineOpen && pipeline && (
+        <PipelineEditor
+          stages={pipeline.stages}
+          phases={pipeline.phases}
+          defaults={pipeline.defaults}
+          rejectedStage={pipeline.rejectedStage}
+          onClose={() => setIsPipelineOpen(false)}
+          onSaved={(savedStages) => {
+            setPipeline((current) => ({ ...current, stages: savedStages }));
+            // A filter on a stage that no longer exists would show nothing.
+            if (statusFilter !== "All" && !savedStages.some((stage) => stage.id === statusFilter) && statusFilter !== "rejected") {
+              setStatusFilter("All");
+            }
+            setIsPipelineOpen(false);
+          }}
+        />
       )}
     </DashboardLayout>
   );

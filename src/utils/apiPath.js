@@ -91,6 +91,8 @@ export const API_PATHS = {
     UPDATE_STATUS: (id) => `/api/applications/${id}/status`,
     GET_MY_APPLICATIONS: "/api/applications/my-applications",
     WITHDRAW_APPLICATION: (id) => `/api/applications/${id}`,
+    GET_PIPELINE: "/api/applications/pipeline",
+    UPDATE_PIPELINE: "/api/applications/pipeline",
   },
 
   IMAGE: {
