@@ -9,21 +9,7 @@ import { LocationPicker } from "../../components/input/LocationPicker";
 import ScreeningQuestionsEditor from "../../components/employer/ScreeningQuestionsEditor";
 import JobDescriptionAssistant from "../../components/employer/JobDescriptionAssistant";
 import { toEditorQuestions, toPayloadQuestions } from "../../utils/screeningQuestions";
-
-const DEPARTMENT_OPTIONS = [
-  "Business & Professional Services",
-  "Technology & Engineering",
-  "Healthcare & Social Care",
-  "Education & Training",
-  "Sales, Marketing & Customer Service",
-  "Finance, Legal & Administration",
-  "Construction, Manufacturing & Trades",
-  "Hospitality, Retail & Tourism",
-  "Transport, Logistics & Supply Chain",
-  "Government, Nonprofit & Community",
-  "Creative & Media",
-  "Other",
-];
+import { DEPARTMENT_OPTIONS, JOB_TYPE_OPTIONS } from "../../utils/jobOptions";
 
 const JobPostingForm = () => {
   const navigate = useNavigate();
@@ -487,6 +473,26 @@ const JobPostingForm = () => {
                         <span className="font-body-sm text-text-muted">
                           Optional. Leave empty to keep the role open indefinitely.
                         </span>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="font-label-lg font-semibold text-text-primary">
+                          Job Type
+                        </label>
+                        <select
+                          value={jobType}
+                          onChange={(e) => setJobType(e.target.value)}
+                          className="h-12 px-4 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface focus:outline-none cursor-pointer"
+                        >
+                          {jobType && !JOB_TYPE_OPTIONS.includes(jobType) && (
+                            <option value={jobType}>{jobType} (current)</option>
+                          )}
+                          {JOB_TYPE_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </div>
