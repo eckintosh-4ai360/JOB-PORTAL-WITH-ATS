@@ -1,6 +1,7 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
 const fraud = require("../services/fraudModerationService");
+const { deriveJobFacets } = require("../utils/jobFacets");
 
 // @desc    Create a new job posting
 // @route   POST /api/jobs
@@ -119,17 +120,30 @@ const createJob = async (req, res) => {
             }
         }
 
+        const effectiveRequirements = requirements || description || "See job description for details.";
+        const effectiveTags = Array.isArray(tags) ? tags.filter(Boolean) : [];
+
+        // Experience level, education and skills are read out of the advert
+        // rather than asked for, so search can filter on them exactly.
+        const facets = deriveJobFacets({
+            title,
+            description,
+            requirements: effectiveRequirements,
+            tags: effectiveTags,
+        });
+
         const job = await prisma.job.create({
             data: {
                 title,
                 description,
-                requirements: requirements || description || "See job description for details.",
+                requirements: effectiveRequirements,
                 location: location || "Remote (Ghana)",
                 latitude: latitude ? Number(latitude) : undefined,
                 longitude: longitude ? Number(longitude) : undefined,
                 category: category || "Other",
                 customCategory: category === "other" ? customCategory : undefined,
-                tags: Array.isArray(tags) ? tags.filter(Boolean) : [],
+                tags: effectiveTags,
+                ...facets,
                 type: effectiveType,
                 jobType: effectiveType,
                 workModel: workModel || undefined,
@@ -390,6 +404,20 @@ const updateJob = async (req, res) => {
         if (updateData.deadline) updateData.deadline = new Date(updateData.deadline);
         if (updateData.salaryMin) updateData.salaryMin = Number(updateData.salaryMin);
         if (updateData.salaryMax) updateData.salaryMax = Number(updateData.salaryMax);
+
+        // An edited advert can mean something different — a title going from
+        // "Engineer" to "Senior Engineer" changes which searches should find
+        // it — so the search facets are read again from the merged posting.
+        const touchesText = ["title", "description", "requirements", "tags"]
+            .some((field) => updateData[field] !== undefined);
+        if (touchesText) {
+            Object.assign(updateData, deriveJobFacets({
+                title: updateData.title ?? job.title,
+                description: updateData.description ?? job.description,
+                requirements: updateData.requirements ?? job.requirements,
+                tags: updateData.tags ?? job.tags,
+            }));
+        }
 
         const updatedJob = await prisma.job.update({
             where: { id: req.params.id },
