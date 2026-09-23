@@ -25,7 +25,7 @@ import SSOCallback from "./pages/Auth/SSOCallback";
 import UserProfile from "./pages/Candidate/UserProfile";
 import MyDocuments from "./pages/Candidate/MyDocuments";
 import EmployerDashboard from "./pages/Employer/EmployerDashboard";
-import ApplicationViewer from "./pages/Employer/AppplicationViewer";
+import Applicants from "./pages/Employer/Applicants";
 import ManageJobs from "./pages/Employer/ManageJobs";
 import JobTemplates from "./pages/Employer/JobTemplates";
 import TalentSearch from "./pages/Employer/TalentSearch";
@@ -92,7 +92,8 @@ export const App = () => {
               <Route path="/manage-jobs" element={<ManageJobs />} />
               <Route path="/job-templates" element={<JobTemplates />} />
               <Route path="/email-templates" element={<EmailTemplates />} />
-              <Route path="/applicants" element={<ApplicationViewer />} />
+              {/* Everyone who applied; with ?jobId= one job's applicants in full. */}
+              <Route path="/applicants" element={<Applicants />} />
               <Route path="/talent-search" element={<TalentSearch />} />
               <Route path="/duplicates" element={<EmployerDuplicates />} />
               <Route path="/assessments" element={<Assessments />} />

@@ -86,6 +86,7 @@ export const NAVIGATION_MENU = [
 { id: "post-job", name: "Post Job", icon: Plus },
 { id: "job-templates", name: "Job Templates", icon: LayoutTemplate },
 { id: "manage-jobs", name: "Manage Jobs", icon: Briefcase },
+{ id: "applicants", name: "Applicants", icon: Users },
 { id: "talent-search", name: "Talent Search", icon: UserSearch },
 { id: "assessments", name: "Assessments", icon: ClipboardCheck },
 { id: "duplicates", name: "Duplicates", icon: Copy },
