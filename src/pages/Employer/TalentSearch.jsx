@@ -29,7 +29,7 @@ const EXAMPLES = [
   "React developers in Accra open to remote",
   "Accountants with QuickBooks and 5+ years experience",
   "Senior nurses in Kumasi with a bachelor degree",
-  "Electricians in Tema",
+  // "Electricians in Tema",
 ];
 
 const EDUCATION_LABEL = {

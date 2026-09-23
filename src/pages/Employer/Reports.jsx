@@ -25,6 +25,60 @@ const REPORT_ICONS = {
   assessments: ClipboardCheck,
 };
 const FORMAT_ICONS = { pdf: FileText, xlsx: FileSpreadsheet, csv: FileDown };
+const REPORT_EXPORT_FORMATS = REPORT_FORMATS.filter((format) => format.id !== "csv");
+
+const DEFAULT_REPORT_CARD_STYLE = {
+  // accent: "bg-primary",
+  icon: "bg-brand-indigo-light text-primary dark:bg-indigo-500/15 dark:text-indigo-300",
+  inactive: "border-indigo-100/80 bg-gradient-to-br from-indigo-50/80 via-white/90 to-white/70 hover:border-indigo-200/90 dark:border-indigo-500/20 dark:from-indigo-500/10 dark:via-gray-900/95 dark:to-gray-900/75",
+  active: "border-primary/40 bg-gradient-to-br from-brand-indigo-light via-indigo-50/90 to-white/80 ring-1 ring-primary/15 dark:border-indigo-400/50 dark:from-indigo-500/20 dark:via-gray-900/95 dark:to-gray-900/80",
+  activeIcon: "bg-primary text-on-primary shadow-[0_10px_20px_rgba(79,70,229,0.28)]",
+  glow: "bg-indigo-300/30 dark:bg-indigo-400/15",
+};
+
+const REPORT_CARD_STYLES = {
+  applicants: {
+    // accent: "bg-sky-500",
+    icon: "bg-sky-100/80 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300",
+    inactive: "border-sky-100/80 bg-gradient-to-br from-sky-50/80 via-white/90 to-white/70 hover:border-sky-200/90 dark:border-sky-500/20 dark:from-sky-500/10 dark:via-gray-900/95 dark:to-gray-900/75",
+    active: "border-sky-300/90 bg-gradient-to-br from-sky-100/90 via-sky-50/75 to-white/80 ring-1 ring-sky-300/40 dark:border-sky-400/50 dark:from-sky-500/20 dark:via-gray-900/95 dark:to-gray-900/80",
+    activeIcon: "bg-sky-600 text-white shadow-[0_10px_20px_rgba(2,132,199,0.28)]",
+    glow: "bg-sky-300/30 dark:bg-sky-400/15",
+  },
+  shortlist: {
+    // accent: "bg-violet-500",
+    icon: "bg-violet-100/80 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300",
+    inactive: "border-violet-100/80 bg-gradient-to-br from-violet-50/80 via-white/90 to-white/70 hover:border-violet-200/90 dark:border-violet-500/20 dark:from-violet-500/10 dark:via-gray-900/95 dark:to-gray-900/75",
+    active: "border-violet-300/90 bg-gradient-to-br from-violet-100/90 via-violet-50/75 to-white/80 ring-1 ring-violet-300/40 dark:border-violet-400/50 dark:from-violet-500/20 dark:via-gray-900/95 dark:to-gray-900/80",
+    activeIcon: "bg-violet-600 text-white shadow-[0_10px_20px_rgba(124,58,237,0.28)]",
+    glow: "bg-violet-300/30 dark:bg-violet-400/15",
+  },
+  pipeline: DEFAULT_REPORT_CARD_STYLE,
+  jobs: {
+    // accent: "bg-emerald-500",
+    icon: "bg-emerald-100/80 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300",
+    inactive: "border-emerald-100/80 bg-gradient-to-br from-emerald-50/80 via-white/90 to-white/70 hover:border-emerald-200/90 dark:border-emerald-500/20 dark:from-emerald-500/10 dark:via-gray-900/95 dark:to-gray-900/75",
+    active: "border-emerald-300/90 bg-gradient-to-br from-emerald-100/90 via-emerald-50/75 to-white/80 ring-1 ring-emerald-300/40 dark:border-emerald-400/50 dark:from-emerald-500/20 dark:via-gray-900/95 dark:to-gray-900/80",
+    activeIcon: "bg-emerald-600 text-white shadow-[0_10px_20px_rgba(5,150,105,0.28)]",
+    glow: "bg-emerald-300/30 dark:bg-emerald-400/15",
+  },
+  assessments: {
+    // accent: "bg-amber-500",
+    icon: "bg-amber-100/80 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
+    inactive: "border-amber-100/80 bg-gradient-to-br from-amber-50/80 via-white/90 to-white/70 hover:border-amber-200/90 dark:border-amber-500/20 dark:from-amber-500/10 dark:via-gray-900/95 dark:to-gray-900/75",
+    active: "border-amber-300/90 bg-gradient-to-br from-amber-100/90 via-amber-50/75 to-white/80 ring-1 ring-amber-300/40 dark:border-amber-400/50 dark:from-amber-500/20 dark:via-gray-900/95 dark:to-gray-900/80",
+    activeIcon: "bg-amber-500 text-white shadow-[0_10px_20px_rgba(217,119,6,0.28)]",
+    glow: "bg-amber-300/30 dark:bg-amber-400/15",
+  },
+};
+
+const SUMMARY_CARD_STYLES = [
+  { accent: "bg-primary", icon: "bg-brand-indigo-light text-primary", value: "text-primary", glow: "bg-indigo-300/25", Icon: Users },
+  { accent: "bg-sky-500", icon: "bg-sky-100 text-sky-600", value: "text-sky-700", glow: "bg-sky-300/25", Icon: Workflow },
+  { accent: "bg-emerald-500", icon: "bg-emerald-100 text-emerald-600", value: "text-emerald-700", glow: "bg-emerald-300/25", Icon: ClipboardCheck },
+  { accent: "bg-rose-500", icon: "bg-rose-100 text-rose-600", value: "text-rose-700", glow: "bg-rose-300/25", Icon: AlertCircle },
+  { accent: "bg-amber-500", icon: "bg-amber-100 text-amber-600", value: "text-amber-700", glow: "bg-amber-300/25", Icon: Star },
+];
 
 // A PDF lists at most this many rows (utils/reportWriters on the API).
 const PDF_MAX_ROWS = 1000;
@@ -140,7 +194,7 @@ const Reports = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reports</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Choose a report, filter it and check the preview, then download it as a PDF, Excel workbook or CSV file.
+            Choose a report, filter it and check the preview, then download it as a PDF or Excel workbook.
           </p>
         </div>
 
@@ -149,34 +203,41 @@ const Reports = () => {
           {(reports.length ? reports : Object.keys(REPORT_ICONS).map((key) => ({ type: key, title: "…", description: "" }))).map((entry) => {
             const Icon = REPORT_ICONS[entry.type] || FileText;
             const isActive = entry.type === type;
+            const style = REPORT_CARD_STYLES[entry.type] || DEFAULT_REPORT_CARD_STYLE;
             return (
               <button
                 key={entry.type}
                 type="button"
                 onClick={() => setSearchParams({ type: entry.type })}
                 aria-pressed={isActive}
-                className={`flex flex-col items-start gap-2 rounded-2xl border p-4 text-left transition ${
-                  isActive
-                    ? "border-indigo-300 bg-indigo-50 shadow-sm dark:border-indigo-500/40 dark:bg-indigo-500/10"
-                    : "border-gray-100 bg-white hover:border-indigo-200 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-500/30"
+                className={`group relative flex min-h-52 flex-col items-start gap-space-sm overflow-hidden rounded-3xl border p-space-md text-left shadow-[0_10px_24px_rgba(40,34,86,0.06)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_34px_rgba(40,34,86,0.12)] ${
+                  isActive ? style.active : style.inactive
                 }`}
               >
+                {/* <span className={`absolute inset-x-0 top-0 h-1 ${style.accent}`} /> */}
+                {/* <span className={`absolute -right-8 -top-8 h-24 w-24 rounded-full blur-2xl ${style.glow}`} /> */}
                 <span
-                  className={`flex h-9 w-9 items-center justify-center rounded-xl ${
-                    isActive ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                  className={`relative flex h-11 w-11 items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-105 ${
+                    isActive ? style.activeIcon : style.icon
                   }`}
                 >
                   <Icon className="h-4.5 w-4.5" />
                 </span>
-                <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{entry.title}</span>
-                <span className="text-xs leading-snug text-gray-500 dark:text-gray-400">{entry.description}</span>
+                <span className="relative font-headline-sm font-bold text-text-primary">{entry.title}</span>
+                <span className="relative font-body-sm leading-relaxed text-text-secondary">{entry.description}</span>
+                {isActive && (
+                  <span className="relative mt-auto rounded-full bg-primary/10 px-2.5 py-1 font-label-md font-bold text-primary dark:bg-indigo-400/15 dark:text-indigo-300">
+                    Selected report
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
 
         {/* Filters and downloads */}
-        <div className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm lg:flex-row lg:items-end lg:justify-between dark:border-gray-800 dark:bg-gray-900">
+        <div className="relative overflow-hidden rounded-3xl border border-border-default bg-gradient-to-br from-surface-card/95 via-surface-card/85 to-brand-indigo-light/45 p-space-md shadow-[0_12px_28px_rgba(40,34,86,0.07)] backdrop-blur-sm lg:flex lg:flex-row lg:items-end lg:justify-between dark:from-gray-900/95 dark:via-gray-900/85 dark:to-indigo-500/10">
+          <span className="pointer-events-none absolute right-8 top-0 h-24 w-24 rounded-full bg-indigo-300/20 blur-3xl dark:bg-indigo-400/10" />
           <div className="flex flex-wrap items-end gap-3">
             {supports("jobId") && (
               <label className="flex flex-col gap-1">
@@ -250,7 +311,7 @@ const Reports = () => {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {REPORT_FORMATS.map((format) => {
+            {REPORT_EXPORT_FORMATS.map((format) => {
               const Icon = FORMAT_ICONS[format.id] || FileDown;
               const busy = downloading === format.id;
               return (
@@ -293,13 +354,28 @@ const Reports = () => {
             </div>
 
             {preview.summary?.length > 0 && (
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-                {preview.summary.map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{item.label}</p>
-                    <p className="mt-1 text-xl font-bold text-gray-900 dark:text-gray-100">{item.value}</p>
-                  </div>
-                ))}
+              <div className="grid grid-cols-2 gap-space-md md:grid-cols-5">
+                {preview.summary.map((item, index) => {
+                  const style = SUMMARY_CARD_STYLES[index % SUMMARY_CARD_STYLES.length];
+                  const Icon = style.Icon;
+
+                  return (
+                    <div
+                      key={item.label}
+                      className="group relative overflow-hidden rounded-3xl border border-white/70 bg-gradient-to-br from-white/90 via-surface-card/90 to-surface-container-low/65 p-space-md shadow-[0_10px_24px_rgba(40,34,86,0.06)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(40,34,86,0.10)] dark:border-gray-700/70 dark:from-gray-900/95 dark:via-gray-900/90 dark:to-gray-800/80"
+                    >
+                      {/* <span className={`absolute inset-x-0 top-0 h-1 ${style.accent}`} /> */}
+                      <span className={`absolute -right-5 -top-5 h-20 w-20 rounded-full blur-2xl ${style.glow}`} />
+                      <div className="relative flex items-start justify-between gap-2 pt-1">
+                        <p className="font-label-caps font-bold uppercase tracking-wider text-text-muted">{item.label}</p>
+                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${style.icon}`}>
+                          <Icon className="h-4 w-4" />
+                        </span>
+                      </div>
+                      <p className={`relative mt-3 font-headline-lg font-bold tracking-tight ${style.value}`}>{item.value}</p>
+                    </div>
+                  );
+                })}
               </div>
             )}
 

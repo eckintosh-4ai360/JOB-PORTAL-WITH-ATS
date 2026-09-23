@@ -35,6 +35,48 @@ const GROUPS = [
   { verdict: "not_suggested", title: "Don't match", hint: "Miss at least one criterion", open: false },
 ];
 
+const SHORTLIST_KPI_TONES = {
+  sky: {
+    // accent: "bg-sky-500",
+    icon: "bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300",
+    value: "text-sky-700 dark:text-sky-300",
+    glow: "bg-sky-300/25 dark:bg-sky-400/15",
+  },
+  violet: {
+    // accent: "bg-violet-500",
+    icon: "bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300",
+    value: "text-violet-700 dark:text-violet-300",
+    glow: "bg-violet-300/25 dark:bg-violet-400/15",
+  },
+  amber: {
+    // accent: "bg-amber-500",
+    icon: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
+    value: "text-amber-700 dark:text-amber-300",
+    glow: "bg-amber-300/25 dark:bg-amber-400/15",
+  },
+};
+
+const ShortlistKpiCard = ({ label, value, detail, icon: Icon, tone, children }) => {
+  const style = SHORTLIST_KPI_TONES[tone];
+
+  return (
+    <article className="group relative overflow-hidden rounded-3xl border border-white/70 bg-gradient-to-br from-white/90 via-surface-card/90 to-surface-container-low/65 p-space-md shadow-[0_10px_24px_rgba(40,34,86,0.06)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(40,34,86,0.10)] dark:border-gray-700/70 dark:from-gray-900/95 dark:via-gray-900/90 dark:to-gray-800/80 md:p-space-lg">
+      <span className={`absolute inset-x-0 top-0 h-1 ${style.accent}`} />
+      <span className={`absolute -right-5 -top-5 h-20 w-20 rounded-full blur-2xl ${style.glow}`} />
+      <div className="relative flex items-start justify-between gap-space-sm pt-1">
+        <div className="min-w-0">
+          <p className="font-label-caps font-bold uppercase tracking-wider text-text-muted">{label}</p>
+          <p className={`mt-2 font-headline-xl font-bold tracking-tight ${style.value}`}>{value}</p>
+        </div>
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${style.icon}`}>
+          <Icon className="h-5 w-5" />
+        </span>
+      </div>
+      <div className="relative mt-2 min-h-5 font-body-sm text-text-muted">{children || detail}</div>
+    </article>
+  );
+};
+
 /** Mirrors notifyCandidate on the API: what a move shows the candidate, and whether it emails. */
 const candidateEffect = (phases, fromStage, toStage) => {
   const phaseLabel = (stage) => phases.find((phase) => phase.key === stage?.phase)?.label || "Application received";
@@ -605,36 +647,40 @@ const Shortlisting = () => {
           <>
             {/* Figures */}
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Open applicants</p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{counts ? counts.open : "—"}</p>
-                <p className="text-xs text-gray-400">{counts ? `${counts.applicants} applied in total` : ""}</p>
-              </div>
-              <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">On the shortlist</p>
-                <p className="mt-1 flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
-                  {counts ? counts.shortlisted : "—"}
-                </p>
-                <p className="text-xs text-gray-400">Private to you</p>
-              </div>
-              <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Not scored by AI</p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{counts ? counts.unscored : "—"}</p>
+              <ShortlistKpiCard
+                label="Open applicants"
+                value={counts ? counts.open : "—"}
+                detail={counts ? `${counts.applicants} applied in total` : ""}
+                icon={Users}
+                tone="sky"
+              />
+              <ShortlistKpiCard
+                label="On the shortlist"
+                value={counts ? counts.shortlisted : "—"}
+                detail="Private to you"
+                icon={Star}
+                tone="violet"
+              />
+              <ShortlistKpiCard
+                label="Not scored by AI"
+                value={counts ? counts.unscored : "—"}
+                icon={Wand2}
+                tone="amber"
+              >
                 {counts?.unscored > 0 ? (
                   <button
                     type="button"
                     onClick={scoreApplicants}
                     disabled={scoring}
-                    className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:underline disabled:opacity-60 dark:text-indigo-400"
+                    className="inline-flex items-center gap-1 font-label-md font-bold text-primary transition-colors hover:text-brand-indigo-dark hover:underline disabled:opacity-60 dark:text-indigo-300"
                   >
                     {scoring ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
                     {scoring ? "Scoring — this can take a minute…" : "Score them now"}
                   </button>
                 ) : (
-                  <p className="text-xs text-gray-400">{counts ? "Everyone open has a fit score" : ""}</p>
+                  <span>{counts ? "Everyone open has a fit score" : ""}</span>
                 )}
-              </div>
+              </ShortlistKpiCard>
             </div>
 
             {/* Tabs */}
