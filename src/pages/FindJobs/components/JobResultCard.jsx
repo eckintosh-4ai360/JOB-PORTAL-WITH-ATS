@@ -43,6 +43,7 @@ const JobResultCard = ({
     job,
     isSaved,
     match,
+    canApply,
     hasApplied,
     onToggleSave,
     onQuickApply,
@@ -186,21 +187,22 @@ const JobResultCard = ({
                 </div>
 
                 <div className="flex items-center gap-space-sm">
-                    {hasApplied ? (
-                        <span className="inline-flex items-center justify-center gap-1 rounded-xl bg-surface-container px-space-md py-2.5 font-label-md font-bold text-text-secondary">
-                            <span className="material-symbols-outlined text-[16px] text-primary">task_alt</span>
-                            <span>Applied</span>
-                        </span>
-                    ) : (
-                        <button
-                            onClick={() => onQuickApply(job)}
-                            type="button"
-                            className="inline-flex items-center justify-center gap-1 rounded-xl bg-brand-indigo-light px-space-md py-2.5 font-label-md font-bold text-primary transition-colors hover:bg-brand-indigo-subtle cursor-pointer"
-                        >
-                            <span className="material-symbols-outlined text-[16px]">bolt</span>
-                            <span>Quick Apply</span>
-                        </button>
-                    )}
+                    {canApply &&
+                        (hasApplied ? (
+                            <span className="inline-flex items-center justify-center gap-1 rounded-xl bg-surface-container px-space-md py-2.5 font-label-md font-bold text-text-secondary">
+                                <span className="material-symbols-outlined text-[16px] text-primary">task_alt</span>
+                                <span>Applied</span>
+                            </span>
+                        ) : (
+                            <button
+                                onClick={() => onQuickApply(job)}
+                                type="button"
+                                className="inline-flex items-center justify-center gap-1 rounded-xl bg-brand-indigo-light px-space-md py-2.5 font-label-md font-bold text-primary transition-colors hover:bg-brand-indigo-subtle cursor-pointer"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">bolt</span>
+                                <span>Quick Apply</span>
+                            </button>
+                        ))}
 
                     <Link
                         to={`/job/${jobId}`}
