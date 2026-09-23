@@ -68,7 +68,7 @@ Application statuses are `Applied`, `Under Review`, `Interviewing`, `Offered`, a
 - `GET /api/analytics` - authenticated employer dashboard analytics.
 - `GET /api/analytics/job/:jobId` - status breakdown for an owned job.
 
-# Fraud Detection & AI Moderation — Walkthrough
+# Fraud Detection & AI Moderation
 
 This document covers the trust-and-safety layer: what it detects, how scores are
 calculated, how enforcement works, and what has been verified.
@@ -127,7 +127,7 @@ Manual rescan is rate-limited at 60/hour.
 
 ---
 
-# AI Resume Analysis & Job Matching — Walkthrough
+# AI Resume Analysis & Job Matching 
 
 This document covers the AI features added to the portal: how they are built, how to run
 them, how the scores are calculated, and what has been verified.
