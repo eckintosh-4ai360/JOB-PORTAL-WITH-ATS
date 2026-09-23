@@ -71,6 +71,7 @@ export const API_PATHS = {
     OVERVIEW: "/api/admin/overview",
     GET_COMPANIES: "/api/admin/companies",
     GET_COMPANY: (id) => `/api/admin/companies/${id}`,
+    START_COMPANY_REVIEW: (id) => `/api/admin/companies/${id}/review`,
     DECIDE_COMPANY: (id) => `/api/admin/companies/${id}/decision`,
     GET_ACCOUNTS: "/api/admin/accounts",
     GET_JOBS: "/api/admin/jobs",
