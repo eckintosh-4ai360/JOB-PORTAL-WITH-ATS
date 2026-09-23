@@ -12,30 +12,7 @@ import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
 import moment from "moment";
-
-//   Status Config for Candidate Applications   
-const STATUS_CONFIG = {
-  Applied: {
-    label: "Applied",
-    badge: "bg-slate-100 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-500/30",
-  },
-  "Under Review": {
-    label: "Under Review",
-    badge: "bg-blue-50 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/30",
-  },
-  Interviewing: {
-    label: "Interviewing",
-    badge: "bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/30",
-  },
-  Offered: {
-    label: "Offered",
-    badge: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-250 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30",
-  },
-  Rejected: {
-    label: "Rejected",
-    badge: "bg-red-50 text-red-600 ring-1 ring-red-200 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/30",
-  },
-};
+import { candidateStatusDisplay, hasUpcomingInterview } from "../../utils/candidateStatus";
 
 //   Info Row   
 const InfoRow = ({ icon: Icon, label, value }) => (
@@ -471,7 +448,7 @@ const UserProfile = () => {
               ) : (
                 <div className="divide-y divide-gray-100 dark:divide-gray-800">
                   {myApplications.slice(0, 4).map((app) => {
-                    const statusCfg = STATUS_CONFIG[app.status] || STATUS_CONFIG.Applied;
+                    const statusCfg = candidateStatusDisplay(app);
                     const companyName = app.job?.company?.companyName || app.job?.company?.name || "Company";
                     return (
                       <div key={app._id} className="py-3.5 flex items-center justify-between gap-4 first:pt-0 last:pb-0">
@@ -484,7 +461,7 @@ const UserProfile = () => {
                             <span>•</span>
                             <span>Applied {moment(app.createdAt).fromNow()}</span>
                           </div>
-                          {app.status === "Interviewing" && app.interview && (
+                          {hasUpcomingInterview(app) && (
                             <button
                               onClick={() => {
                                 setSelectedInterviewApp(app);
