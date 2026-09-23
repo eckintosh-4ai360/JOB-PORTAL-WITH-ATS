@@ -45,6 +45,7 @@ model User {
   assessments           Assessment[]   @relation("EmployerAssessments")
   assessmentAttempts    AssessmentAttempt[] @relation("CandidateAssessmentAttempts")
   careerPlan            CareerPlan?
+  jobTemplates          JobTemplate[]  @relation("EmployerJobTemplates")
 
   @@index([email])
   @@index([clerkId])
@@ -376,6 +377,13 @@ model Application {
   interviewTime     String?
   interviewLocation String?
   interviewNotes    String?
+  // The employer's own shortlist: a private working list, kept apart from the
+  // pipeline. Adding or removing someone is reversible and tells them nothing —
+  // only moving them to a stage does. `shortlistSource` is manual | assisted.
+  shortlistedAt     DateTime?
+  shortlistedById   String?
+  shortlistSource   String?
+  shortlistNote     String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -385,6 +393,7 @@ model Application {
 
   @@index([jobId])
   @@index([applicantId])
+  @@index([jobId, shortlistedAt])
   // One application per job per account. Postgres treats NULLs as distinct, so
   // this constrains signed-in applicants only and leaves guest rows (which
   // carry no applicantId) alone. The controller's own check gives the friendly
@@ -549,6 +558,36 @@ model CareerPlan {
   degraded   Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+// A reusable starting point for a job advert: its wording and settings. Nothing
+// tied to one opening — no deadline — so every posting started from it is fresh.
+model JobTemplate {
+  id                 String    @id @default(cuid())
+  employerId         String
+  employer           User      @relation("EmployerJobTemplates", fields: [employerId], references: [id], onDelete: Cascade)
+  name               String
+  title              String
+  category           String?
+  type               String?
+  workModel          String?
+  location           String?
+  latitude           Float?
+  longitude          Float?
+  description        String
+  requirements       String    @default("")
+  tags               String[]  @default([])
+  salaryMin          Float?
+  salaryMax          Float?
+  // Same shape as Job.screeningQuestions (utils/screeningQuestions).
+  screeningQuestions Json?
+  // Postings actually published from it, so the useful ones rise to the top.
+  timesUsed          Int       @default(0)
+  lastUsedAt         DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([employerId, updatedAt])
 }
 
 model SavedJob {
