@@ -1,4 +1,4 @@
-import { LayoutDashboard, Plus, Briefcase, Building2, Mail, ShieldAlert, Users, UserSearch, ClipboardCheck, Copy, LayoutTemplate } from "lucide-react";
+import { LayoutDashboard, Plus, Briefcase, Building2, Mail, ShieldAlert, Users, UserSearch, ClipboardCheck, Copy, LayoutTemplate, ListChecks } from "lucide-react";
 
 export const landingFeatures = {
   title: "Designed for",
@@ -87,6 +87,7 @@ export const NAVIGATION_MENU = [
 { id: "job-templates", name: "Job Templates", icon: LayoutTemplate },
 { id: "manage-jobs", name: "Manage Jobs", icon: Briefcase },
 { id: "applicants", name: "Applicants", icon: Users },
+{ id: "shortlisting", name: "Shortlisting", icon: ListChecks },
 { id: "talent-search", name: "Talent Search", icon: UserSearch },
 { id: "assessments", name: "Assessments", icon: ClipboardCheck },
 { id: "duplicates", name: "Duplicates", icon: Copy },
