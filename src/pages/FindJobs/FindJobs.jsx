@@ -73,7 +73,8 @@ const RELAXATION = {
 
 const FindJobs = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const canApply = user?.role === "jobseeker";
 
   const {
     draft,
@@ -222,6 +223,12 @@ const FindJobs = () => {
   const handleQuickApplySubmit = async (event) => {
     event.preventDefault();
     if (!quickApplyJob) return;
+
+    if (!canApply) {
+      toast.error("Only jobseekers can apply for jobs.");
+      setQuickApplyJob(null);
+      return;
+    }
 
     setIsSubmittingApply(true);
     try {
@@ -503,7 +510,8 @@ const FindJobs = () => {
                       job={job}
                       isSaved={savedJobIds.has(job._id || job.id)}
                       match={matchScores[job._id || job.id]}
-                      hasApplied={hasApplied(job._id || job.id)}
+                      canApply={canApply}
+                      hasApplied={canApply && hasApplied(job._id || job.id)}
                       onToggleSave={handleToggleSave}
                       onQuickApply={setQuickApplyJob}
                       onSkillClick={(skill) => toggleListValue("skills", skill)}
