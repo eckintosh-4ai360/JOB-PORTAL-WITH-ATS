@@ -28,6 +28,7 @@ import EmployerDashboard from "./pages/Employer/EmployerDashboard";
 import ApplicationViewer from "./pages/Employer/AppplicationViewer";
 import ManageJobs from "./pages/Employer/ManageJobs";
 import TalentSearch from "./pages/Employer/TalentSearch";
+import EmployerDuplicates from "./pages/Employer/Duplicates";
 import Assessments from "./pages/Employer/Assessments/Assessments";
 import AssessmentBuilder from "./pages/Employer/Assessments/AssessmentBuilder";
 import AssessmentDetail from "./pages/Employer/Assessments/AssessmentDetail";
@@ -91,6 +92,7 @@ export const App = () => {
               <Route path="/email-templates" element={<EmailTemplates />} />
               <Route path="/applicants" element={<ApplicationViewer />} />
               <Route path="/talent-search" element={<TalentSearch />} />
+              <Route path="/duplicates" element={<EmployerDuplicates />} />
               <Route path="/assessments" element={<Assessments />} />
               <Route path="/assessments/new" element={<AssessmentBuilder />} />
               <Route path="/assessments/:id" element={<AssessmentDetail />} />

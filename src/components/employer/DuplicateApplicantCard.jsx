@@ -1,30 +1,17 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Copy, FileText, Files, Mail, AtSign, Phone, User, Briefcase, AlertTriangle, Check, X, Loader2 } from "lucide-react";
+import { Copy, Check, X, Loader2 } from "lucide-react";
 import moment from "moment";
 import toast from "react-hot-toast";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
+import { EVIDENCE_ICONS, FALLBACK_EVIDENCE_ICON } from "../../utils/duplicateEvidence";
 
 /**
  * Other applicants who look like this one — the same person applying twice,
  * as a guest and with an account, or under two emails. Only this employer's
  * own applicants are compared, using only what those applicants sent them.
  */
-
-const ICONS = {
-  same_file: FileText,
-  same_text: Copy,
-  similar_text: Files,
-  same_inbox: Mail,
-  shared_email: AtSign,
-  shared_phone: Phone,
-  same_name: User,
-  similar_name: User,
-  same_job: Briefcase,
-  names_differ: AlertTriangle,
-  shared_contact_note: AlertTriangle,
-};
 
 const DuplicateApplicantCard = ({ matches, currentJobId, onSelectApplication, onDecided }) => {
   const [busy, setBusy] = useState(null);
@@ -93,7 +80,10 @@ const DuplicateApplicantCard = ({ matches, currentJobId, onSelectApplication, on
                   </li>
                 ) : (
                   <li key={app.applicationId}>
-                    <Link to={`/applicants?jobId=${app.jobId}`} className="text-xs text-gray-500 hover:text-indigo-600 dark:text-gray-400">
+                    <Link
+                      to={`/applicants?jobId=${app.jobId}&application=${app.applicationId}`}
+                      className="text-xs text-gray-500 hover:text-indigo-600 dark:text-gray-400"
+                    >
                       Applied for {app.jobTitle} · {app.stage} · {moment(app.appliedAt).fromNow()}
                     </Link>
                   </li>
@@ -103,7 +93,7 @@ const DuplicateApplicantCard = ({ matches, currentJobId, onSelectApplication, on
 
             <ul className="mt-3 space-y-1.5">
               {match.evidence.map((item, index) => {
-                const Icon = ICONS[item.code] || AlertTriangle;
+                const Icon = EVIDENCE_ICONS[item.code] || FALLBACK_EVIDENCE_ICON;
                 return (
                   <li
                     key={`${item.code}-${index}`}

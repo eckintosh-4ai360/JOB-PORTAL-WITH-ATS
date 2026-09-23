@@ -97,6 +97,7 @@ export const API_PATHS = {
     GET_READINESS: (jobId) => `/api/applications/readiness/${jobId}`,
     GET_PIPELINE: "/api/applications/pipeline",
     DUPLICATES: "/api/applications/duplicates",
+    DUPLICATE_GROUPS: "/api/applications/duplicates/groups",
     DUPLICATES_REVIEW: "/api/applications/duplicates/review",
     UPDATE_PIPELINE: "/api/applications/pipeline",
   },

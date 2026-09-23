@@ -218,6 +218,41 @@ const listEmployerDuplicates = async (req, res) => {
     }
 };
 
+// @desc    Groups of this employer's applicants that look like one person,
+//          across all their jobs — for the Duplicates page
+// @route   GET /api/applications/duplicates/groups?view=open|confirmed|dismissed
+// @access  Private (Employer)
+const listEmployerDuplicateGroups = async (req, res) => {
+    try {
+        if (!requireEmployer(req, res)) return;
+        const view = VIEWS.includes(req.query.view) ? req.query.view : "open";
+
+        const { result, subjectsCount, describeApplications } = await detectForEmployer(req.user._id);
+
+        const { groups, counts } = groupsFor(result.pairs, view, (key) => {
+            const subject = result.subjects.get(key);
+            return {
+                key,
+                name: subject.name,
+                email: subject.rawEmails[0] || "",
+                avatar: subject.avatar,
+                isGuest: subject.kind === "guest",
+                applications: describeApplications(subject),
+            };
+        });
+
+        res.status(200).json({
+            groups,
+            counts,
+            applicantsChecked: subjectsCount,
+            pendingCvs: result.pending,
+        });
+    } catch (error) {
+        console.error("Employer duplicate groups failed:", error);
+        res.status(500).json({ message: "Could not check for duplicate applicants", error: error.message });
+    }
+};
+
 // @desc    Mark a group of the employer's applicants as the same or different people
 // @route   POST /api/applications/duplicates/review
 // @body    { keys: [identityKey, …], decision: "same" | "distinct" }
@@ -254,5 +289,6 @@ module.exports = {
     scanPlatform,
     reviewPlatform,
     listEmployerDuplicates,
+    listEmployerDuplicateGroups,
     reviewEmployer,
 };

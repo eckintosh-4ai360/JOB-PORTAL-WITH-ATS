@@ -87,6 +87,7 @@ export const NAVIGATION_MENU = [
 { id: "manage-jobs", name: "Manage Jobs", icon: Briefcase },
 { id: "talent-search", name: "Talent Search", icon: UserSearch },
 { id: "assessments", name: "Assessments", icon: ClipboardCheck },
+{ id: "duplicates", name: "Duplicates", icon: Copy },
 { id: "email-templates", name: "Email Templates", icon: Mail },
 { id: "company-profile", name: "Company Profile", icon: Building2 },
 ];

@@ -476,6 +476,8 @@ const ApplicationViewer = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const jobId = searchParams.get("jobId");
+  // Another page can link straight to one applicant, e.g. from Duplicates.
+  const linkedApplicationId = searchParams.get("application");
 
   const [applications, setApplications] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -514,7 +516,10 @@ const ApplicationViewer = () => {
       const res = await axiosInstance.get(API_PATHS.APPLICATIONS.GET_APPLICANT(jobId));
       const data = Array.isArray(res.data) ? res.data : [];
       setApplications(data);
-      if (data.length > 0 && !selectedApp) {
+      const linked = linkedApplicationId && data.find((a) => (a._id || a.id) === linkedApplicationId);
+      if (linked) {
+        setSelectedApp(linked);
+      } else if (data.length > 0 && !selectedApp) {
         setSelectedApp(data[0]);
       }
     } catch (err) {
@@ -523,7 +528,7 @@ const ApplicationViewer = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [jobId]);
+  }, [jobId, linkedApplicationId]);
 
   useEffect(() => {
     fetchApplications();

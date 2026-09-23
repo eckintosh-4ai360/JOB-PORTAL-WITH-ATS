@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  Copy, Loader2, RefreshCw, ScanSearch, FileText, Files, Mail, AtSign, Phone, User, Briefcase, AlertTriangle,
-  Check, X, ExternalLink, Users,
-} from "lucide-react";
+import { Copy, Loader2, RefreshCw, ScanSearch, FileText, Check, X, ExternalLink, Users } from "lucide-react";
 import moment from "moment";
 import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { StatTile, FilterTabs, EmptyRow } from "./components/AdminUI";
+import { EVIDENCE_ICONS, FALLBACK_EVIDENCE_ICON, summarizeEvidence } from "../../utils/duplicateEvidence";
 
 /**
  * Duplicate accounts.
@@ -21,20 +19,6 @@ import { StatTile, FilterTabs, EmptyRow } from "./components/AdminUI";
  * a family, and a copied CV can be a template.
  */
 
-const EVIDENCE_ICON = {
-  same_file: FileText,
-  same_text: Copy,
-  similar_text: Files,
-  same_inbox: Mail,
-  shared_email: AtSign,
-  shared_phone: Phone,
-  same_name: User,
-  similar_name: User,
-  same_job: Briefcase,
-  names_differ: AlertTriangle,
-  shared_contact_note: AlertTriangle,
-};
-
 const STRENGTH_STYLE = {
   strong: "bg-rose-50 text-rose-800 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-200 dark:ring-rose-500/30",
   supporting: "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-500/10 dark:text-slate-200 dark:ring-slate-500/30",
@@ -44,13 +28,14 @@ const STRENGTH_STYLE = {
 const initials = (name = "") => name.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
 
 const Evidence = ({ item }) => {
-  const Icon = EVIDENCE_ICON[item.code] || AlertTriangle;
+  const Icon = EVIDENCE_ICONS[item.code] || FALLBACK_EVIDENCE_ICON;
   return (
     <li className={`flex items-start gap-2 rounded-xl px-3 py-2 text-sm ring-1 ${STRENGTH_STYLE[item.strength] || STRENGTH_STYLE.supporting}`}>
       <Icon className="mt-0.5 h-4 w-4 shrink-0" />
       <span>
         <span className="font-semibold">{item.label}</span>
         {item.detail && <span className="opacity-80"> — {item.detail}</span>}
+        {item.scope && <span className="opacity-60"> · {item.scope}</span>}
       </span>
     </li>
   );
@@ -86,6 +71,7 @@ const MemberCard = ({ member }) => (
 
 const ClusterCard = ({ cluster, onDecide, isDeciding }) => {
   const [note, setNote] = useState("");
+  const [showPairs, setShowPairs] = useState(false);
   const byKey = new Map(cluster.members.map((member) => [member.key, member]));
   const multiple = cluster.pairs.length > 1;
 
@@ -118,20 +104,37 @@ const ClusterCard = ({ cluster, onDecide, isDeciding }) => {
       </div>
 
       <div className="mt-4 space-y-3">
-        {cluster.pairs.map((pair) => (
-          <div key={`${pair.a}-${pair.b}`}>
-            {multiple && (
-              <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-400">
-                {byKey.get(pair.a)?.name} ↔ {byKey.get(pair.b)?.name}
-              </p>
-            )}
-            <ul className="space-y-1.5">
-              {pair.evidence.map((item, index) => (
-                <Evidence key={`${item.code}-${index}`} item={item} />
-              ))}
-            </ul>
+        <ul className="space-y-1.5">
+          {summarizeEvidence(cluster.pairs).map((item, index) => (
+            <Evidence key={`${item.code}-${index}`} item={item} />
+          ))}
+        </ul>
+        {multiple && (
+          <button
+            type="button"
+            onClick={() => setShowPairs((value) => !value)}
+            aria-expanded={showPairs}
+            className="text-xs font-semibold text-violet-600 hover:underline dark:text-violet-400"
+          >
+            {showPairs ? "Hide each pair" : `Show each pair (${cluster.pairs.length})`}
+          </button>
+        )}
+        {multiple && showPairs && (
+          <div className="space-y-3 rounded-xl bg-gray-50/60 p-3 dark:bg-gray-800/40">
+            {cluster.pairs.map((pair) => (
+              <div key={`${pair.a}-${pair.b}`}>
+                <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-400">
+                  {byKey.get(pair.a)?.name} ↔ {byKey.get(pair.b)?.name}
+                </p>
+                <ul className="space-y-1.5">
+                  {pair.evidence.map((item, index) => (
+                    <Evidence key={`${item.code}-${index}`} item={item} />
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
       <div className="mt-4 flex flex-col gap-2 border-t border-gray-100 pt-4 dark:border-gray-800 sm:flex-row sm:items-center">
