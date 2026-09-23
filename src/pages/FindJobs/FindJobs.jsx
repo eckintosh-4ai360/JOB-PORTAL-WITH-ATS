@@ -15,7 +15,6 @@ import { useAppliedJobs } from "../../hooks/useAppliedJobs";
 import { useJobSearch } from "../../hooks/useJobSearch";
 import SearchBox from "./components/SearchBox";
 import SearchFilterRail from "./components/SearchFilterRail";
-import QueryUnderstanding from "./components/QueryUnderstanding";
 import JobResultCard from "./components/JobResultCard";
 
 import toast from "react-hot-toast";
@@ -93,7 +92,6 @@ const FindJobs = () => {
     commit,
     toggleListValue,
     clearAll,
-    removeInterpreted,
     readList,
   } = useJobSearch();
 
@@ -262,7 +260,10 @@ const FindJobs = () => {
     commit({ company: null, companyName: null });
   }, [commit]);
 
-  const { jobs, total, pages, interpreted, facets, relaxations, didYouMean, corrections, expandedWith, aiApplied } = results;
+  //   The engine's reading of the query — the filters it inferred, the
+  //   spellings it corrected, the titles it expanded into — is applied on the
+  //   server and deliberately not shown. Only the results of it are.
+  const { jobs, total, pages, facets, relaxations } = results;
 
   return (
     <div className="bg-surface min-h-screen text-on-surface flex flex-col pt-20">
@@ -388,19 +389,6 @@ const FindJobs = () => {
                   </Link>
                 </div>
               )}
-
-              <QueryUnderstanding
-                interpreted={interpreted}
-                didYouMean={didYouMean}
-                corrections={corrections}
-                expandedWith={expandedWith}
-                aiApplied={aiApplied}
-                onRemove={removeInterpreted}
-                onAcceptSpelling={(corrected) => {
-                  setDraft(corrected);
-                  commit({ q: corrected });
-                }}
-              />
 
               {/* Stream header */}
               <div className="flex flex-col justify-between gap-space-sm rounded-2xl border border-border-default bg-surface-card p-space-md shadow-xs sm:flex-row sm:items-center">
