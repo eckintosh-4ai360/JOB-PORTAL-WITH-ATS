@@ -3,12 +3,13 @@ import {
   Briefcase, Plus, Search, Edit3, XCircle, Trash2,
   AlertCircle, Users, CheckCircle, ChevronDown, Loader2,
   MapPin, DollarSign, Eye, ArrowUpDown,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, LayoutTemplate,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/dashboardLayout";
 import ReviewStatusBanner from "../../components/employer/ReviewStatusBanner";
+import SaveTemplateDialog from "../../components/employer/SaveTemplateDialog";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 const ManageJobs = () => {
@@ -24,6 +25,9 @@ const ManageJobs = () => {
   // Delete modal state
   const [deletingJobId, setDeletingJobId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // The job being saved as a reusable template, while its dialog is open
+  const [templateJob, setTemplateJob] = useState(null);
 
   // Fetch jobs
   const fetchJobs = async () => {
@@ -258,6 +262,15 @@ const ManageJobs = () => {
                         </td>
                         <td className="px-6 py-5 text-right">
                           <div className="flex items-center justify-end gap-2">
+                            {/* Save as a reusable template */}
+                            <button
+                              onClick={() => setTemplateJob(job)}
+                              className="rounded-lg p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition"
+                              title="Save as template"
+                            >
+                              <LayoutTemplate className="h-4 w-4" />
+                            </button>
+
                             {/* Edit */}
                             <button
                               onClick={() => handleEditClick(job)}
@@ -343,6 +356,13 @@ const ManageJobs = () => {
 
                     {/* Action buttons list */}
                     <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={() => setTemplateJob(job)}
+                        title="Save as template"
+                        className="flex items-center justify-center rounded-xl border border-indigo-100 dark:border-indigo-500/30 p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10"
+                      >
+                        <LayoutTemplate className="h-4 w-4" />
+                      </button>
                       <button
                         onClick={() => handleEditClick(job)}
                         className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
@@ -443,6 +463,14 @@ const ManageJobs = () => {
           </div>
         )}
       </div>
+
+      {templateJob && (
+        <SaveTemplateDialog
+          defaultName={templateJob.title}
+          fromJobId={templateJob._id || templateJob.id}
+          onClose={() => setTemplateJob(null)}
+        />
+      )}
 
       {/*  Delete Confirmation Dialog  */}
       {deletingJobId && (
