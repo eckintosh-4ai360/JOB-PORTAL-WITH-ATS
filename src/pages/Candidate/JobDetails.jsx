@@ -36,6 +36,22 @@ const parseList = (val, defaultList = []) => {
   return defaultList;
 };
 
+/**
+ * A description is an overview, optionally followed by one line per
+ * responsibility — the job description assistant writes them that way. The
+ * bullet lines belong in Key Responsibilities, not in the overview paragraph.
+ */
+const splitDescription = (text) => {
+  const bullets = [];
+  const prose = [];
+  for (const line of String(text || "").split(/\r?\n/)) {
+    const match = /^\s*[•*-]\s+(.+)$/.exec(line);
+    if (match) bullets.push(match[1].trim());
+    else prose.push(line);
+  }
+  return { overview: prose.join("\n").trim(), bullets };
+};
+
 const parseTags = (tags, defaultList = []) => {
   if (!tags) return defaultList;
   if (Array.isArray(tags)) return tags.filter(Boolean);
@@ -211,7 +227,9 @@ const JobDetails = () => {
     ? `https://www.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`
     : "";
 
-  const responsibilitiesList = parseList(job.responsibilities, [
+  const { overview, bullets: descriptionBullets } = splitDescription(job.description);
+
+  const responsibilitiesList = descriptionBullets.length > 0 ? descriptionBullets : parseList(job.responsibilities, [
     "Deliver high-quality work that supports the team and the organisation's goals.",
     "Collaborate with colleagues, customers, and stakeholders in a professional manner.",
     "Follow relevant procedures, safety standards, and quality requirements.",
@@ -411,7 +429,7 @@ const JobDetails = () => {
                   Role Overview
                 </h2>
                 <p className="font-body-lg text-body-lg text-text-secondary leading-relaxed whitespace-pre-line">
-                  {job.description ||
+                  {overview ||
                     `${companyName} is seeking a motivated candidate to join its team.`}
                 </p>
 

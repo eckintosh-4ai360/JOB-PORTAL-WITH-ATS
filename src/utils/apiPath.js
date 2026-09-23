@@ -148,6 +148,9 @@ export const API_PATHS = {
     GET_SCORED_APPLICANTS: (jobId) => `/api/ai/match/applicants/${jobId}`,
     RESCORE_APPLICANTS: (jobId) => `/api/ai/match/applicants/${jobId}/rescore`,
     GET_JOB_SPEC: (jobId) => `/api/ai/match/job-spec/${jobId}`,
+
+    // Employer writing tools
+    JOB_DESCRIPTION_ASSIST: "/api/ai/job-description",
   },
 };
 

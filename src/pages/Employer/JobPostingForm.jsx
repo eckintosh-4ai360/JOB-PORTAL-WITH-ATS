@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 import { LocationPicker } from "../../components/input/LocationPicker";
 import ScreeningQuestionsEditor from "../../components/employer/ScreeningQuestionsEditor";
+import JobDescriptionAssistant from "../../components/employer/JobDescriptionAssistant";
 import { toEditorQuestions, toPayloadQuestions } from "../../utils/screeningQuestions";
 
 const DEPARTMENT_OPTIONS = [
@@ -117,6 +118,20 @@ const JobPostingForm = () => {
   }, [isEditing, jobId, navigate, user?.companyName]);
 
   const tagsList = tagsInput.split(",").map((t) => t.trim()).filter(Boolean);
+
+  // Sections the job description assistant hands back once the employer
+  // chooses them. Skills are added to the list, never replacing it.
+  const applyAssistant = ({ description: nextDescription, requirements: nextRequirements, addTags }) => {
+    if (nextDescription !== undefined) setDescription(nextDescription);
+    if (nextRequirements !== undefined) setRequirements(nextRequirements);
+    if (addTags?.length) {
+      setTagsInput((current) => {
+        const existing = current.split(",").map((t) => t.trim()).filter(Boolean);
+        const lower = new Set(existing.map((t) => t.toLowerCase()));
+        return [...existing, ...addTags.filter((t) => !lower.has(t.toLowerCase()))].join(", ");
+      });
+    }
+  };
 
   // A multiple-choice question with fewer than two answers cannot be answered,
   // so it is caught here rather than after the whole form has been filled in.
@@ -489,6 +504,23 @@ const JobPostingForm = () => {
                         Step 2 of 4
                       </span>
                     </div>
+
+                    <JobDescriptionAssistant
+                      context={{
+                        title,
+                        category: department,
+                        type: jobType,
+                        workModel,
+                        location,
+                        salaryMin: Number(salaryMin) || 0,
+                        salaryMax: Number(salaryMax) || 0,
+                        currency,
+                        tags: tagsList,
+                        description,
+                        requirements,
+                      }}
+                      onApply={applyAssistant}
+                    />
 
                     <div className="flex flex-col gap-1">
                       <label className="font-label-lg font-semibold text-text-primary">

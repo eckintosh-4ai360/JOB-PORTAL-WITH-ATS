@@ -14,6 +14,9 @@ const {
     getJobSpecForEmployer,
     getAiStatus,
 } = require("../controllers/aiController");
+const {
+    assistWithJobDescription,
+} = require("../controllers/employerAiController");
 
 const { protect, optionalAuth } = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
@@ -28,6 +31,7 @@ const analyzeLimit = aiRateLimit({
 });
 const matchLimit = aiRateLimit({ scope: "job-match", windowMs: 60 * 60 * 1000, max: 60 });
 const employerLimit = aiRateLimit({ scope: "applicant-score", windowMs: 60 * 60 * 1000, max: 40 });
+const writingLimit = aiRateLimit({ scope: "job-description", windowMs: 60 * 60 * 1000, max: 30 });
 
 // --- Status ---
 router.get("/status", getAiStatus);
@@ -51,5 +55,8 @@ router.get("/match/job/:jobId", protect, matchLimit, getJobMatch);
 router.get("/match/applicants/:jobId", protect, employerLimit, getScoredApplicants);
 router.post("/match/applicants/:jobId/rescore", protect, employerLimit, rescoreApplicants);
 router.get("/match/job-spec/:jobId", protect, employerLimit, getJobSpecForEmployer);
+
+// --- Employer writing tools ---
+router.post("/job-description", protect, writingLimit, assistWithJobDescription);
 
 module.exports = router;
