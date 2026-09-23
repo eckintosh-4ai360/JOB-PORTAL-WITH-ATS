@@ -29,6 +29,7 @@ import Applicants from "./pages/Employer/Applicants";
 import ManageJobs from "./pages/Employer/ManageJobs";
 import JobTemplates from "./pages/Employer/JobTemplates";
 import Shortlisting from "./pages/Employer/Shortlisting";
+import Reports from "./pages/Employer/Reports";
 import TalentSearch from "./pages/Employer/TalentSearch";
 import EmployerDuplicates from "./pages/Employer/Duplicates";
 import Assessments from "./pages/Employer/Assessments/Assessments";
@@ -96,6 +97,7 @@ export const App = () => {
               {/* Everyone who applied; with ?jobId= one job's applicants in full. */}
               <Route path="/applicants" element={<Applicants />} />
               <Route path="/shortlisting" element={<Shortlisting />} />
+              <Route path="/reports" element={<Reports />} />
               <Route path="/talent-search" element={<TalentSearch />} />
               <Route path="/duplicates" element={<EmployerDuplicates />} />
               <Route path="/assessments" element={<Assessments />} />
