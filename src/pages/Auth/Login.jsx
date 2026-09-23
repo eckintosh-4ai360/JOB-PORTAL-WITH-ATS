@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Mail, 
@@ -11,8 +11,7 @@ import {
   Briefcase,
   Users,
   Building2,
-  ChevronRight,
-  Sparkles
+  ChevronRight
 } from "lucide-react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { toast } from "react-hot-toast"
@@ -131,7 +130,7 @@ const Login = () => {
         } else if (from && from !== "/login") {
           navigate(from, { replace: true })
         } else if (user.role === "admin") {
-          navigate("/admin-email-templates")
+          navigate("/admin-overview")
         } else if (user.role === "employer") {
           navigate("/employer-dashboard")
         } else {
@@ -154,10 +153,10 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex font-display text-secondary overflow-hidden dark:bg-gray-950">
+    <div className="auth-viewport flex h-dvh min-h-0 bg-gray-50 font-display text-secondary overflow-hidden dark:bg-gray-950">
       
       {/* LEFT SIDE: Brand Showcase (Hidden on Mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-[#131211] overflow-hidden flex-col justify-between p-12 xl:p-16 select-none">
+      <div className="auth-showcase relative hidden overflow-hidden bg-[#131211] p-6 select-none lg:flex lg:w-1/2 lg:flex-col lg:justify-between xl:p-8 2xl:p-16">
         {/* Ambient Warm Corner Glows */}
         <div className="absolute -bottom-36 -right-36 w-[580px] h-[580px] rounded-full bg-gradient-to-tl from-orange-600/20 via-orange-950/10 to-transparent blur-3xl pointer-events-none" />
         <div className="absolute top-0 left-0 w-80 h-80 rounded-full bg-orange-500/5 blur-3xl pointer-events-none" />
@@ -173,22 +172,22 @@ const Login = () => {
         </div>
 
         {/* Brand Core Value Section */}
-        <div className="relative z-10 my-auto max-w-lg space-y-7 xl:space-y-8">
+        <div className="relative z-10 my-auto max-w-lg space-y-4 2xl:space-y-8">
           <motion.div
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
-            className="space-y-5"
+            className="space-y-3 2xl:space-y-5"
           >
             <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#241a14] border border-[#f97316]/35 text-[#f97316] text-[11px] font-bold uppercase tracking-widest">
               <span>Next-Gen Job Matching</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl xl:text-[56px] font-extrabold text-white leading-[1.12] tracking-tight">
+            <h1 className="text-3xl xl:text-4xl 2xl:text-[56px] font-extrabold text-white leading-[1.12] tracking-tight">
               Connect with<br />
               <span className="text-[#f97316]">Opportunities</span> built<br />
               for your skills.
             </h1>
-            <p className="text-gray-400 text-base xl:text-lg leading-relaxed max-w-md">
+            <p className="auth-showcase-description text-sm 2xl:text-lg text-gray-400 leading-relaxed max-w-md">
               Log in to access tailored recommendations, apply to top tier firms, and keep track of your career progression in real time.
             </p>
           </motion.div>
@@ -198,9 +197,9 @@ const Login = () => {
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.15 }}
-            className="grid grid-cols-3 gap-3.5 xl:gap-4.5"
+            className="grid grid-cols-3 gap-2 2xl:gap-4.5"
           >
-            <div className="bg-[#1c1b1a]/85 backdrop-blur-md border border-white/5 rounded-2xl p-5 xl:p-6 hover:border-[#f97316]/30 transition-colors flex flex-col justify-between min-h-[145px]">
+            <div className="flex min-h-[104px] flex-col justify-between rounded-2xl border border-white/5 bg-[#1c1b1a]/85 p-3 backdrop-blur-md transition-colors hover:border-[#f97316]/30 2xl:min-h-[145px] 2xl:p-6">
               <div className="w-10 h-10 rounded-xl bg-[#f97316]/10 text-[#f97316] flex items-center justify-center">
                 <Briefcase className="w-5 h-5" />
               </div>
@@ -210,7 +209,7 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="bg-[#1c1b1a]/85 backdrop-blur-md border border-white/5 rounded-2xl p-5 xl:p-6 hover:border-[#f97316]/30 transition-colors flex flex-col justify-between min-h-[145px]">
+            <div className="flex min-h-[104px] flex-col justify-between rounded-2xl border border-white/5 bg-[#1c1b1a]/85 p-3 backdrop-blur-md transition-colors hover:border-[#f97316]/30 2xl:min-h-[145px] 2xl:p-6">
               <div className="w-10 h-10 rounded-xl bg-[#f97316]/10 text-[#f97316] flex items-center justify-center">
                 <Building2 className="w-5 h-5" />
               </div>
@@ -220,7 +219,7 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="bg-[#1c1b1a]/85 backdrop-blur-md border border-white/5 rounded-2xl p-5 xl:p-6 hover:border-[#f97316]/30 transition-colors flex flex-col justify-between min-h-[145px]">
+            <div className="flex min-h-[104px] flex-col justify-between rounded-2xl border border-white/5 bg-[#1c1b1a]/85 p-3 backdrop-blur-md transition-colors hover:border-[#f97316]/30 2xl:min-h-[145px] 2xl:p-6">
               <div className="w-10 h-10 rounded-xl bg-[#f97316]/10 text-[#f97316] flex items-center justify-center">
                 <Users className="w-5 h-5" />
               </div>
@@ -233,7 +232,7 @@ const Login = () => {
         </div>
 
         {/* Footer info */}
-        <div className="relative z-10 text-sm text-gray-500 flex justify-between items-center pt-6">
+        <div className="relative z-10 flex items-center justify-between pt-3 text-xs text-gray-500 2xl:pt-6 2xl:text-sm">
           <span>&copy; 2026 SPG JobPortal.</span>
           <div className="flex space-x-6">
             <a href="#" className="hover:text-white transition-colors">Privacy</a>
@@ -243,7 +242,7 @@ const Login = () => {
       </div>
 
       {/* RIGHT SIDE: Interactive Login Form Container */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative bg-white dark:bg-gray-950">
+      <div className="auth-form-panel relative flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-white p-4 sm:p-6 xl:p-8 2xl:p-12 lg:w-1/2 dark:bg-gray-950">
         
         {/* Subtle decorative lights for mobile */}
         <div className="lg:hidden absolute top-0 right-0 w-64 h-64 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
@@ -252,14 +251,14 @@ const Login = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md space-y-8"
+          className="auth-form-content auth-login-content w-full max-w-md space-y-4 sm:space-y-5 2xl:space-y-8"
         >
           {/* Form Header */}
-          <div className="space-y-3">
-            <h2 className="text-3xl font-extrabold text-secondary tracking-tight dark:text-gray-100">
+          <div className="space-y-1.5">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-secondary tracking-tight dark:text-gray-100">
               Welcome Back
             </h2>
-            <p className="text-gray-500 font-medium dark:text-gray-400">
+            <p className="text-sm text-gray-500 font-medium dark:text-gray-400">
               Sign in to your account to continue your search
             </p>
           </div>
@@ -277,10 +276,10 @@ const Login = () => {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             
             {/* Email Address */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-200">
                 Email Address
               </label>
@@ -310,7 +309,7 @@ const Login = () => {
                   onChange={handleInputChange}
                   onFocus={() => setActiveField("email")}
                   onBlur={() => setActiveField(null)}
-                  className="w-full pl-3 pr-4 py-3 bg-transparent text-secondary placeholder-gray-400 outline-none text-[15px] font-medium dark:text-gray-100 dark:placeholder-gray-500"
+                  className="w-full pl-3 pr-4 py-2.5 bg-transparent text-secondary placeholder-gray-400 outline-none text-[15px] font-medium dark:text-gray-100 dark:placeholder-gray-500"
                 />
               </div>
               <AnimatePresence>
@@ -329,7 +328,7 @@ const Login = () => {
             </div>
 
             {/* Password */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <div className="flex justify-between items-center">
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-200">
                   Password
@@ -367,7 +366,7 @@ const Login = () => {
                   onChange={handleInputChange}
                   onFocus={() => setActiveField("password")}
                   onBlur={() => setActiveField(null)}
-                  className="w-full pl-3 pr-11 py-3 bg-transparent text-secondary placeholder-gray-400 outline-none text-[15px] font-medium dark:text-gray-100 dark:placeholder-gray-500"
+                  className="w-full pl-3 pr-11 py-2.5 bg-transparent text-secondary placeholder-gray-400 outline-none text-[15px] font-medium dark:text-gray-100 dark:placeholder-gray-500"
                 />
                 <button
                   type="button"
@@ -422,7 +421,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={formState.loading || formState.success}
-              className={`w-full py-3.5 rounded-xl font-bold text-[15px] text-white transition-all transform active:scale-[0.98] shadow-md shadow-primary/20 flex items-center justify-center space-x-2 cursor-pointer ${
+              className={`w-full py-2.5 sm:py-3 rounded-xl font-bold text-[15px] text-white transition-all transform active:scale-[0.98] shadow-md shadow-primary/20 flex items-center justify-center space-x-2 cursor-pointer ${
                 formState.success
                   ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
                   : "bg-primary hover:bg-orange-600"
@@ -447,7 +446,7 @@ const Login = () => {
             </button>
 
             {/* Link to Register */}
-            <div className="text-center pt-3 text-sm text-gray-500 font-semibold dark:text-gray-400">
+            <div className="pt-1 text-center text-sm text-gray-500 font-semibold dark:text-gray-400">
               New to SPG JobPortal?{" "}
               <Link 
                 to="/signup" 

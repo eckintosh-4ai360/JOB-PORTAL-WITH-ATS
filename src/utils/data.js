@@ -1,4 +1,4 @@
-import { LayoutDashboard, Plus, Briefcase, Building2, Mail, ShieldAlert } from "lucide-react";
+import { LayoutDashboard, Plus, Briefcase, Building2, Mail, ShieldAlert, Users } from "lucide-react";
 
 export const landingFeatures = {
   title: "Designed for",
@@ -91,6 +91,10 @@ export const NAVIGATION_MENU = [
 
 // Navigation shown to platform administrators.
 export const ADMIN_NAVIGATION_MENU = [
+  { id: "admin-overview", name: "Overview", icon: LayoutDashboard },
+  { id: "admin-companies", name: "Companies", icon: Building2 },
+  { id: "admin-accounts", name: "Accounts", icon: Users },
+  { id: "admin-jobs", name: "Job Postings", icon: Briefcase },
   { id: "admin-moderation", name: "Trust & Safety", icon: ShieldAlert },
   { id: "admin-email-templates", name: "Email Templates", icon: Mail },
 ];

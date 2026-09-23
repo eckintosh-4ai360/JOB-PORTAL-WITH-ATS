@@ -31,6 +31,10 @@ import EmployerProfilePage from "./pages/Employer/EmployerProfilePage";
 import EmployerSetup from "./pages/Employer/EmployerSetup";
 import EmailTemplates from "./pages/Admin/EmailTemplates";
 import ModerationQueue from "./pages/Admin/ModerationQueue";
+import AdminOverview from "./pages/Admin/Overview";
+import AdminCompanies from "./pages/Admin/Companies";
+import AdminAccounts from "./pages/Admin/Accounts";
+import AdminJobs from "./pages/Admin/JobsOversight";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import EmployerOnboardingRoute from "./routes/EmployerOnboardingRoute";
 import LandingPage from "./pages/LandingPage/LandingPage";
@@ -81,12 +85,20 @@ export const App = () => {
             </Route>
           </Route>
 
-          {/* Admin aliases for shared email templates screen */}
+          {/* Platform control — every screen here is admin-gated on the server too */}
           <Route element={<ProtectedRoute requiredRole="admin" />}>
+            <Route path="/admin-overview" element={<AdminOverview />} />
+            <Route path="/admin-companies" element={<AdminCompanies />} />
+            <Route path="/admin-accounts" element={<AdminAccounts />} />
+            <Route path="/admin-jobs" element={<AdminJobs />} />
             <Route path="/admin-email-templates" element={<EmailTemplates />} />
             <Route path="/admin-moderation" element={<ModerationQueue />} />
             <Route path="/admin/moderation" element={<ModerationQueue />} />
             <Route path="/admin/email-templates" element={<EmailTemplates />} />
+            <Route path="/admin/companies" element={<AdminCompanies />} />
+            <Route path="/admin/accounts" element={<AdminAccounts />} />
+            <Route path="/admin/jobs" element={<AdminJobs />} />
+            <Route path="/admin" element={<Navigate to="/admin-overview" replace />} />
           </Route>
 
           {/* Catch all routes */}

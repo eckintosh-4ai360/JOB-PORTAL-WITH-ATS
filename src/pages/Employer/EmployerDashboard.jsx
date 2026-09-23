@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import DashboardLayout from "../../components/layout/dashboardLayout";
+import ReviewStatusBanner from "../../components/employer/ReviewStatusBanner";
 import JobDashboardCard from "../../components/cards/JobDashboardCard";
 import ApplicantDashboardCard from "../../components/cards/ApplicantDashboardCard";
 import { useAuth } from "../../context/AuthContext";
@@ -137,6 +138,8 @@ export const EmployerDashboard = () => {
         <InlineLoader />
       ) : (
         <div className="max-w-7xl mx-auto space-y-8 pb-12">
+
+          <ReviewStatusBanner />
 
           {/*  Welcome Banner  */}
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-secondary via-secondary to-secondary px-8 py-7 shadow-xl dark:from-slate-800 dark:via-slate-800 dark:to-slate-900">

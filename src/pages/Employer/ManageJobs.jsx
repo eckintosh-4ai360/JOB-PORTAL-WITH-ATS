@@ -8,6 +8,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/dashboardLayout";
+import ReviewStatusBanner from "../../components/employer/ReviewStatusBanner";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 const ManageJobs = () => {
@@ -133,6 +134,7 @@ const ManageJobs = () => {
   return (
     <DashboardLayout activeMenu="manage-jobs">
       <div className="max-w-7xl mx-auto space-y-6 pb-12">
+        <ReviewStatusBanner />
         {/*  Header Row  */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>

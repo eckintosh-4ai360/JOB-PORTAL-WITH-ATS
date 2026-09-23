@@ -65,7 +65,7 @@ const DashboardLayout = ({ children, activeMenu }) => {
     return window.localStorage.getItem("dashboard-sidebar-collapsed") === "true";
   });
   const [activeNavItem, setActiveNavItem] = useState(
-    activeMenu || (user?.role === "admin" ? "admin-email-templates" : "employer-dashboard")
+    activeMenu || (user?.role === "admin" ? "admin-overview" : "employer-dashboard")
   );
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);

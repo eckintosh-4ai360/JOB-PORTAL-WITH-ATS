@@ -45,6 +45,15 @@ export const API_PATHS = {
 
   JOBS: {
     GET_ALL_JOBS: "/api/jobs",
+
+    // Advanced search. SEARCH accepts a natural-language `q` plus any of the
+    // filters, and answers with ranked jobs, facet counts and its reading of
+    // the query. SUGGEST powers autocomplete; OPTIONS supplies the filter
+    // vocabularies so the client never keeps its own copy of them.
+    SEARCH: "/api/jobs/search",
+    SEARCH_SUGGEST: "/api/jobs/search/suggest",
+    SEARCH_OPTIONS: "/api/jobs/search/options",
+
     GET_COMPANIES: "/api/jobs/companies",
     GET_JOB_BY_ID: (id) => `/api/jobs/${id}`,
     POST_JOB: "/api/jobs",
@@ -55,6 +64,16 @@ export const API_PATHS = {
     SAVE_JOB: (id) => `/api/saved-jobs/${id}`,
     UNSAVE_JOB: (id) => `/api/saved-jobs/${id}`,
     GET_SAVED_JOBS: "/api/saved-jobs",
+  },
+
+  // Platform control — company review, accounts and postings oversight.
+  ADMIN: {
+    OVERVIEW: "/api/admin/overview",
+    GET_COMPANIES: "/api/admin/companies",
+    GET_COMPANY: (id) => `/api/admin/companies/${id}`,
+    DECIDE_COMPANY: (id) => `/api/admin/companies/${id}/decision`,
+    GET_ACCOUNTS: "/api/admin/accounts",
+    GET_JOBS: "/api/admin/jobs",
   },
 
   MODERATION: {
