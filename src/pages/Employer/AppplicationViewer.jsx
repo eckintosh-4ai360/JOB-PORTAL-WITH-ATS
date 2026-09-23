@@ -373,6 +373,9 @@ const ApplicationViewer = () => {
   const jobId = searchParams.get("jobId");
   // Another page can link straight to one applicant, e.g. from Duplicates.
   const linkedApplicationId = searchParams.get("application");
+  // Opened from the all-applicants list, so "back" returns there.
+  const cameFromApplicants = searchParams.get("from") === "applicants";
+  const activeMenu = cameFromApplicants ? "applicants" : "manage-jobs";
 
   const [applications, setApplications] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -639,7 +642,7 @@ const ApplicationViewer = () => {
 
   if (!jobId) {
     return (
-      <DashboardLayout activeMenu="manage-jobs">
+      <DashboardLayout activeMenu={activeMenu}>
         <EmptyState
           icon={AlertCircle}
           title="No Job Selected"
@@ -650,17 +653,17 @@ const ApplicationViewer = () => {
   }
 
   return (
-    <DashboardLayout activeMenu="manage-jobs">
+    <DashboardLayout activeMenu={activeMenu}>
       <div className="h-[calc(100vh-8rem)] flex flex-col gap-0 max-w-7xl mx-auto">
 
         {/*    Top Bar   */}
         <div className="mb-5 flex flex-col sm:flex-row sm:items-center gap-4">
           <button
-            onClick={() => navigate("/manage-jobs")}
+            onClick={() => navigate(cameFromApplicants ? "/applicants" : "/manage-jobs")}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors group shrink-0"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            Back to Jobs
+            {cameFromApplicants ? "Back to Applicants" : "Back to Jobs"}
           </button>
 
           <div className="flex-1 min-w-0">
