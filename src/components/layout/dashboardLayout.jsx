@@ -175,8 +175,8 @@ const DashboardLayout = ({ children, activeMenu }) => {
           }`}
         />
         {/* Top Branding Section */}
-        <div className="relative z-10 space-y-8">
-          <div className={`relative flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+          <div className={`relative flex shrink-0 items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
             <Link to="/" className={`flex min-w-0 items-center group ${isCollapsed ? "justify-center" : "space-x-3"}`} title={isCollapsed ? (isAdmin ? "SPG Admin" : "SPG Portal") : undefined}>
               <div className={`h-9 w-9 flex items-center justify-center shadow-md transition-transform group-hover:scale-105 active:scale-100 ${
                 isAdmin
@@ -218,9 +218,18 @@ const DashboardLayout = ({ children, activeMenu }) => {
             )}
           </div>
 
-          {/* Navigation Links */}
-          {isAdmin && !isCollapsed && <p className="mb-2 px-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Workspace</p>}
-          <nav className="space-y-1.5">
+          {/* Navigation Links — scroll inside the sidebar when the screen is too
+              short for every item, rather than pushing the account button off. */}
+          {isAdmin && !isCollapsed && <p className="mb-2 mt-8 shrink-0 px-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Workspace</p>}
+          <nav
+            className={`-mr-2 min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-2 [scrollbar-width:thin] ${
+              isAdmin && !isCollapsed ? "" : "mt-8"
+            } ${
+              isAdmin
+                ? "[scrollbar-color:rgba(124,58,237,0.3)_transparent]"
+                : "[scrollbar-color:rgba(255,255,255,0.3)_transparent]"
+            }`}
+          >
             {navigationMenu.map((item) => (
               <NavigationItem
                 key={item.id}
@@ -235,7 +244,7 @@ const DashboardLayout = ({ children, activeMenu }) => {
         </div>
 
         {/* Bottom Profile section matching image layout */}
-        <div className={`relative z-10 border-t pt-4 ${isAdmin ? "border-violet-100 dark:border-slate-800" : "border-white/15"}`}>
+        <div className={`relative z-10 mt-4 shrink-0 border-t pt-4 ${isAdmin ? "border-violet-100 dark:border-slate-800" : "border-white/15"}`}>
           <button
             onClick={handleLogout}
             title={isCollapsed ? "Log out" : "Click to logout"}
