@@ -5,12 +5,7 @@ import Footer from "../../components/layout/Footer";
 import { useAuth } from "../../context/AuthContext";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
-import AttachmentPicker from "../../components/apply/AttachmentPicker";
-import {
-  useSavedAttachments,
-  emptyAttachment,
-  defaultAttachment,
-} from "../../hooks/useSavedAttachments";
+import ApplyDrawer from "../../components/apply/ApplyDrawer";
 import { useAppliedJobs } from "../../hooks/useAppliedJobs";
 import { useJobSearch } from "../../hooks/useJobSearch";
 import SearchBox from "./components/SearchBox";
@@ -100,28 +95,13 @@ const FindJobs = () => {
   const [rawMatchScores, setMatchScores] = useState({});
   const [needsResumeAnalysis, setNeedsResumeAnalysis] = useState(false);
 
-  const [quickApplyJob, setQuickApplyJob] = useState(null);
-  const [resumeAttachment, setResumeAttachment] = useState(emptyAttachment);
-  const [coverAttachment, setCoverAttachment] = useState(emptyAttachment);
-  const [applyNote, setApplyNote] = useState("");
-  const [isSubmittingApply, setIsSubmittingApply] = useState(false);
-
-  //   Quick Apply is only quick if it stops asking for a CV already on file.
-  const { resumeOptions, coverLetterOptions } = useSavedAttachments(Boolean(quickApplyJob));
+  const [applyJob, setApplyJob] = useState(null);
 
   //   An account can only apply once per job; show that on the card.
   const { hasApplied, markApplied } = useAppliedJobs();
 
   const companyFilterName = searchParams.get("companyName") || "";
   const companyFilter = searchParams.get("company") || "";
-
-  //   Until the applicant picks something, the newest saved file stands in.
-  const resumeChoice = resumeAttachment.url || resumeAttachment.file
-    ? resumeAttachment
-    : defaultAttachment(resumeOptions);
-  const coverChoice = coverAttachment.url || coverAttachment.file
-    ? coverAttachment
-    : defaultAttachment(coverLetterOptions);
 
   //   Saved jobs are the candidate's, so they are loaded once per session
   //   rather than with every search.
@@ -217,49 +197,6 @@ const FindJobs = () => {
       }
     } catch {
       toast.error("Could not update your bookmarks. Please try again.");
-    }
-  };
-
-  const handleQuickApplySubmit = async (event) => {
-    event.preventDefault();
-    if (!quickApplyJob) return;
-
-    if (!canApply) {
-      toast.error("Only jobseekers can apply for jobs.");
-      setQuickApplyJob(null);
-      return;
-    }
-
-    setIsSubmittingApply(true);
-    try {
-      if (!resumeChoice.url && !resumeChoice.file) {
-        toast.error("Please attach a resume or pick one you have already uploaded.");
-        setIsSubmittingApply(false);
-        return;
-      }
-
-      const jobId = quickApplyJob._id || quickApplyJob.id;
-      const formData = new FormData();
-      // A saved file travels as its URL; a fresh one as the file itself.
-      formData.append("resume", resumeChoice.file || resumeChoice.url);
-      if (coverChoice.file || coverChoice.url) {
-        formData.append("coverLetterFile", coverChoice.file || coverChoice.url);
-      }
-      if (applyNote) formData.append("coverLetter", applyNote);
-
-      await axiosInstance.post(API_PATHS.APPLICATIONS.APPLY_FOR_JOB(jobId), formData);
-      toast.success(
-        `Application sent to ${quickApplyJob.companyName || quickApplyJob.company?.companyName || "Employer"}!`
-      );
-      markApplied(jobId);
-      setQuickApplyJob(null);
-      setResumeAttachment(emptyAttachment);
-      setCoverAttachment(emptyAttachment);
-      setApplyNote("");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to submit quick application");
-    } finally {
-      setIsSubmittingApply(false);
     }
   };
 
@@ -513,7 +450,7 @@ const FindJobs = () => {
                       canApply={canApply}
                       hasApplied={canApply && hasApplied(job._id || job.id)}
                       onToggleSave={handleToggleSave}
-                      onQuickApply={setQuickApplyJob}
+                      onApply={setApplyJob}
                       onSkillClick={(skill) => toggleListValue("skills", skill)}
                     />
                   ))}
@@ -552,91 +489,12 @@ const FindJobs = () => {
         </section>
       </main>
 
-      {/* ================= QUICK APPLY MODAL ================= */}
-      {quickApplyJob && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="quick-apply-modal-title"
-            className="animate-slide-in-right ml-auto flex h-full w-full flex-col overflow-hidden bg-surface-card shadow-2xl md:w-1/2"
-          >
-            <div className="flex items-start justify-between gap-4 border-b border-border-default px-6 py-5 md:px-8 md:py-7">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-indigo-light text-primary">
-                  <span className="material-symbols-outlined text-[26px]">bolt</span>
-                </div>
-                <div className="min-w-0">
-                  <h3 id="quick-apply-modal-title" className="font-headline-md font-bold text-on-surface">Quick Apply</h3>
-                  <p className="truncate font-body-md text-text-secondary">
-                    {quickApplyJob.title} &bull; {quickApplyJob.companyName || quickApplyJob.company?.companyName}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setQuickApplyJob(null)}
-                type="button"
-                aria-label="Close quick application form"
-                className="shrink-0 rounded-lg p-1 text-text-muted hover:text-on-surface cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[24px]">close</span>
-              </button>
-            </div>
-
-            <form onSubmit={handleQuickApplySubmit} className="flex min-h-0 flex-1 flex-col">
-              <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6 md:px-8 md:py-8">
-                <AttachmentPicker
-                  label="CV / Resume"
-                  required
-                  options={resumeOptions}
-                  value={resumeChoice}
-                  onChange={setResumeAttachment}
-                />
-
-                {coverLetterOptions.length > 0 && (
-                  <AttachmentPicker
-                    label="Cover letter document (optional)"
-                    options={coverLetterOptions}
-                    value={coverChoice}
-                    onChange={setCoverAttachment}
-                  />
-                )}
-
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="quick-apply-note" className="font-label-caps uppercase text-text-muted">
-                    Personal Intro or Portfolio Link
-                  </label>
-                  <textarea
-                    id="quick-apply-note"
-                    rows="3"
-                    value={applyNote}
-                    onChange={(event) => setApplyNote(event.target.value)}
-                    placeholder="Share your GitHub, LinkedIn, or a brief note explaining why you're a great fit..."
-                    className="min-h-32 w-full resize-y rounded-xl border border-border-default bg-surface-container-low p-3 font-body-md text-on-surface placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col-reverse gap-3 border-t border-border-default px-6 py-5 sm:flex-row sm:items-center sm:justify-end md:px-8">
-                <button
-                  type="button"
-                  onClick={() => setQuickApplyJob(null)}
-                  className="w-full rounded-xl px-4 py-3 font-label-md text-text-secondary hover:bg-surface-container cursor-pointer sm:w-auto"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingApply}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary-container px-space-lg py-3 font-label-md font-bold text-on-primary shadow-sm hover:bg-brand-indigo-dark disabled:opacity-50 cursor-pointer sm:w-auto"
-                >
-                  {isSubmittingApply ? "Submitting..." : "Send Application"}
-                  <span className="material-symbols-outlined text-[16px]">send</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {applyJob && canApply && (
+        <ApplyDrawer
+          job={applyJob}
+          onClose={() => setApplyJob(null)}
+          onApplied={markApplied}
+        />
       )}
 
       <Footer />

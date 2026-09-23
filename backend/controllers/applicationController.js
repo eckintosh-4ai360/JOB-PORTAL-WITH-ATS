@@ -26,6 +26,7 @@ const {
     getStagesByEmployer,
 } = require("../utils/hiringPipeline");
 const { validateAnswers } = require("../utils/screeningQuestions");
+const { getApplicationReadiness: buildReadiness } = require("../services/applicationReadinessService");
 
 // The pipeline only runs forwards (utils/hiringPipeline.canTransition). A
 // candidate is emailed as they move through it, so walking a stage backwards
@@ -793,6 +794,33 @@ const updatePipeline = async (req, res) => {
     }
 };
 
+// @desc    Everything the apply screen shows before submitting: profile
+//          completeness, the CV on file, screening questions and prefills
+// @route   GET /api/applications/readiness/:jobId
+// @access  Private (Jobseeker only)
+const getApplicationReadiness = async (req, res) => {
+    try {
+        if (req.user.role !== "jobseeker") {
+            return res.status(403).json({ message: "Only jobseekers can apply for jobs" });
+        }
+
+        const job = await prisma.job.findUnique({
+            where: { id: req.params.jobId },
+            select: { id: true, title: true, isClosed: true, deletedAt: true, screeningQuestions: true },
+        });
+
+        if (!job || job.deletedAt) {
+            return res.status(404).json({ message: "Job not found" });
+        }
+
+        const readiness = await buildReadiness({ user: req.user, job });
+        res.status(200).json({ ...readiness, isClosed: job.isClosed });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
 // @desc    Withdraw (delete) an application
 // @route   DELETE /api/applications/:id
 // @access  Private (Jobseeker — must be the applicant)
@@ -832,4 +860,5 @@ module.exports = {
     withdrawApplication,
     getPipeline,
     updatePipeline,
+    getApplicationReadiness,
 };
