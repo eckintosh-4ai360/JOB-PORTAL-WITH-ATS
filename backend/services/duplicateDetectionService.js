@@ -450,6 +450,20 @@ const clusterPairs = (pairs) => {
     return [...clusters.values()];
 };
 
+/**
+ * Groups for each review state. Pairs someone marked "different people" are
+ * grouped on their own, so they never pull an undecided account into a group
+ * — where a group-wide "same person" would silently overturn that decision.
+ */
+const groupByDecision = (pairs) => {
+    const live = clusterPairs(pairs.filter((pair) => pair.decision !== "distinct"));
+    return {
+        open: live.filter((cluster) => cluster.pairs.some((pair) => !pair.decision)),
+        confirmed: live.filter((cluster) => cluster.pairs.every((pair) => pair.decision === "same")),
+        dismissed: clusterPairs(pairs.filter((pair) => pair.decision === "distinct")),
+    };
+};
+
 const loadDecisions = async (scope) => {
     const rows = await prisma.duplicateReview.findMany({ where: { scope }, select: { pairKey: true, decision: true } });
     return new Map(rows.map((row) => [row.pairKey, row.decision]));
@@ -457,7 +471,7 @@ const loadDecisions = async (scope) => {
 
 /**
  * Run detection for a set of raw subjects.
- * @returns {Promise<{subjects: Map, pairs: object[], clusters: object[], pending: number}>}
+ * @returns {Promise<{subjects: Map, pairs: object[], pending: number}>}
  */
 const detect = async ({ subjects, scope, budget = 0 }) => {
     // Decisions do not depend on the fingerprints, so they load alongside.
@@ -468,7 +482,7 @@ const detect = async ({ subjects, scope, budget = 0 }) => {
     const decisions = await decisionsLoading;
     const pairs = findPairs(prepared, decisions);
     const byKey = new Map(prepared.map((subject) => [subject.key, subject]));
-    return { subjects: byKey, pairs, clusters: clusterPairs(pairs), pending };
+    return { subjects: byKey, pairs, pending };
 };
 
 /** Record one decision for every pair among the given identities. */
@@ -496,6 +510,7 @@ module.exports = {
     loadEmployerSubjects,
     detect,
     recordDecision,
+    groupByDecision,
     ensureFingerprints,
     withAnalysisText,
     fingerprintInBackground,

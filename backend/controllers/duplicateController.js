@@ -15,20 +15,42 @@ const EMPLOYER_BUDGET = 15;
 const VIEWS = ["open", "confirmed", "dismissed"];
 const KEY_PATTERN = /^(user:[\w-]+|guest:[^\s|]+|guest-application:[\w-]+)$/;
 
-const clusterDecision = (pairs) => {
-    if (pairs.every((pair) => pair.decision === "same")) return "same";
-    if (pairs.every((pair) => pair.decision === "distinct")) return "distinct";
-    return null;
-};
+const shapePair = (pair) => ({
+    a: pair.a,
+    b: pair.b,
+    score: pair.score,
+    confidence: pair.confidence,
+    evidence: pair.evidence,
+    decision: pair.decision,
+});
 
-const summarizeCluster = (cluster) => {
-    const high = cluster.pairs.some((pair) => pair.confidence === "high");
+/**
+ * Groups for one review state, shaped for a list page, with the counts for
+ * every state. `member` turns an identity into what the page shows about it.
+ */
+const groupsFor = (pairs, view, member) => {
+    const grouped = duplicates.groupByDecision(pairs);
+    const decisionOf = { open: null, confirmed: "same", dismissed: "distinct" };
+
+    const groups = grouped[view]
+        .map((cluster) => ({
+            id: [...cluster.members].sort().join(","),
+            confidence: cluster.pairs.some((pair) => pair.confidence === "high") ? "high" : "medium",
+            score: Math.max(...cluster.pairs.map((pair) => pair.score)),
+            decision: decisionOf[view],
+            members: [...cluster.members].map(member),
+            pairs: cluster.pairs.map(shapePair),
+        }))
+        .sort((a, b) => (a.confidence === b.confidence ? b.score - a.score : a.confidence === "high" ? -1 : 1));
+
     return {
-        confidence: high ? "high" : "medium",
-        score: Math.max(...cluster.pairs.map((pair) => pair.score)),
-        decision: clusterDecision(cluster.pairs),
+        groups,
+        counts: { open: grouped.open.length, confirmed: grouped.confirmed.length, dismissed: grouped.dismissed.length },
     };
 };
+
+const validKeys = (keys) =>
+    Array.isArray(keys) && keys.length >= 2 && keys.length <= 12 && keys.every((key) => typeof key === "string" && KEY_PATTERN.test(key));
 
 // ---------------------------------------------------------------------------
 // Admin
@@ -43,49 +65,24 @@ const listPlatformDuplicates = async (req, res) => {
         const subjects = await duplicates.loadPlatformSubjects();
         const result = await duplicates.detect({ subjects, scope: duplicates.PLATFORM_SCOPE, budget: ADMIN_LIST_BUDGET });
 
-        const all = result.clusters.map((cluster) => {
-            const summary = summarizeCluster(cluster);
+        const { groups, counts } = groupsFor(result.pairs, view, (key) => {
+            const subject = result.subjects.get(key);
             return {
-                id: [...cluster.members].sort().join(","),
-                ...summary,
-                members: [...cluster.members].map((key) => {
-                    const subject = result.subjects.get(key);
-                    return {
-                        key,
-                        userId: subject.userId,
-                        name: subject.name,
-                        email: subject.rawEmails[0] || "",
-                        avatar: subject.avatar,
-                        trustState: subject.trustState,
-                        joinedAt: subject.createdAt,
-                        applicationCount: subject.applications.length,
-                        cvCount: subject.readableCvs,
-                        lastAppliedAt: subject.applications[0]?.appliedAt || null,
-                    };
-                }),
-                pairs: cluster.pairs.map((pair) => ({
-                    a: pair.a,
-                    b: pair.b,
-                    score: pair.score,
-                    confidence: pair.confidence,
-                    evidence: pair.evidence,
-                    decision: pair.decision,
-                })),
+                key,
+                userId: subject.userId,
+                name: subject.name,
+                email: subject.rawEmails[0] || "",
+                avatar: subject.avatar,
+                trustState: subject.trustState,
+                joinedAt: subject.createdAt,
+                applicationCount: subject.applications.length,
+                cvCount: subject.readableCvs,
+                lastAppliedAt: subject.applications[0]?.appliedAt || null,
             };
         });
 
-        const counts = {
-            open: all.filter((cluster) => !cluster.decision).length,
-            confirmed: all.filter((cluster) => cluster.decision === "same").length,
-            dismissed: all.filter((cluster) => cluster.decision === "distinct").length,
-        };
-        const clusters = all
-            .filter((cluster) =>
-                view === "open" ? !cluster.decision : view === "confirmed" ? cluster.decision === "same" : cluster.decision === "distinct")
-            .sort((a, b) => (a.confidence === b.confidence ? b.score - a.score : a.confidence === "high" ? -1 : 1));
-
         res.status(200).json({
-            clusters,
+            clusters: groups,
             counts,
             accountsChecked: subjects.length,
             pendingCvs: result.pending,
@@ -110,9 +107,6 @@ const scanPlatform = async (req, res) => {
         res.status(500).json({ message: "Could not scan CVs", error: error.message });
     }
 };
-
-const validKeys = (keys) =>
-    Array.isArray(keys) && keys.length >= 2 && keys.length <= 12 && keys.every((key) => typeof key === "string" && KEY_PATTERN.test(key));
 
 // @desc    Decide whether a group of accounts is one person
 // @route   POST /api/admin/duplicates/review
@@ -146,46 +140,54 @@ const reviewPlatform = async (req, res) => {
 // Employer
 // ---------------------------------------------------------------------------
 
-// @desc    Applicants who look like another of this employer's applicants
+const requireEmployer = (req, res) => {
+    if (req.user.role !== "employer") {
+        res.status(403).json({ message: "Only employers can access this route" });
+        return false;
+    }
+    return true;
+};
+
+/** Detection over one employer's applicants; the given job's are read first. */
+const detectForEmployer = async (employerId, jobId) => {
+    let subjects = await duplicates.loadEmployerSubjects(employerId);
+    if (jobId) {
+        const inJob = (subject) => subject.applications.some((app) => app.jobId === jobId);
+        subjects = [...subjects.filter(inJob), ...subjects.filter((subject) => !inJob(subject))];
+    }
+    const [result, stages] = await Promise.all([
+        duplicates.detect({ subjects, scope: duplicates.employerScope(employerId), budget: EMPLOYER_BUDGET }),
+        getEmployerStages(employerId),
+    ]);
+
+    const describeApplications = (subject) => subject.applications.map((app) => ({
+        applicationId: app.id,
+        jobId: app.jobId,
+        jobTitle: app.jobTitle,
+        stage: findStage(stages, app.status)?.name || app.status,
+        appliedAt: app.appliedAt,
+    }));
+
+    return { result, subjectsCount: subjects.length, describeApplications };
+};
+
+// @desc    Applicants who look like another of this employer's applicants,
+//          keyed by application — for flagging them on the applicant screen
 // @route   GET /api/applications/duplicates?jobId=
 // @access  Private (Employer)
 const listEmployerDuplicates = async (req, res) => {
     try {
-        if (req.user.role !== "employer") {
-            return res.status(403).json({ message: "Only employers can access this route" });
-        }
+        if (!requireEmployer(req, res)) return;
 
         const { jobId } = req.query;
-        const [job, pool] = await Promise.all([
-            jobId ? prisma.job.findUnique({ where: { id: String(jobId) }, select: { companyId: true } }) : null,
-            duplicates.loadEmployerSubjects(req.user._id),
-        ]);
-        if (jobId && (!job || job.companyId !== req.user._id)) return res.status(404).json({ message: "Job not found" });
-
-        const scope = duplicates.employerScope(req.user._id);
-        let subjects = pool;
-
-        // The job being looked at is fingerprinted first, so its applicants are
-        // checked even when the rest of the pool is still being read.
         if (jobId) {
-            const inJob = (subject) => subject.applications.some((app) => app.jobId === jobId);
-            subjects = [...subjects.filter(inJob), ...subjects.filter((subject) => !inJob(subject))];
+            const job = await prisma.job.findUnique({ where: { id: String(jobId) }, select: { companyId: true } });
+            if (!job || job.companyId !== req.user._id) return res.status(404).json({ message: "Job not found" });
         }
 
-        const [result, stages] = await Promise.all([
-            duplicates.detect({ subjects, scope, budget: EMPLOYER_BUDGET }),
-            getEmployerStages(req.user._id),
-        ]);
+        const { result, describeApplications } = await detectForEmployer(req.user._id, jobId);
 
         const matches = {};
-        const describe = (subject) => subject.applications.map((app) => ({
-            applicationId: app.id,
-            jobId: app.jobId,
-            jobTitle: app.jobTitle,
-            stage: findStage(stages, app.status)?.name || app.status,
-            appliedAt: app.appliedAt,
-        }));
-
         for (const pair of result.pairs) {
             if (pair.decision === "distinct") continue;
             for (const [self, other] of [[pair.a, pair.b], [pair.b, pair.a]]) {
@@ -199,7 +201,7 @@ const listEmployerDuplicates = async (req, res) => {
                         otherKey: other,
                         otherName: otherSubject.name,
                         otherIsGuest: otherSubject.kind === "guest",
-                        otherApplications: describe(otherSubject),
+                        otherApplications: describeApplications(otherSubject),
                         score: pair.score,
                         confidence: pair.confidence,
                         evidence: pair.evidence,
@@ -216,17 +218,15 @@ const listEmployerDuplicates = async (req, res) => {
     }
 };
 
-// @desc    Mark two of the employer's applicants as the same or different people
+// @desc    Mark a group of the employer's applicants as the same or different people
 // @route   POST /api/applications/duplicates/review
-// @body    { keys: [identityKey, identityKey], decision: "same" | "distinct" }
+// @body    { keys: [identityKey, …], decision: "same" | "distinct" }
 // @access  Private (Employer)
 const reviewEmployer = async (req, res) => {
     try {
-        if (req.user.role !== "employer") {
-            return res.status(403).json({ message: "Only employers can access this route" });
-        }
+        if (!requireEmployer(req, res)) return;
         const { keys, decision } = req.body || {};
-        if (!validKeys(keys)) return res.status(400).json({ message: "Choose two applicants." });
+        if (!validKeys(keys)) return res.status(400).json({ message: "Choose at least two applicants." });
         if (!["same", "distinct"].includes(decision)) {
             return res.status(400).json({ message: "Decision must be same or distinct." });
         }
