@@ -7,7 +7,6 @@ const {
     STAGE_TYPES,
     DEFAULT_STAGES,
     REJECTED_STAGE,
-    LEGACY_STATUSES,
     normalizeStatus,
     findStage,
     validateStages,
@@ -19,6 +18,8 @@ const { validateAnswers } = require("../utils/screeningQuestions");
 const { getApplicationReadiness: buildReadiness } = require("../services/applicationReadinessService");
 const { fingerprintInBackground } = require("../services/duplicateDetectionService");
 const { moveApplication } = require("../services/stageMoveService");
+const { summarizeAttempts } = require("../services/shortlistService");
+const { statusFilter, buildApplicationWhere } = require("../utils/applicationFilters");
 
 /** The employer's view: the stage id, with legacy status names translated. */
 const normalizeApplication = (application) => {
@@ -82,13 +83,6 @@ const ownsStoredFile = async (userId, url) => {
     ]);
 
     return user?.resume === url || Boolean(document);
-};
-
-/** Match a stage, including rows still holding its pre-pipeline name. */
-const statusFilter = (status) => {
-    const id = normalizeStatus(status);
-    const legacy = Object.keys(LEGACY_STATUSES).filter((name) => LEGACY_STATUSES[name] === id);
-    return { in: [id, ...legacy] };
 };
 
 const getEmployerJobIds = async (employerId) => {
@@ -319,8 +313,54 @@ const getMyApplications = async (req, res) => {
     }
 };
 
-// @desc    Get every application submitted to the logged-in employer's jobs
-// @route   GET /api/applications/employer
+// Sorting by fit happens after reading, so it has a ceiling: a larger list
+// is sorted by date instead, and the response says so.
+const MAX_FIT_SORT = 5000;
+
+const EMPLOYER_LIST_INCLUDE = {
+    applicant: {
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+            resume: true,
+        },
+    },
+    job: {
+        select: {
+            id: true,
+            title: true,
+            location: true,
+            type: true,
+            isClosed: true,
+        },
+    },
+    aiScore: { select: { matchScore: true, verdict: true, recommendation: true } },
+    assessmentAttempts: {
+        select: {
+            status: true,
+            percent: true,
+            passMark: true,
+            dueAt: true,
+            assessment: { select: { title: true } },
+        },
+    },
+};
+
+/** A list row: the application plus its fit and assessment in brief. */
+const toEmployerListRow = (application) => {
+    const { assessmentAttempts, aiScore, ...rest } = application;
+    const row = normalizeApplication(rest);
+    row.aiScore = aiScore
+        ? { matchScore: aiScore.matchScore, verdict: aiScore.verdict, recommendation: aiScore.recommendation || null }
+        : null;
+    row.assessment = summarizeAttempts(assessmentAttempts);
+    return row;
+};
+
+// @desc    Every application to the logged-in employer's jobs, filtered and paged
+// @route   GET /api/applications/employer?jobId=&status=&q=&from=&to=&shortlisted=&source=&sort=&page=&limit=
 // @access  Private (Employer only)
 const getEmployerApplications = async (req, res) => {
     try {
@@ -328,62 +368,72 @@ const getEmployerApplications = async (req, res) => {
             return res.status(403).json({ message: "Only employers can access this route" });
         }
 
-        const { jobId, status } = req.query;
+        const { jobId } = req.query;
         const { page, limit, skip } = getPagination(req.query);
 
-        const stages = await getEmployerStages(req.user._id);
-        if (status && !findStage(stages, status)) {
-            return res.status(400).json({ message: "That is not a stage in your pipeline." });
-        }
-
-        const employerJobIds = await getEmployerJobIds(req.user._id);
-        const where = { jobId: { in: employerJobIds } };
-
         if (jobId) {
-            const ownsJob = employerJobIds.includes(jobId);
-            if (!ownsJob) {
+            const job = await prisma.job.findUnique({ where: { id: String(jobId) }, select: { companyId: true } });
+            if (!job || job.companyId !== req.user._id) {
                 return res.status(403).json({ message: "Not authorized to view this job's applications" });
             }
-            where.jobId = jobId;
         }
 
-        if (status) where.status = statusFilter(status);
+        const stages = await getEmployerStages(req.user._id);
+        const { where, error } = buildApplicationWhere({ employerId: req.user._id, query: req.query, stages });
+        if (error) return res.status(400).json({ message: error });
 
-        const [total, applications] = await Promise.all([
+        // Counts per stage ignore the stage filter, so every filter pill keeps
+        // its number while one of them is selected.
+        const { status: _status, ...withoutStatus } = where;
+
+        const [total, grouped] = await Promise.all([
             prisma.application.count({ where }),
-            prisma.application.findMany({
+            prisma.application.groupBy({ by: ["status"], where: withoutStatus, _count: { _all: true } }),
+        ]);
+
+        const stageCounts = {};
+        for (const row of grouped) {
+            const id = normalizeStatus(row.status);
+            stageCounts[id] = (stageCounts[id] || 0) + row._count._all;
+        }
+
+        let sort = ["oldest", "fit"].includes(req.query.sort) ? req.query.sort : "newest";
+        if (sort === "fit" && total > MAX_FIT_SORT) sort = "newest";
+
+        let applications;
+        if (sort === "fit") {
+            // Unscored applicants sort after scored ones rather than as zero.
+            const keys = await prisma.application.findMany({
                 where,
-                include: {
-                    applicant: {
-                        select: {
-                            id: true,
-                            name: true,
-                            email: true,
-                            avatar: true,
-                            resume: true,
-                        },
-                    },
-                    job: {
-                        select: {
-                            id: true,
-                            title: true,
-                            location: true,
-                            type: true,
-                            isClosed: true,
-                        },
-                    },
-                },
-                orderBy: { createdAt: "desc" },
+                select: { id: true, createdAt: true, aiScore: { select: { matchScore: true } } },
+            });
+            keys.sort((a, b) =>
+                (b.aiScore?.matchScore ?? -1) - (a.aiScore?.matchScore ?? -1) || b.createdAt - a.createdAt
+            );
+            const pageIds = keys.slice(skip, skip + limit).map((key) => key.id);
+            const rows = await prisma.application.findMany({
+                where: { id: { in: pageIds } },
+                include: EMPLOYER_LIST_INCLUDE,
+            });
+            const byId = new Map(rows.map((row) => [row.id, row]));
+            applications = pageIds.map((id) => byId.get(id)).filter(Boolean);
+        } else {
+            applications = await prisma.application.findMany({
+                where,
+                include: EMPLOYER_LIST_INCLUDE,
+                orderBy: { createdAt: sort === "oldest" ? "asc" : "desc" },
                 skip,
                 take: limit,
-            }),
-        ]);
+            });
+        }
 
         res.status(200).json({
             total,
             page,
             pages: Math.ceil(total / limit),
-            applications: applications.map(normalizeApplication),
+            sort,
+            stageCounts,
+            applications: applications.map(toEmployerListRow),
         });
     } catch (error) {
         console.error(error);
