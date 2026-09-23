@@ -6,12 +6,7 @@ import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
 import JobMatchPanel from "../../components/ai/JobMatchPanel";
-import AttachmentPicker from "../../components/apply/AttachmentPicker";
-import {
-  useSavedAttachments,
-  emptyAttachment,
-  defaultAttachment,
-} from "../../hooks/useSavedAttachments";
+import ApplyDrawer from "../../components/apply/ApplyDrawer";
 import { useAppliedJobs } from "../../hooks/useAppliedJobs";
 import toast from "react-hot-toast";
 
@@ -61,18 +56,7 @@ const JobDetails = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Application Modal state
   const [showApplyModal, setShowApplyModal] = useState(false);
-  const [resumeAttachment, setResumeAttachment] = useState(emptyAttachment);
-  const [coverAttachment, setCoverAttachment] = useState(emptyAttachment);
-  const [coverNote, setCoverNote] = useState("");
-  const [applicantName, setApplicantName] = useState("");
-  const [applicantEmail, setApplicantEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  //   Files this applicant has already uploaded, so the form can offer them
-  //   instead of asking for the same CV on every job.
-  const { resumeOptions, coverLetterOptions } = useSavedAttachments(showApplyModal);
 
   //   An account can only apply once, so say so before the form is filled in
   //   rather than after the CV has been uploaded.
@@ -452,6 +436,16 @@ const JobDetails = () => {
                         <span>Quick Apply with CV</span>
                       </button>
                     </>
+                    <button
+                      onClick={() => setShowApplyModal(true)}
+                      type="button"
+                      className="w-full h-12 px-6 rounded-xl bg-primary-container text-on-primary font-label-lg font-bold flex items-center justify-center gap-2 shadow-md hover:bg-brand-indigo-dark transition-all transform active:scale-98 cursor-pointer"
+                    >
+                      <span>Apply Now</span>
+                      <span className="material-symbols-outlined text-[20px]">
+                        arrow_forward
+                      </span>
+                    </button>
                   ))}
 
                 <div className="grid grid-cols-2 gap-space-xs pt-1">
@@ -830,6 +824,12 @@ const JobDetails = () => {
             </form>
           </div>
         </div>
+      {canApply && showApplyModal && (
+        <ApplyDrawer
+          job={{ ...job, companyName }}
+          onClose={() => setShowApplyModal(false)}
+          onApplied={markApplied}
+        />
       )}
 
       <Footer />

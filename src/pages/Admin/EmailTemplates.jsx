@@ -11,11 +11,16 @@ const PREVIEW_VALUES = {
   role: "jobseeker",
   applicantName: "Jordan Smith",
   jobTitle: "Senior Product Designer",
-  status: "Under Review",
+  // What the candidate sees — never an employer's internal stage name.
+  status: "Interview",
   interviewDate: "Monday, 14 September 2026",
   interviewTime: "10:00 AM",
   interviewLocation: "Google Meet",
   interviewNotes: "Please bring a portfolio of your recent work.",
+  contactName: "Ama Owusu",
+  companyName: "Acme Services Ltd",
+  note: "Your registration certificate checked out.",
+  reason: "The registration number does not match the certificate uploaded.",
 };
 
 const replacePreviewVariables = (value = "") => value.replace(

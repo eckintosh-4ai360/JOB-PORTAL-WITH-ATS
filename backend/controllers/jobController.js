@@ -2,6 +2,7 @@ const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
 const fraud = require("../services/fraudModerationService");
 const { deriveJobFacets } = require("../utils/jobFacets");
+const { validateQuestions } = require("../utils/screeningQuestions");
 
 // @desc    Create a new job posting
 // @route   POST /api/jobs
@@ -26,7 +27,13 @@ const createJob = async (req, res) => {
             companyLogo,
             deadline,
             tags,
+            screeningQuestions,
         } = req.body;
+
+        const screening = validateQuestions(screeningQuestions);
+        if (screening.error) {
+            return res.status(400).json({ message: screening.error });
+        }
 
         if (req.user.role !== "employer" && req.user.role !== "admin") {
             return res.status(403).json({ message: "Only employers and admins can post jobs" });
@@ -74,7 +81,9 @@ const createJob = async (req, res) => {
                         : "COMPANY_PENDING_REVIEW",
                     message: reviewed.approvalState === "rejected"
                         ? `Your company was not approved${reviewed.approvalNote ? `: ${reviewed.approvalNote}` : "."} Update your details and resubmit for review.`
-                        : "Your company is awaiting review. You can post jobs once it has been approved.",
+                        : reviewed.approvalState === "in_review"
+                            ? "Your company is under review. You can post jobs once it has been approved."
+                            : "Your company is awaiting review. You can post jobs once it has been approved.",
                 });
             }
         }
@@ -154,6 +163,7 @@ const createJob = async (req, res) => {
                 companyLogo: effectiveLogo,
                 companyId: req.user._id,
                 companyProfileId: employerCompany ? employerCompany.id : undefined,
+                screeningQuestions: screening.questions.length > 0 ? screening.questions : undefined,
             },
             include: {
                 company: {
@@ -401,6 +411,16 @@ const updateJob = async (req, res) => {
         }
 
         const { companyId, id, createdAt, updatedAt, ...updateData } = req.body;
+
+        // Stored as-is otherwise, so questions go through the same checks as
+        // on create. An empty list clears them.
+        if (updateData.screeningQuestions !== undefined) {
+            const screening = validateQuestions(updateData.screeningQuestions);
+            if (screening.error) {
+                return res.status(400).json({ message: screening.error });
+            }
+            updateData.screeningQuestions = screening.questions.length > 0 ? screening.questions : null;
+        }
         if (updateData.deadline) updateData.deadline = new Date(updateData.deadline);
         if (updateData.salaryMin) updateData.salaryMin = Number(updateData.salaryMin);
         if (updateData.salaryMax) updateData.salaryMax = Number(updateData.salaryMax);

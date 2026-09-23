@@ -23,6 +23,7 @@ export const StatTile = ({ label, value, hint, tone = "default" }) => (
 );
 
 const PILL_STYLES = {
+  in_review: "bg-sky-50 text-sky-700 ring-1 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30",
   pending: "bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/30",
   approved: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30",
   rejected: "bg-rose-50 text-rose-700 ring-1 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/30",
@@ -32,10 +33,11 @@ const PILL_STYLES = {
 };
 
 const PILL_LABELS = {
-  pending: "Awaiting review",
-  approved: "Approved",
+  pending: "Submitted",
+  in_review: "Under review",
+  approved: "Verified",
   rejected: "Rejected",
-  setup_incomplete: "Setup unfinished",
+  setup_incomplete: "Unverified",
 };
 
 export const StatePill = ({ state, label, tone }) => (

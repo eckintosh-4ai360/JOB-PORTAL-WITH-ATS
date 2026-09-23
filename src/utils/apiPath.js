@@ -71,6 +71,7 @@ export const API_PATHS = {
     OVERVIEW: "/api/admin/overview",
     GET_COMPANIES: "/api/admin/companies",
     GET_COMPANY: (id) => `/api/admin/companies/${id}`,
+    START_COMPANY_REVIEW: (id) => `/api/admin/companies/${id}/review`,
     DECIDE_COMPANY: (id) => `/api/admin/companies/${id}/decision`,
     GET_ACCOUNTS: "/api/admin/accounts",
     GET_JOBS: "/api/admin/jobs",
@@ -90,6 +91,9 @@ export const API_PATHS = {
     UPDATE_STATUS: (id) => `/api/applications/${id}/status`,
     GET_MY_APPLICATIONS: "/api/applications/my-applications",
     WITHDRAW_APPLICATION: (id) => `/api/applications/${id}`,
+    GET_READINESS: (jobId) => `/api/applications/readiness/${jobId}`,
+    GET_PIPELINE: "/api/applications/pipeline",
+    UPDATE_PIPELINE: "/api/applications/pipeline",
   },
 
   IMAGE: {

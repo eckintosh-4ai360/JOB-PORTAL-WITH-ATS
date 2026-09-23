@@ -46,7 +46,7 @@ const JobResultCard = ({
     canApply,
     hasApplied,
     onToggleSave,
-    onQuickApply,
+    onApply,
     onSkillClick,
 }) => {
     const jobId = job._id || job.id;
@@ -201,6 +201,12 @@ const JobResultCard = ({
                             >
                                 <span className="material-symbols-outlined text-[16px]">bolt</span>
                                 <span>Quick Apply</span>
+                                onClick={() => onApply(job)}
+                                type="button"
+                                className="inline-flex items-center justify-center gap-1 rounded-xl bg-brand-indigo-light px-space-md py-2.5 font-label-md font-bold text-primary transition-colors hover:bg-brand-indigo-subtle cursor-pointer"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">send</span>
+                                <span>Apply</span>
                             </button>
                         ))}
 

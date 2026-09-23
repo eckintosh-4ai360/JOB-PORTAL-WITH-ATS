@@ -9,9 +9,20 @@ const {
     getApplicationById,
     updateApplicationStatus,
     withdrawApplication,
+    getPipeline,
+    updatePipeline,
+    getApplicationReadiness,
 } = require("../controllers/applicationController");
 const { protect, optionalAuth } = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
+
+// Employer — the stages applications move through. Registered before the
+// "/:id" and "/:jobId" routes so "pipeline" is never read as an id.
+router.get("/pipeline", protect, getPipeline);
+router.put("/pipeline", protect, updatePipeline);
+
+// Jobseeker — profile completeness, CV and screening questions before applying
+router.get("/readiness/:jobId", protect, getApplicationReadiness);
 
 // Apply for a job — works for both logged-in users and guests
 router.post("/:jobId", optionalAuth, upload.fields([

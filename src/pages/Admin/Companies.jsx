@@ -22,8 +22,9 @@ import {
  */
 
 const STATE_TABS = [
-  { id: "pending", label: "Awaiting review" },
-  { id: "approved", label: "Approved" },
+  { id: "pending", label: "Submitted" },
+  { id: "in_review", label: "Under review" },
+  { id: "approved", label: "Verified" },
   { id: "rejected", label: "Rejected" },
   { id: "", label: "All" },
 ];
@@ -96,6 +97,24 @@ const Companies = () => {
     }
   };
 
+  const startReview = async () => {
+    if (!selected) return;
+
+    setIsDeciding(true);
+    try {
+      const res = await axiosInstance.post(API_PATHS.ADMIN.START_COMPANY_REVIEW(selected.id));
+      toast.success(res.data.message);
+      setSelected(res.data.company);
+      loadCompanies();
+      loadOverview();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not start the review.");
+      if (err.response?.data?.company) setSelected(err.response.data.company);
+    } finally {
+      setIsDeciding(false);
+    }
+  };
+
   const decide = async (decision) => {
     if (!selected) return;
     if (decision === "rejected" && !note.trim()) {
@@ -154,20 +173,21 @@ const Companies = () => {
         </div>
 
         {overview && (
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
             <StatTile
-              label="Awaiting review"
+              label="Submitted"
               value={overview.companies?.pending ?? 0}
               tone={overview.companies?.pending ? "warn" : "default"}
-              hint="cannot post yet"
+              hint="waiting to be picked up"
             />
-            <StatTile label="Approved" value={overview.companies?.approved ?? 0} />
+            <StatTile label="Under review" value={overview.companies?.in_review ?? 0} hint="cannot post yet" />
+            <StatTile label="Verified" value={overview.companies?.approved ?? 0} />
             <StatTile
               label="Rejected"
               value={overview.companies?.rejected ?? 0}
               tone={overview.companies?.rejected ? "danger" : "default"}
             />
-            <StatTile label="Setup unfinished" value={overview.companies?.awaitingSetup ?? 0} hint="never submitted" />
+            <StatTile label="Unverified" value={overview.companies?.awaitingSetup ?? 0} hint="never submitted" />
             <StatTile label="Companies" value={overview.companies?.total ?? 0} hint="total on platform" />
           </div>
         )}
@@ -192,7 +212,7 @@ const Companies = () => {
           <EmptyRow
             icon={Inbox}
             title="No companies here"
-            description="Nothing matches this filter. New companies land in Awaiting review the moment an employer submits their setup."
+            description="Nothing matches this filter. New companies land in Submitted the moment an employer submits their setup."
           />
         ) : (
           <div className="space-y-3">
@@ -408,6 +428,22 @@ const Companies = () => {
               )}
             </div>
 
+            {selected.approvalState === "pending" ? (
+              <div className="flex items-center justify-between gap-3 border-t border-gray-100 px-6 py-4 dark:border-gray-800">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Starting the review emails the employer that their company is being checked.
+                </p>
+                <button
+                  type="button"
+                  disabled={isDeciding || isLoadingDetail}
+                  onClick={startReview}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-700 disabled:opacity-50"
+                >
+                  {isDeciding ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                  Start review
+                </button>
+              </div>
+            ) : (
             <div className="border-t border-gray-100 px-6 py-4 dark:border-gray-800">
               <label className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                 Note to the employer {selected.approvalState !== "approved" && "(required to reject)"}
@@ -440,6 +476,7 @@ const Companies = () => {
                 </button>
               </div>
             </div>
+            )}
           </div>
         </div>
       )}

@@ -1,5 +1,18 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
+const {
+    LEGACY_STATUSES,
+    normalizeStatus,
+    findStage,
+    getEmployerStages,
+} = require("../utils/hiringPipeline");
+
+/** Stage ids of the given types, plus the legacy names that meant the same. */
+const statusesOfType = (stages, types) => {
+    const ids = stages.filter((stage) => types.includes(stage.type)).map((stage) => stage.id);
+    const legacy = Object.keys(LEGACY_STATUSES).filter((name) => ids.includes(LEGACY_STATUSES[name]));
+    return [...ids, ...legacy];
+};
 
 // @desc    Get or generate analytics for the logged-in employer
 // @route   GET /api/analytics
@@ -27,10 +40,13 @@ const getEmployerAnalytics = async (req, res) => {
             where: { jobId: { in: jobIds } },
         });
 
+        // Offers count toward the rate as they always have; a hire is an offer
+        // that was accepted, so it counts too.
+        const stages = await getEmployerStages(employerId);
         const totalHired = await prisma.application.count({
             where: {
                 jobId: { in: jobIds },
-                status: "Offered",
+                status: { in: statusesOfType(stages, ["offer", "hired"]) },
             },
         });
 
@@ -82,7 +98,9 @@ const getEmployerAnalytics = async (req, res) => {
             id:        app.id,
             applicant: app.applicant?.name || app.guestName || "Unknown",
             job:       { title: app.job?.title || "" },
-            status:    app.status,
+            status:    findStage(stages, app.status)?.name || app.status,
+            phase:     findStage(stages, app.status)?.phase || "received",
+            stageType: findStage(stages, app.status)?.type || "standard",
             updatedAt: app.updatedAt,
         }));
 
@@ -130,9 +148,17 @@ const getJobAnalytics = async (req, res) => {
             _count: { _all: true },
         });
 
-        const statusBreakdown = statusGroups.map((g) => ({
-            _id:   g.status,
-            count: g._count._all,
+        // Legacy names and their stage ids are the same stage, so fold them.
+        const stages = await getEmployerStages(req.user._id);
+        const byStage = new Map();
+        for (const group of statusGroups) {
+            const id = normalizeStatus(group.status);
+            byStage.set(id, (byStage.get(id) || 0) + group._count._all);
+        }
+        const statusBreakdown = [...byStage].map(([id, count]) => ({
+            _id:   id,
+            name:  findStage(stages, id)?.name || id,
+            count,
         }));
 
         const totalApplications = await prisma.application.count({
