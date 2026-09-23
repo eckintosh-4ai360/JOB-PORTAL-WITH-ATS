@@ -316,6 +316,10 @@ model Job {
   // Canonical skills, so a skills filter never depends on free text.
   searchSkills     String[]      @default([])
 
+  // Employer-specific questions asked when applying — see
+  // utils/screeningQuestions for the shape. Null or empty means none.
+  screeningQuestions Json?
+
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
@@ -351,6 +355,9 @@ model Application {
   // A stage id from the employer's HiringPipeline (or the default one), or
   // "rejected". Candidates never see it — only the phase it maps to.
   status            String    @default("applied")
+  // The screening questions as asked and the answers given, so later edits
+  // to the job's questions never rewrite what an applicant said.
+  screeningAnswers  Json?
   interviewDate     DateTime?
   interviewTime     String?
   interviewLocation String?

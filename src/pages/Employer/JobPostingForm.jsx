@@ -6,6 +6,8 @@ import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 import { LocationPicker } from "../../components/input/LocationPicker";
+import ScreeningQuestionsEditor from "../../components/employer/ScreeningQuestionsEditor";
+import { toEditorQuestions, toPayloadQuestions } from "../../utils/screeningQuestions";
 
 const DEPARTMENT_OPTIONS = [
   "Business & Professional Services",
@@ -55,6 +57,7 @@ const JobPostingForm = () => {
   const [tagsInput, setTagsInput] = useState("");
   const [description, setDescription] = useState("");
   const [requirements, setRequirements] = useState("");
+  const [screeningQuestions, setScreeningQuestions] = useState([]);
 
   // Step 3
   const [currency, setCurrency] = useState("GH₵");
@@ -93,6 +96,7 @@ const JobPostingForm = () => {
         setSalaryMin(job.salaryMin != null ? String(job.salaryMin) : "");
         setSalaryMax(job.salaryMax != null ? String(job.salaryMax) : "");
         setDeadline(job.deadline ? new Date(job.deadline).toISOString().split("T")[0] : "");
+        setScreeningQuestions(toEditorQuestions(job.screeningQuestions));
         setPassthrough({
           customCategory: job.customCategory ?? undefined,
           customJobType: job.customJobType ?? undefined,
@@ -114,8 +118,24 @@ const JobPostingForm = () => {
 
   const tagsList = tagsInput.split(",").map((t) => t.trim()).filter(Boolean);
 
+  // A multiple-choice question with fewer than two answers cannot be answered,
+  // so it is caught here rather than after the whole form has been filled in.
+  const screeningProblem = () => {
+    const incomplete = toPayloadQuestions(screeningQuestions).find(
+      (question) => question.type === "choice" && question.options.length < 2
+    );
+    return incomplete ? `"${incomplete.prompt}" needs at least two answers to choose from.` : null;
+  };
+
   const handleNext = (e) => {
     e.preventDefault();
+    if (step === 2) {
+      const problem = screeningProblem();
+      if (problem) {
+        toast.error(problem);
+        return;
+      }
+    }
     if (step < 4) setStep(step + 1);
   };
 
@@ -137,6 +157,13 @@ const JobPostingForm = () => {
       return;
     }
 
+    const problem = screeningProblem();
+    if (problem) {
+      toast.error(problem);
+      setStep(2);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload = {
@@ -154,6 +181,7 @@ const JobPostingForm = () => {
         tags: tagsList,
         workModel,
         deadline: deadline || null,
+        screeningQuestions: toPayloadQuestions(screeningQuestions),
       };
 
       if (isEditing) {
@@ -506,6 +534,13 @@ const JobPostingForm = () => {
                         value={requirements}
                         onChange={(e) => setRequirements(e.target.value)}
                         className="p-3 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="pt-2 border-t border-border-default">
+                      <ScreeningQuestionsEditor
+                        questions={screeningQuestions}
+                        onChange={setScreeningQuestions}
                       />
                     </div>
                   </div>

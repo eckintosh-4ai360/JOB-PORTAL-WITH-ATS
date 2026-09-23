@@ -25,6 +25,7 @@ const {
     getEmployerStages,
     getStagesByEmployer,
 } = require("../utils/hiringPipeline");
+const { validateAnswers } = require("../utils/screeningQuestions");
 
 // The pipeline only runs forwards (utils/hiringPipeline.canTransition). A
 // candidate is emailed as they move through it, so walking a stage backwards
@@ -199,6 +200,17 @@ const applyForJob = async (req, res) => {
             }
         }
 
+        // Screening answers are checked before any file is uploaded, so a
+        // missed question does not leave an orphaned CV in storage.
+        const questions = Array.isArray(job.screeningQuestions) ? job.screeningQuestions : [];
+        const screening = validateAnswers(questions, req.body.screeningAnswers);
+        if (screening.errors) {
+            return res.status(422).json({
+                message: "Answer the employer's screening questions before submitting.",
+                errors: screening.errors,
+            });
+        }
+
         // New applications land in the first stage of the employer's pipeline.
         const [firstStage] = await getEmployerStages(job.companyId);
 
@@ -258,6 +270,7 @@ const applyForJob = async (req, res) => {
             coverLetter: req.body.coverLetter || "",
             coverLetterFile: coverLetterFileUrl || "",
             status: firstStage.id,
+            screeningAnswers: screening.answers.length > 0 ? screening.answers : undefined,
         };
 
         if (isLoggedIn) {
