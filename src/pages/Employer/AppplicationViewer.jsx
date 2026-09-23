@@ -18,6 +18,7 @@ import PipelineEditor from "../../components/employer/PipelineEditor";
 import InterviewQuestionsPanel from "../../components/employer/InterviewQuestionsPanel";
 import ApplicantAssessmentsCard from "../../components/employer/ApplicantAssessmentsCard";
 import DuplicateApplicantCard from "../../components/employer/DuplicateApplicantCard";
+import ShortlistToggle from "../../components/employer/ShortlistToggle";
 import { stageStyle, fitTone, AVATAR_GRADIENTS, getInitials } from "../../utils/stageStyles";
 
 // Mirrors the rule the API enforces (utils/hiringPipeline.canTransition): the
@@ -319,6 +320,12 @@ const ApplicantListItem = ({ app, stage, index, isSelected, onClick, aiScore, du
           {name}
           {app.isGuest && (
             <span className="ml-1.5 inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/30">Guest</span>
+          )}
+          {app.shortlistedAt && (
+            <Star
+              className="ml-1.5 inline h-3 w-3 fill-amber-400 text-amber-400 align-[-1px]"
+              aria-label="On your shortlist"
+            />
           )}
           {duplicate && (
             <span
@@ -891,9 +898,22 @@ const ApplicationViewer = () => {
                       </div>
                     </div>
 
-                    {/* Current Status */}
-                    <div className="shrink-0">
+                    {/* Current Status, and the private shortlist */}
+                    <div className="shrink-0 flex flex-col items-end gap-2">
                       <StatusBadge stage={stageById(selectedApp.status)} size="md" />
+                      <ShortlistToggle
+                        applicationId={selectedApp._id || selectedApp.id}
+                        shortlisted={Boolean(selectedApp.shortlistedAt)}
+                        disabled={["rejected", "hired"].includes(stageById(selectedApp.status)?.type)}
+                        disabledReason="This application is settled, so it is past shortlisting."
+                        onChange={(on) => {
+                          const shortlistedAt = on ? new Date().toISOString() : null;
+                          setApplications((prev) =>
+                            prev.map((a) => (a._id === selectedApp._id ? { ...a, shortlistedAt } : a))
+                          );
+                          setSelectedApp((prev) => ({ ...prev, shortlistedAt }));
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
