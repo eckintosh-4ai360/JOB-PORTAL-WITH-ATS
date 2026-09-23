@@ -22,6 +22,7 @@ const moderationRoutes = require("./routes/moderationRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const jobTemplateRoutes = require("./routes/jobTemplateRoutes");
 const shortlistRoutes = require("./routes/shortlistRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 
 
 const app = express();
@@ -32,6 +33,8 @@ app.use(
         origin: "*",
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
         allowedHeaders: ["Content-Type", "Authorization"],
+        // Report downloads name their file here; the browser hides it otherwise.
+        exposedHeaders: ["Content-Disposition"],
     })
 );
 
@@ -55,6 +58,7 @@ app.use('/api/moderation', moderationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/job-templates', jobTemplateRoutes);
 app.use('/api/shortlists', shortlistRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Serve uploads folder.
 //
