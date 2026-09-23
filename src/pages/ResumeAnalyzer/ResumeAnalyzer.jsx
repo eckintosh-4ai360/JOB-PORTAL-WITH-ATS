@@ -203,8 +203,19 @@ const ResumeAnalyzer = () => {
   const handleSaveProfile = async (values) => {
     setIsSavingProfile(true);
     try {
+      const previous = matchProfile;
       const res = await axiosInstance.put(API_PATHS.AI.UPDATE_MATCH_PROFILE, values);
       setMatchProfile(res.data?.profile || null);
+
+      // Talent Search visibility is not a scoring input, so turning it on or
+      // off alone needs no rescore.
+      const scoringChanged = ["location", "expectedSalaryMin", "expectedSalaryMax", "willingToRelocate", "openToRemote"]
+        .some((key) => (values[key] ?? null) !== (previous?.[key] ?? null));
+      if (!scoringChanged) {
+        toast.success(values.discoverable ? "Verified employers can now find you" : "You're hidden from Talent Search");
+        return;
+      }
+
       toast.success("Criteria saved — rescoring your matches");
       setMatches([]);
       if (activeTab === "matches") await loadMatches({ refresh: true });

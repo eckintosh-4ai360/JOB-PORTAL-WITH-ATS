@@ -27,6 +27,7 @@ import MyDocuments from "./pages/Candidate/MyDocuments";
 import EmployerDashboard from "./pages/Employer/EmployerDashboard";
 import ApplicationViewer from "./pages/Employer/AppplicationViewer";
 import ManageJobs from "./pages/Employer/ManageJobs";
+import TalentSearch from "./pages/Employer/TalentSearch";
 import EmployerProfilePage from "./pages/Employer/EmployerProfilePage";
 import EmployerSetup from "./pages/Employer/EmployerSetup";
 import EmailTemplates from "./pages/Admin/EmailTemplates";
@@ -81,6 +82,7 @@ export const App = () => {
               <Route path="/manage-jobs" element={<ManageJobs />} />
               <Route path="/email-templates" element={<EmailTemplates />} />
               <Route path="/applicants" element={<ApplicationViewer />} />
+              <Route path="/talent-search" element={<TalentSearch />} />
               <Route path="/company-profile" element={<EmployerProfilePage />} />
             </Route>
           </Route>

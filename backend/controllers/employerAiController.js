@@ -1,6 +1,6 @@
 /**
  * Employer AI tools: the job description assistant and the interview
- * question generator.
+ * question generator. Talent Search has its own controller.
  */
 
 const prisma = require("../config/prisma");

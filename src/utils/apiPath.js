@@ -153,5 +153,10 @@ export const API_PATHS = {
     JOB_DESCRIPTION_ASSIST: "/api/ai/job-description",
     INTERVIEW_QUESTIONS: (applicationId) => `/api/ai/interview-questions/${applicationId}`,
   },
+
+  TALENT: {
+    SEARCH: "/api/talent/search",
+    INVITE: "/api/talent/invite",
+  },
 };
 

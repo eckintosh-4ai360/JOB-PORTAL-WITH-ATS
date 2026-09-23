@@ -144,6 +144,20 @@ const DEFAULT_EMAIL_TEMPLATES = [
         `),
     },
     {
+        key: "talent-invite",
+        name: "Invitation to apply",
+        description: "Sent when an employer finds a candidate in Talent Search and invites them to apply. The employer never sees the candidate's address.",
+        subject: "{{companyName}} invited you to apply — {{jobTitle}}",
+        variables: ["candidateName", "companyName", "jobTitle", "jobUrl"],
+        html: emailShell(`
+            <h2 style="color: #2563eb;">You've been invited to apply</h2>
+            <p>Hi <strong>{{candidateName}}</strong>,</p>
+            <p><strong>{{companyName}}</strong> found your profile in Talent Search and would like you to apply for <strong>{{jobTitle}}</strong>.</p>
+            <p><a href="{{jobUrl}}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 8px; text-decoration: none;">View the job</a></p>
+            <p style="color: #6b7280; font-size: 14px;">You received this because you chose to let verified employers find you. You can turn that off at any time in your match settings on the Resume Analyzer page.</p>
+        `),
+    },
+    {
         key: "company-submitted",
         name: "Company verification submitted",
         description: "Sent to an employer when they submit their company setup for verification.",
@@ -303,6 +317,12 @@ const sendRejectionEmail = async ({ to, applicantName, jobTitle }) => sendTempla
     key: "application-rejected", to, data: { applicantName, jobTitle },
 });
 
+const sendTalentInviteEmail = async ({ to, candidateName, companyName, jobTitle, jobUrl }) => sendTemplatedEmail({
+    key: "talent-invite",
+    to,
+    data: { candidateName: candidateName || "there", companyName, jobTitle, jobUrl },
+});
+
 const sendCompanySubmittedEmail = async ({ to, contactName, companyName }) => sendTemplatedEmail({
     key: "company-submitted",
     to,
@@ -345,6 +365,7 @@ module.exports = {
     sendRejectionEmail,
     sendShortlistedEmail,
     sendHiredEmail,
+    sendTalentInviteEmail,
     sendCompanySubmittedEmail,
     sendCompanyUnderReviewEmail,
     sendCompanyApprovedEmail,

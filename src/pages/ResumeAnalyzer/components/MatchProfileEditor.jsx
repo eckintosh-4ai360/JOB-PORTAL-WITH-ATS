@@ -14,8 +14,11 @@ const MatchProfileEditor = ({ profile, onSave, isSaving }) => {
     expectedSalaryMax: "",
     willingToRelocate: false,
     openToRemote: true,
+    discoverable: false,
   });
   const [dirty, setDirty] = useState(false);
+  // Visibility is not a scoring input, so changing only it does not rescore.
+  const [scoringDirty, setScoringDirty] = useState(false);
   const [syncedFrom, setSyncedFrom] = useState(null);
 
   /**
@@ -32,6 +35,7 @@ const MatchProfileEditor = ({ profile, onSave, isSaving }) => {
         profile.expectedSalaryMax,
         profile.willingToRelocate,
         profile.openToRemote,
+        profile.discoverable,
       ])
     : null;
 
@@ -43,13 +47,16 @@ const MatchProfileEditor = ({ profile, onSave, isSaving }) => {
       expectedSalaryMax: profile.expectedSalaryMax ?? "",
       willingToRelocate: Boolean(profile.willingToRelocate),
       openToRemote: profile.openToRemote !== false,
+      discoverable: Boolean(profile.discoverable),
     });
     setDirty(false);
+    setScoringDirty(false);
   }
 
   const update = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setDirty(true);
+    if (key !== "discoverable") setScoringDirty(true);
   };
 
   const min = Number(form.expectedSalaryMin);
@@ -68,6 +75,7 @@ const MatchProfileEditor = ({ profile, onSave, isSaving }) => {
       expectedSalaryMax: form.expectedSalaryMax === "" ? null : max,
       willingToRelocate: form.willingToRelocate,
       openToRemote: form.openToRemote,
+      discoverable: form.discoverable,
     });
   };
 
@@ -176,12 +184,31 @@ const MatchProfileEditor = ({ profile, onSave, isSaving }) => {
         ))}
       </div>
 
+      <label className="flex cursor-pointer items-start gap-space-sm rounded-xl border border-primary/20 bg-brand-indigo-light/40 p-space-sm">
+        <input
+          type="checkbox"
+          checked={form.discoverable}
+          onChange={(event) => update("discoverable", event.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--color-primary)]"
+        />
+        <span className="min-w-0">
+          <span className="block font-body-md font-semibold text-text-primary">
+            Let verified employers find me in Talent Search
+          </span>
+          <span className="block font-body-sm text-text-muted">
+            They see your name, headline, skills, experience, education, location and the roles you want. Never your
+            email, phone number, CV or salary expectation — they can only invite you to apply. Off by default; turn it
+            off at any time.
+          </span>
+        </span>
+      </label>
+
       <button
         type="submit"
         disabled={isSaving || rangeInvalid || !dirty}
         className="self-start rounded-xl bg-primary px-space-md py-2.5 font-label-md font-bold text-on-primary transition-colors hover:bg-brand-indigo-dark disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {isSaving ? "Saving…" : dirty ? "Save and rescore matches" : "Saved"}
+        {isSaving ? "Saving…" : !dirty ? "Saved" : scoringDirty ? "Save and rescore matches" : "Save"}
       </button>
     </form>
   );

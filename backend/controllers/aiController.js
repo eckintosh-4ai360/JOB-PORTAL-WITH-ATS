@@ -415,9 +415,20 @@ const updateMatchProfile = async (req, res) => {
             }
         }
 
+        // Talent Search visibility. Opt-in only, and only the candidate can set it.
+        const scoringFields = Object.keys(data);
+        if (body.discoverable !== undefined) {
+            data.discoverable = body.discoverable === true;
+            data.discoverableAt = data.discoverable ? new Date() : null;
+        }
+
         if (Object.keys(data).length === 0) {
             return res.status(400).json({ message: "No valid fields were provided" });
         }
+
+        const existing = await prisma.candidateProfile.findUnique({ where: { userId: req.user._id } });
+        // Turning visibility on again keeps the date it was first switched on.
+        if (data.discoverable && existing?.discoverable) delete data.discoverableAt;
 
         const profile = await prisma.candidateProfile.upsert({
             where: { userId: req.user._id },
@@ -425,8 +436,16 @@ const updateMatchProfile = async (req, res) => {
             update: data,
         });
 
-        // Preferences feed directly into scoring, so drop the cached matches.
-        await prisma.jobMatch.deleteMany({ where: { userId: req.user._id } }).catch(() => {});
+        // Preferences feed directly into scoring, so drop the cached matches —
+        // but only when one actually changed. The editor sends every field on
+        // each save, and toggling Talent Search visibility alone must not
+        // throw away scored matches.
+        const scoringChanged = scoringFields.some(
+            (field) => JSON.stringify(existing?.[field] ?? null) !== JSON.stringify(profile[field] ?? null)
+        );
+        if (!existing || scoringChanged) {
+            await prisma.jobMatch.deleteMany({ where: { userId: req.user._id } }).catch(() => {});
+        }
 
         res.status(200).json({ profile: toClient(profile), message: "Match preferences updated" });
     } catch (error) {

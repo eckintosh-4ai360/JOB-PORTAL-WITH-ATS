@@ -40,6 +40,8 @@ model User {
   resumeAnalyses     ResumeAnalysis[]
   jobMatches         JobMatch[]
   hiringPipeline     HiringPipeline?
+  talentInvitesSent     TalentInvite[] @relation("TalentInvitesSent")
+  talentInvitesReceived TalentInvite[] @relation("TalentInvitesReceived")
 
   @@index([email])
   @@index([clerkId])
@@ -76,9 +78,15 @@ model CandidateProfile {
   resumeAnalysisId      String?
   profileSyncedAt       DateTime?
 
+  // Opt-in visibility to verified employers in Talent Search. Off by default:
+  // applying to one employer never makes a candidate findable by the rest.
+  discoverable          Boolean  @default(false)
+  discoverableAt        DateTime?
+
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
+  @@index([discoverable])
 }
 
 // One stored AI resume analysis. Keyed by a hash of the extracted text so an
@@ -328,6 +336,7 @@ model Job {
   savedBy          SavedJob[]
   requirementSpec  JobRequirementSpec?
   matches          JobMatch[]
+  talentInvites    TalentInvite[]
 
   @@index([companyId])
   @@index([companyProfileId])
@@ -406,6 +415,22 @@ model InterviewGuide {
   model         String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+}
+
+// An employer inviting a candidate found in Talent Search to apply. The
+// candidate is emailed; the employer never sees their address.
+model TalentInvite {
+  id          String   @id @default(cuid())
+  employerId  String
+  employer    User     @relation("TalentInvitesSent", fields: [employerId], references: [id], onDelete: Cascade)
+  candidateId String
+  candidate   User     @relation("TalentInvitesReceived", fields: [candidateId], references: [id], onDelete: Cascade)
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([candidateId, jobId])
+  @@index([employerId, createdAt])
 }
 
 model SavedJob {
