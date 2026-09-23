@@ -19,6 +19,7 @@ const {
     getInterviewGuide,
     createInterviewGuide,
 } = require("../controllers/employerAiController");
+const { getCareerPaths, createCareerPaths } = require("../controllers/careerController");
 
 const { protect, optionalAuth } = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
@@ -35,6 +36,7 @@ const matchLimit = aiRateLimit({ scope: "job-match", windowMs: 60 * 60 * 1000, m
 const employerLimit = aiRateLimit({ scope: "applicant-score", windowMs: 60 * 60 * 1000, max: 40 });
 const writingLimit = aiRateLimit({ scope: "job-description", windowMs: 60 * 60 * 1000, max: 30 });
 const interviewLimit = aiRateLimit({ scope: "interview-questions", windowMs: 60 * 60 * 1000, max: 30 });
+const careerLimit = aiRateLimit({ scope: "career-paths", windowMs: 60 * 60 * 1000, max: 10 });
 
 // --- Status ---
 router.get("/status", getAiStatus);
@@ -58,6 +60,11 @@ router.get("/match/job/:jobId", protect, matchLimit, getJobMatch);
 router.get("/match/applicants/:jobId", protect, employerLimit, getScoredApplicants);
 router.post("/match/applicants/:jobId/rescore", protect, employerLimit, rescoreApplicants);
 router.get("/match/job-spec/:jobId", protect, employerLimit, getJobSpecForEmployer);
+
+// --- Candidate career paths ---
+// Reading saved paths costs nothing; only writing them calls the model.
+router.get("/career-paths", protect, getCareerPaths);
+router.post("/career-paths", protect, careerLimit, createCareerPaths);
 
 // --- Employer writing and interview tools ---
 router.post("/job-description", protect, writingLimit, assistWithJobDescription);

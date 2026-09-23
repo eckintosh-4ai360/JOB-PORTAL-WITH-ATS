@@ -14,6 +14,7 @@ import ResumeUploadPanel from "./components/ResumeUploadPanel";
 import AtsChecklist from "./components/AtsChecklist";
 import MatchProfileEditor from "./components/MatchProfileEditor";
 import JobMatchList from "./components/JobMatchList";
+import CareerPathsPanel from "./components/CareerPathsPanel";
 import {
   GrammarPanel,
   KeywordPanel,
@@ -33,6 +34,7 @@ import {
 const TABS = [
   { id: "analysis", label: "Resume report", icon: "fact_check" },
   { id: "matches", label: "Job matches", icon: "join_inner" },
+  { id: "careers", label: "Career paths", icon: "route" },
 ];
 
 const ResumeAnalyzer = () => {
@@ -610,6 +612,9 @@ const ResumeAnalyzer = () => {
             )}
 
             {/* ---------------- MATCHES TAB ---------------- */}
+            {/* ---------------- CAREER PATHS TAB ---------------- */}
+            {activeTab === "careers" && <CareerPathsPanel isAuthenticated={isAuthenticated} />}
+
             {activeTab === "matches" && (
               <>
                 {!isAuthenticated ? (

@@ -44,6 +44,7 @@ model User {
   talentInvitesReceived TalentInvite[] @relation("TalentInvitesReceived")
   assessments           Assessment[]   @relation("EmployerAssessments")
   assessmentAttempts    AssessmentAttempt[] @relation("CandidateAssessmentAttempts")
+  careerPlan            CareerPlan?
 
   @@index([email])
   @@index([clerkId])
@@ -534,6 +535,20 @@ model DuplicateReview {
   updatedAt   DateTime @updatedAt
 
   @@unique([scope, pairKey])
+}
+
+// Career paths suggested to a candidate, kept until their profile changes.
+model CareerPlan {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Hash of the profile the paths were written from, to tell when they are stale.
+  profileKey String
+  paths      Json
+  model      String?
+  degraded   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model SavedJob {
