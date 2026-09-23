@@ -78,6 +78,7 @@ model CandidateProfile {
 
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
+
 }
 
 // One stored AI resume analysis. Keyed by a hash of the extracted text so an
@@ -366,6 +367,7 @@ model Application {
   updatedAt         DateTime  @updatedAt
 
   aiScore           ApplicantScore?
+  interviewGuide    InterviewGuide?
 
   @@index([jobId])
   @@index([applicantId])
@@ -387,6 +389,23 @@ model HiringPipeline {
   stages     Json
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+// AI-generated interview questions for one application. Employer-only: no
+// candidate-facing read includes this relation.
+model InterviewGuide {
+  id            String      @id @default(cuid())
+  applicationId String      @unique
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  questions     Json
+  // Whether the questions used this applicant's profile and fit gaps, or only
+  // the job.
+  tailored      Boolean     @default(false)
+  // Written from templates because AI was unavailable.
+  degraded      Boolean     @default(false)
+  model         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model SavedJob {

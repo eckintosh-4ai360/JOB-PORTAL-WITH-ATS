@@ -149,8 +149,9 @@ export const API_PATHS = {
     RESCORE_APPLICANTS: (jobId) => `/api/ai/match/applicants/${jobId}/rescore`,
     GET_JOB_SPEC: (jobId) => `/api/ai/match/job-spec/${jobId}`,
 
-    // Employer writing tools
+    // Employer writing and interview tools
     JOB_DESCRIPTION_ASSIST: "/api/ai/job-description",
+    INTERVIEW_QUESTIONS: (applicationId) => `/api/ai/interview-questions/${applicationId}`,
   },
 };
 

@@ -1,9 +1,14 @@
 /**
- * Employer AI tools: the job description assistant.
+ * Employer AI tools: the job description assistant and the interview
+ * question generator.
  */
 
+const prisma = require("../config/prisma");
+const { toClient } = require("../utils/prismaHelper");
 const groq = require("../utils/groqClient");
+const matchService = require("../services/jobMatchService");
 const { assistJobDescription } = require("../services/jobDescriptionService");
+const { generateInterviewQuestions } = require("../services/interviewQuestionService");
 
 const isEmployer = (user) => user?.role === "employer" || user?.role === "admin";
 
@@ -59,6 +64,101 @@ const assistWithJobDescription = async (req, res) => {
     }
 };
 
+/** The application, if this employer owns the job it was made to. */
+const loadOwnedApplication = async (applicationId, user) => {
+    const application = await prisma.application.findUnique({
+        where: { id: applicationId },
+        include: {
+            job: true,
+            aiScore: true,
+            interviewGuide: true,
+        },
+    });
+    if (!application) return { error: { status: 404, message: "Application not found" } };
+    if (application.job.companyId !== user._id && user.role !== "admin") {
+        return { error: { status: 403, message: "You do not have access to this application" } };
+    }
+    return { application };
+};
+
+const shapeGuide = (guide) => (guide
+    ? toClient({
+        id: guide.id,
+        questions: Array.isArray(guide.questions) ? guide.questions : [],
+        tailored: guide.tailored,
+        degraded: guide.degraded,
+        updatedAt: guide.updatedAt,
+    })
+    : null);
+
+/**
+ * @desc   The saved interview guide for an application, if there is one
+ * @route  GET /api/ai/interview-questions/:applicationId
+ * @access Private (Employer who owns the job, or Admin)
+ */
+const getInterviewGuide = async (req, res) => {
+    try {
+        const { application, error } = await loadOwnedApplication(req.params.applicationId, req.user);
+        if (error) return res.status(error.status).json({ message: error.message });
+
+        res.status(200).json({
+            guide: shapeGuide(application.interviewGuide),
+            canTailor: Boolean(application.applicantId),
+            aiEnabled: groq.isConfigured(),
+        });
+    } catch (error) {
+        sendError(res, error, "Could not load the interview questions");
+    }
+};
+
+/**
+ * @desc   Generate (or regenerate) interview questions for an application
+ * @route  POST /api/ai/interview-questions/:applicationId
+ * @access Private (Employer who owns the job, or Admin)
+ * @body   { tailor?: boolean } — use the applicant's profile and fit gaps
+ */
+const createInterviewGuide = async (req, res) => {
+    try {
+        const { application, error } = await loadOwnedApplication(req.params.applicationId, req.user);
+        if (error) return res.status(error.status).json({ message: error.message });
+
+        const tailor = req.body?.tailor !== false;
+        const [spec, profile] = await Promise.all([
+            matchService.getJobSpec(application.job),
+            application.applicantId
+                ? prisma.candidateProfile.findUnique({ where: { userId: application.applicantId } })
+                : null,
+        ]);
+
+        const result = await generateInterviewQuestions({
+            job: application.job,
+            spec,
+            profile,
+            assessment: application.aiScore,
+            screeningAnswers: application.screeningAnswers,
+            tailor,
+        });
+
+        const data = {
+            questions: result.questions,
+            tailored: result.tailored,
+            degraded: result.degraded,
+            model: result.model,
+        };
+        const guide = await prisma.interviewGuide.upsert({
+            where: { applicationId: application.id },
+            create: { applicationId: application.id, ...data },
+            update: data,
+        });
+
+        res.status(200).json({ guide: shapeGuide(guide), aiEnabled: groq.isConfigured() });
+    } catch (error) {
+        sendError(res, error, "Could not generate interview questions");
+    }
+};
+
 module.exports = {
     assistWithJobDescription,
+    getInterviewGuide,
+    createInterviewGuide,
 };

@@ -15,6 +15,7 @@ import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { resolveFileUrl, downloadFileUrl } from "../../utils/fileUrl";
 import PipelineEditor from "../../components/employer/PipelineEditor";
+import InterviewQuestionsPanel from "../../components/employer/InterviewQuestionsPanel";
 
 //   Stage styling
 //   Stages are the employer's own, so their look comes from what they mean —
@@ -972,6 +973,14 @@ const ApplicationViewer = () => {
                     score={aiScores[selectedApp._id || selectedApp.id]}
                     isLoading={isLoadingScores}
                     jobSpec={jobSpec}
+                  />
+
+                  {/*  Interview questions for this applicant  */}
+                  <InterviewQuestionsPanel
+                    applicationId={selectedApp._id || selectedApp.id}
+                    applicantName={(selectedApp.applicantName || selectedApp.applicant?.name || "").split(" ")[0]}
+                    canTailor={!selectedApp.isGuest}
+                    hasAssessment={Boolean(aiScores[selectedApp._id || selectedApp.id])}
                   />
 
                   {/*  Change Status ─ */}
