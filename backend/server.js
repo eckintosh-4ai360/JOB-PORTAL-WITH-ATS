@@ -20,6 +20,7 @@ const talentRoutes = require("./routes/talentRoutes");
 const assessmentRoutes = require("./routes/assessmentRoutes");
 const moderationRoutes = require("./routes/moderationRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const jobTemplateRoutes = require("./routes/jobTemplateRoutes");
 
 
 const app = express();
@@ -51,6 +52,7 @@ app.use('/api/talent', talentRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/job-templates', jobTemplateRoutes);
 
 // Serve uploads folder.
 //
