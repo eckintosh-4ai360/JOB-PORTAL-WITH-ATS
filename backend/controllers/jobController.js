@@ -3,6 +3,7 @@ const { toClient } = require("../utils/prismaHelper");
 const fraud = require("../services/fraudModerationService");
 const { deriveJobFacets } = require("../utils/jobFacets");
 const { validateQuestions } = require("../utils/screeningQuestions");
+const { recordTemplateUse } = require("../utils/jobTemplates");
 
 // @desc    Create a new job posting
 // @route   POST /api/jobs
@@ -28,6 +29,7 @@ const createJob = async (req, res) => {
             deadline,
             tags,
             screeningQuestions,
+            templateId,
         } = req.body;
 
         const screening = validateQuestions(screeningQuestions);
@@ -180,6 +182,7 @@ const createJob = async (req, res) => {
         // Screening is advisory and can call out to Groq, so it runs after the
         // response rather than making an employer wait on it.
         fraud.screenInBackground(`job:${job.id}`, () => fraud.screenJob(job.id));
+        recordTemplateUse(templateId, req.user._id);
 
         res.status(201).json({ message: "Job created successfully", job: clientJob });
     } catch (error) {
