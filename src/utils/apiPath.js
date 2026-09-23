@@ -100,6 +100,34 @@ export const API_PATHS = {
     DUPLICATE_GROUPS: "/api/applications/duplicates/groups",
     DUPLICATES_REVIEW: "/api/applications/duplicates/review",
     UPDATE_PIPELINE: "/api/applications/pipeline",
+    // Every application to the employer's jobs: filters, paging, stage counts
+    GET_EMPLOYER_APPLICATIONS: "/api/applications/employer",
+  },
+
+  // Reusable job adverts
+  JOB_TEMPLATES: {
+    LIST: "/api/job-templates",
+    CREATE: "/api/job-templates",
+    GET: (id) => `/api/job-templates/${id}`,
+    UPDATE: (id) => `/api/job-templates/${id}`,
+    DELETE: (id) => `/api/job-templates/${id}`,
+  },
+
+  // The employer's private shortlist, and assisted suggestions for it
+  SHORTLISTS: {
+    OVERVIEW: "/api/shortlists",
+    JOB: (jobId) => `/api/shortlists/${jobId}`,
+    CANDIDATES: (jobId) => `/api/shortlists/${jobId}/candidates`,
+    ADVANCE: (jobId) => `/api/shortlists/${jobId}/advance`,
+    ADD: "/api/shortlists/add",
+    REMOVE: "/api/shortlists/remove",
+    NOTE: (applicationId) => `/api/shortlists/note/${applicationId}`,
+  },
+
+  // Previews (JSON) and downloads (?format=csv|xlsx|pdf)
+  REPORTS: {
+    LIST: "/api/reports",
+    GET: (type) => `/api/reports/${type}`,
   },
 
   IMAGE: {
