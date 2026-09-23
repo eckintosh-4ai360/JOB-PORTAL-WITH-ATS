@@ -27,6 +27,7 @@ import MyDocuments from "./pages/Candidate/MyDocuments";
 import EmployerDashboard from "./pages/Employer/EmployerDashboard";
 import ApplicationViewer from "./pages/Employer/AppplicationViewer";
 import ManageJobs from "./pages/Employer/ManageJobs";
+import JobTemplates from "./pages/Employer/JobTemplates";
 import TalentSearch from "./pages/Employer/TalentSearch";
 import EmployerDuplicates from "./pages/Employer/Duplicates";
 import Assessments from "./pages/Employer/Assessments/Assessments";
@@ -89,6 +90,7 @@ export const App = () => {
               {/* Editing reuses the full posting form so employers get every field. */}
               <Route path="/edit-job/:jobId" element={<JobPostingForm />} />
               <Route path="/manage-jobs" element={<ManageJobs />} />
+              <Route path="/job-templates" element={<JobTemplates />} />
               <Route path="/email-templates" element={<EmailTemplates />} />
               <Route path="/applicants" element={<ApplicationViewer />} />
               <Route path="/talent-search" element={<TalentSearch />} />
