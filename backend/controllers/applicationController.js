@@ -1,16 +1,7 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
 const { uploadToCloudinary, uploadToLocalDisk } = require("../middlewares/uploadMiddleware");
-const {
-    sendApplicationSubmittedEmail,
-    sendApplicationStatusUpdatedEmail,
-    sendUnderReviewEmail,
-    sendInterviewScheduledEmail,
-    sendOfferEmail,
-    sendRejectionEmail,
-    sendShortlistedEmail,
-    sendHiredEmail,
-} = require("../utils/emailService");
+const { sendApplicationSubmittedEmail } = require("../utils/emailService");
 const {
     CANDIDATE_PHASES,
     STAGE_TYPES,
@@ -20,7 +11,6 @@ const {
     normalizeStatus,
     findStage,
     validateStages,
-    canTransition,
     toCandidateStatus,
     getEmployerStages,
     getStagesByEmployer,
@@ -28,10 +18,7 @@ const {
 const { validateAnswers } = require("../utils/screeningQuestions");
 const { getApplicationReadiness: buildReadiness } = require("../services/applicationReadinessService");
 const { fingerprintInBackground } = require("../services/duplicateDetectionService");
-
-// The pipeline only runs forwards (utils/hiringPipeline.canTransition). A
-// candidate is emailed as they move through it, so walking a stage backwards
-// would contradict something they have already been told.
+const { moveApplication } = require("../services/stageMoveService");
 
 /** The employer's view: the stage id, with legacy status names translated. */
 const normalizeApplication = (application) => {
@@ -78,36 +65,6 @@ const toCandidateApplication = (application, stages) => {
     if (normalized.job) delete normalized.job.companyId;
 
     return normalized;
-};
-
-/**
- * Tell the candidate about a move — only when what they can see changes.
- * Screening to Longlisted says nothing; Longlisted to Shortlisted does. An
- * interview stage always sends its details, since a second interview is news
- * even though the phase is the same.
- */
-const notifyCandidate = ({ application, stages, previousStatus, stage, interview }) => {
-    const to = application.applicant?.email || application.guestEmail;
-    if (!to) return;
-
-    const payload = {
-        to,
-        applicantName: application.applicant?.name || application.guestName || "Applicant",
-        jobTitle: application.job.title,
-    };
-
-    if (stage.type === "rejected") return sendRejectionEmail(payload);
-    if (stage.type === "interview") return sendInterviewScheduledEmail({ ...payload, interview });
-    if (stage.type === "offer") return sendOfferEmail(payload);
-    if (stage.type === "hired") return sendHiredEmail(payload);
-
-    const before = toCandidateStatus(stages, previousStatus);
-    const after = toCandidateStatus(stages, stage.id);
-    if (before.phase === after.phase) return;
-
-    if (after.phase === "under_review") return sendUnderReviewEmail(payload);
-    if (after.phase === "shortlisted") return sendShortlistedEmail(payload);
-    return sendApplicationStatusUpdatedEmail({ ...payload, status: after.label });
 };
 
 /**
@@ -656,70 +613,16 @@ const updateApplicationStatus = async (req, res) => {
             return res.status(400).json({ message: "That is not a stage in your pipeline." });
         }
 
-        const current = normalizeStatus(application.status);
-        const currentStage = findStage(stages, current);
-
-        // Re-sending an interview stage the application is already in is a
-        // reschedule, not a move — the one same-stage update worth accepting.
-        const isReschedule = stage.id === current && stage.type === "interview";
-
-        if (!isReschedule && !canTransition(stages, current, stage.id)) {
-            const settled = currentStage?.type === "rejected" || currentStage?.type === "hired";
-            return res.status(409).json({
-                message: settled
-                    ? `This application is settled as "${currentStage.name}" and can no longer be moved.`
-                    : `An application cannot move from "${currentStage?.name || current}" back to "${stage.name}".`,
-                currentStatus: current,
-            });
-        }
-
-        const updateData = { status: stage.id };
-
-        if (stage.type === "interview") {
-            if (!application.applicantId) {
-                return res.status(400).json({ message: "Interviews can only be scheduled for candidates with registered accounts." });
-            }
-            if (!interview || !interview.date || !interview.time || !interview.location) {
-                return res.status(400).json({ message: "Interview date, time, and location/link are required when scheduling an interview." });
-            }
-            updateData.interviewDate = new Date(interview.date);
-            updateData.interviewTime = interview.time;
-            updateData.interviewLocation = interview.location;
-            updateData.interviewNotes = interview.notes || "";
-        }
-
-        // Conditional on the stage it was read in, so two recruiters moving the
-        // same applicant at once cannot both succeed and both email them.
-        const { count } = await prisma.application.updateMany({
-            where: { id: application.id, status: application.status },
-            data: updateData,
-        });
-        if (count === 0) {
-            return res.status(409).json({
-                message: "Someone else moved this application a moment ago. Refresh to see where it is now.",
-            });
-        }
-
-        const updatedApplication = await prisma.application.findUnique({
-            where: { id: application.id },
-            include: {
-                job: { select: { id: true, title: true, location: true, type: true, isClosed: true } },
-                applicant: { select: { id: true, name: true, email: true, avatar: true, resume: true } },
-            },
-        });
-
-        notifyCandidate({
-            application: updatedApplication,
+        const { application: updatedApplication, error } = await moveApplication({
+            application,
             stages,
-            previousStatus: current,
             stage,
-            interview: {
-                date: updateData.interviewDate,
-                time: updateData.interviewTime,
-                location: updateData.interviewLocation,
-                notes: updateData.interviewNotes,
-            },
+            interview,
         });
+        if (error) {
+            const { status, ...body } = error;
+            return res.status(status).json(body);
+        }
 
         res.status(200).json({ message: `Moved to ${stage.name}`, application: normalizeApplication(updatedApplication) });
     } catch (error) {
