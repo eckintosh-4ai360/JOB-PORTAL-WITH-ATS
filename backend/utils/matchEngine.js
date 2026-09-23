@@ -612,4 +612,5 @@ module.exports = {
     titleCase,
     DIMENSION_WEIGHTS,
     EDUCATION_LEVELS,
+    SKILL_ALIASES,
 };
