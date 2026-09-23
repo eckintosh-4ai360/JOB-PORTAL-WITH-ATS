@@ -161,7 +161,10 @@ const INDUSTRIES = [
  * pulls in the rest at a reduced weight.
  */
 const ROLE_FAMILIES = [
-    ["software engineer", "software developer", "developer", "programmer", "swe", "software engineering", "full stack", "fullstack", "backend", "back-end", "frontend", "front-end", "web developer", "application developer", "mobile developer", "android developer", "ios developer"],
+    // Both spellings of every role: a board this size titles the same job
+    // "Backend Developer" and "Backend Engineer" interchangeably, and a search
+    // for one that misses the other looks broken.
+    ["software engineer", "software developer", "developer", "programmer", "swe", "software engineering", "full stack", "fullstack", "full stack engineer", "fullstack engineer", "full stack developer", "backend", "back-end", "backend engineer", "backend developer", "frontend", "front-end", "frontend engineer", "frontend developer", "web developer", "web engineer", "application developer", "application engineer", "mobile developer", "mobile engineer", "android developer", "ios developer"],
     ["data analyst", "data analytics", "business analyst", "bi analyst", "business intelligence", "reporting analyst", "insights analyst"],
     ["data scientist", "machine learning engineer", "ml engineer", "ai engineer", "data science"],
     ["devops engineer", "site reliability engineer", "sre", "platform engineer", "cloud engineer", "infrastructure engineer", "systems engineer"],
