@@ -89,6 +89,49 @@ const COMPANY_GRADIENTS = [
 const getInitials = (name = "") =>
   name.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "CO";
 
+const KPI_TONES = {
+  primary: {
+    accent: "bg-primary",
+    icon: "bg-brand-indigo-light text-primary",
+    value: "text-text-primary",
+  },
+  sky: {
+    accent: "bg-sky-500",
+    icon: "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-300",
+    value: "text-sky-700 dark:text-sky-300",
+  },
+  amber: {
+    accent: "bg-amber-500",
+    icon: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300",
+    value: "text-amber-700 dark:text-amber-300",
+  },
+  emerald: {
+    accent: "bg-emerald-500",
+    icon: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300",
+    value: "text-emerald-700 dark:text-emerald-300",
+  },
+};
+
+const KpiCard = ({ label, value, detail, icon: Icon, tone = "primary" }) => {
+  const style = KPI_TONES[tone];
+
+  return (
+    <article className="group relative overflow-hidden rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_10px_24px_rgba(40,34,86,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_16px_30px_rgba(89,47,174,0.10)] md:p-space-lg">
+      {/* <span className={`absolute inset-x-0 top-0 h-1 ${style.accent}`} /> */}
+      <div className="flex items-start justify-between gap-space-sm pt-1">
+        <div className="min-w-0">
+          <p className="font-label-caps font-bold uppercase tracking-wider text-text-muted">{label}</p>
+          <p className={`mt-2 font-headline-xl font-bold tracking-tight ${style.value}`}>{value}</p>
+        </div>
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${style.icon}`}>
+          <Icon className="h-5 w-5" />
+        </span>
+      </div>
+      <p className="mt-2 font-body-sm text-text-muted">{detail}</p>
+    </article>
+  );
+};
+
 export const MyDocuments = () => {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
@@ -325,6 +368,16 @@ export const MyDocuments = () => {
       .sort((a, b) => new Date(a.interview.date) - new Date(b.interview.date));
   }, [applications]);
 
+  const activeApplicationCount = useMemo(
+    () => applications.filter(isActiveApplication).length,
+    [applications]
+  );
+
+  const availableDocumentCount = useMemo(() => {
+    const hasStoredResume = documents.some((document) => document.category === "Resume");
+    return documents.length + (user?.resume && !hasStoredResume ? 1 : 0);
+  }, [documents, user?.resume]);
+
   // Filtered Applications
   const filteredApplications = useMemo(() => {
     let list = [...applications];
@@ -420,20 +473,21 @@ export const MyDocuments = () => {
           </div>
         </div>
 
-        {/* TOP METRICS ROW: 2 LEFT STACKED / GRID STAT CARDS + 1 RIGHT INTERVIEW CARD */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* CANDIDATE DASHBOARD: KPI SNAPSHOT + NEXT INTERVIEW */}
+        <div className="grid grid-cols-1 gap-space-md xl:grid-cols-5">
           
-          {/* Left Column: 2 Stat Cards */}
-          <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-5">
+          {/* KPI cards */}
+          <div className="grid grid-cols-1 gap-space-md sm:grid-cols-2 xl:col-span-5 xl:grid-cols-5">
             
             {/* Stat Card 1: Total Jobs Applied */}
-            <div className="rounded-2xl border border-gray-200/90 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-xs flex flex-col justify-between hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
+            <div className="group relative overflow-hidden rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_10px_24px_rgba(40,34,86,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_16px_30px_rgba(89,47,174,0.10)] md:p-space-lg">
+              {/* <span className="absolute inset-x-0 top-0 h-1 bg-primary" /> */}
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-                  Total Jobs Applied
+                  Applications sent
                 </h3>
-                <div className="h-8 w-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                  <Briefcase className="h-4 w-4" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-indigo-light text-primary">
+                  <Briefcase className="h-5 w-5" />
                 </div>
               </div>
               <div className="mt-3">
@@ -441,14 +495,16 @@ export const MyDocuments = () => {
                   {isLoading ? "—" : applications.length}
                 </span>
               </div>
+              <p className="mt-2 font-body-sm text-text-muted">Roles you have applied to</p>
             </div>
 
             {/* Stat Card 2: Applications to Submit Documents On */}
-            <div className="rounded-2xl border border-gray-200/90 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-xs flex flex-col justify-between hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
+            <div className="group relative overflow-hidden rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_10px_24px_rgba(40,34,86,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_16px_30px_rgba(89,47,174,0.10)] md:p-space-lg">
+              {/* <span className="absolute inset-x-0 top-0 h-1 bg-rose-500" /> */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-                    Applications to Submit Documents On
+                    Documents to add
                   </h3>
                   <div
                     className="relative cursor-pointer text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
@@ -457,8 +513,8 @@ export const MyDocuments = () => {
                     <Info className="h-4 w-4" />
                   </div>
                 </div>
-                <div className="h-8 w-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                  <AlertCircle className="h-4 w-4" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300">
+                  <AlertCircle className="h-5 w-5" />
                 </div>
               </div>
               <div className="mt-3">
@@ -466,19 +522,47 @@ export const MyDocuments = () => {
                   {isLoading ? "—" : missingDocumentInfo.count}
                 </span>
               </div>
+              <p className="mt-2 font-body-sm text-text-muted">Applications needing your files</p>
             </div>
+
+            <KpiCard
+              label="Active pipeline"
+              value={isLoading ? "—" : activeApplicationCount}
+              detail="Still moving through hiring"
+              icon={Layers}
+              tone="sky"
+            />
+            <KpiCard
+              label="Interviews ahead"
+              value={isLoading ? "—" : upcomingInterviews.length}
+              detail={upcomingInterviews.length === 1 ? "One meeting on your calendar" : "Meetings on your calendar"}
+              icon={Calendar}
+              tone="amber"
+            />
+            <KpiCard
+              label="Documents ready"
+              value={isLoading ? "—" : availableDocumentCount}
+              detail={missingDocumentInfo.hasPendingAction ? "Add missing files to continue" : "Profile documents available"}
+              icon={FileCheck}
+              tone="emerald"
+            />
 
           </div>
 
-          {/* Right Column: Upcoming Interviews Spotlight Card */}
-          <div className="lg:col-span-7 rounded-2xl border border-gray-200/90 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-xs flex flex-col justify-between hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
+          {/* Next interview spotlight */}
+          <div className="xl:col-span-5 rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_12px_28px_rgba(40,34,86,0.07)] md:p-space-lg">
             <div>
-              <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3 mb-4">
-                <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-                  Upcoming Interviews
-                </h3>
-                <div className="h-8 w-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                  <Calendar className="h-4 w-4" />
+              <div className="mb-space-md flex items-center justify-between border-b border-border-default pb-space-sm">
+                <div>
+                  <h3 className="font-headline-md font-bold tracking-tight text-text-primary">
+                    Upcoming Interviews
+                  </h3>
+                  <p className="mt-0.5 font-body-sm text-text-muted">
+                    Your next conversations with employers.
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-indigo-light text-primary">
+                  <Calendar className="h-5 w-5" />
                 </div>
               </div>
 
@@ -487,7 +571,7 @@ export const MyDocuments = () => {
                   <Loader2 className="h-5 w-5 text-gray-400 dark:text-gray-500 animate-spin" />
                 </div>
               ) : upcomingInterviews.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-space-sm">
                   {upcomingInterviews.slice(0, 2).map((app) => {
                     const company = app.job?.company;
                     const companyName = company?.companyName || company?.name || "Company";
@@ -498,20 +582,20 @@ export const MyDocuments = () => {
                           setSelectedInterviewApp(app);
                           setIsInterviewModalOpen(true);
                         }}
-                        className="group flex items-start justify-between gap-3 p-3.5 rounded-xl bg-gray-50/70 dark:bg-gray-800/50 hover:bg-indigo-50/60 dark:hover:bg-indigo-500/10 border border-gray-100 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-500/30 cursor-pointer transition"
+                        className="group flex items-start justify-between gap-space-sm rounded-2xl border border-border-default bg-surface-container-low p-space-md transition-all hover:border-primary/30 hover:bg-brand-indigo-subtle dark:hover:bg-indigo-500/10"
                       >
                         <div className="flex items-start gap-3 min-w-0">
-                          <div className="mt-0.5 h-8 w-8 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
-                            <Calendar className="h-4 w-4" />
+                          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-surface-card text-primary shadow-sm">
+                            <Calendar className="h-4.5 w-4.5" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 truncate">
+                            <p className="truncate font-label-lg font-bold text-text-primary">
                               {app.job?.title}{" "}
-                              <span className="font-semibold text-gray-500 dark:text-gray-400">
+                              <span className="font-semibold text-text-muted">
                                 @ {companyName} {app.job?.location ? `– ${app.job.location}` : ""}
                               </span>
                             </p>
-                            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mt-0.5">
+                            <p className="mt-0.5 font-label-md font-bold text-primary">
                               {moment(app.interview.date).format("ddd, D MMM YYYY")}{" "}
                               {app.interview.time ? `at ${app.interview.time}` : ""}{" "}
                               <span className="text-gray-400 dark:text-gray-500 font-normal">· (1st Interview)</span>
@@ -519,7 +603,7 @@ export const MyDocuments = () => {
                           </div>
                         </div>
 
-                        <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0 flex items-center gap-1 mt-1">
+                        <span className="mt-1 flex shrink-0 items-center gap-1 font-label-md font-bold text-primary transition-transform group-hover:translate-x-0.5">
                           Details <ChevronRight className="h-3.5 w-3.5" />
                         </span>
                       </div>
@@ -527,11 +611,11 @@ export const MyDocuments = () => {
                   })}
                 </div>
               ) : (
-                <div className="py-7 text-center">
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                <div className="rounded-2xl bg-surface-container-low py-space-lg text-center">
+                  <p className="font-label-md font-semibold text-text-secondary">
                     No scheduled interviews at this time
                   </p>
-                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+                  <p className="mt-0.5 font-body-sm text-text-muted">
                     When employers schedule an interview, it will appear here.
                   </p>
                 </div>
@@ -539,7 +623,7 @@ export const MyDocuments = () => {
             </div>
 
             {upcomingInterviews.length > 0 && (
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-3 border-t border-gray-50 dark:border-gray-800 pt-2">
+              <p className="mt-space-md border-t border-border-default pt-space-sm font-body-sm text-text-muted">
                 Click any interview to access instructions, joining link, or copy location.
               </p>
             )}
@@ -549,43 +633,44 @@ export const MyDocuments = () => {
 
         {/* ACTION REQUIRED: SUBMIT MISSING DOCUMENTS BANNER */}
         {missingDocumentInfo.hasPendingAction && (
-          <div className="rounded-2xl border border-rose-200/90 dark:border-rose-500/20 bg-rose-50/40 dark:bg-rose-500/5 p-5 sm:p-6 shadow-xs animate-in fade-in duration-200">
-            <div className="flex flex-col gap-4">
+          <div className="relative overflow-hidden rounded-3xl border border-rose-200/90 bg-gradient-to-br from-rose-50/90 via-surface-card to-surface-card p-space-md shadow-[0_12px_28px_rgba(225,29,72,0.08)] animate-in fade-in duration-200 dark:border-rose-500/20 dark:from-rose-500/10 md:p-space-lg">
+            {/* <span className="absolute inset-y-0 left-0 w-1 bg-rose-500" /> */}
+            <div className="flex flex-col gap-space-md">
 
               {/* Header */}
-              <div className="flex items-center gap-2.5">
-                <div className="h-6 w-6 rounded-full bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center text-xs font-bold shrink-0">
+              <div className="flex items-center gap-space-sm">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-sm">
                   !
                 </div>
-                <h3 className="text-base font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
+                <h3 className="font-headline-md font-bold tracking-tight text-text-primary">
                   Action Required: Submit Missing Documents
                 </h3>
               </div>
 
               {/* Subtitle */}
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed max-w-3xl">
+              <p className="max-w-3xl font-body-md leading-relaxed text-text-secondary">
                 You have interview-stage applications that require additional documents. Please upload the missing documents to your profile to proceed.
               </p>
 
               {/* Application Row & Missing Pills */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+              <div className="flex flex-col justify-between gap-space-md pt-1 sm:flex-row sm:items-center">
 
-                <div className="space-y-2">
+                <div className="space-y-space-xs">
                   {missingDocumentInfo.actionableApps.map((app) => {
                     const company = app.job?.company;
                     const companyName = company?.companyName || company?.name || "Arch Holdings Limited";
                     return (
-                      <div key={app._id} className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className="flex items-center gap-1.5 font-bold text-gray-900 dark:text-gray-100">
+                      <div key={app._id} className="flex flex-wrap items-center gap-space-xs font-body-sm">
+                        <span className="flex items-center gap-1.5 font-bold text-text-primary">
                           <Briefcase className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
                           {app.job?.title}
                         </span>
-                        <span className="text-gray-500 dark:text-gray-400">@ {companyName}</span>
+                        <span className="text-text-muted">@ {companyName}</span>
                       </div>
                     );
                   })}
 
-                  <div className="flex items-center gap-2 flex-wrap text-xs">
+                  <div className="flex flex-wrap items-center gap-space-xs font-body-sm">
                     <span className="font-bold text-rose-700 dark:text-rose-400">Missing:</span>
                     {missingDocumentInfo.missingPills.map((pill) => (
                       <button
@@ -595,7 +680,7 @@ export const MyDocuments = () => {
                           else if (pill.includes("ID")) scrollToUpload("ID Document");
                           else scrollToUpload("Resume");
                         }}
-                        className="inline-flex items-center gap-1 rounded-full border border-rose-300 dark:border-rose-500/30 bg-white dark:bg-gray-900 hover:bg-rose-100/70 dark:hover:bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-700 dark:text-rose-400 transition shadow-2xs"
+                        className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-surface-card px-3 py-1 font-label-md font-semibold text-rose-700 shadow-2xs transition hover:bg-rose-100/70 dark:border-rose-500/30 dark:bg-gray-900 dark:text-rose-400 dark:hover:bg-rose-500/10"
                       >
                         {pill}
                       </button>
@@ -606,7 +691,7 @@ export const MyDocuments = () => {
                 {/* Upload CTA Button */}
                 <button
                   onClick={() => scrollToUpload()}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 px-5 py-3 text-xs font-bold text-white transition-all shadow-sm hover:scale-[1.01] active:scale-100 shrink-0 uppercase tracking-wide"
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary-container px-5 py-3 font-label-md font-bold uppercase tracking-wide text-on-primary shadow-sm transition-all hover:scale-[1.01] hover:bg-brand-indigo-dark active:scale-100"
                 >
                   <ArrowRight className="h-4 w-4" />
                   Upload Documents to Profile
@@ -660,7 +745,7 @@ export const MyDocuments = () => {
       
         {/* SECTION 1: APPLICATIONS HISTORY TABLE & TRACKER */}
         {(activeTab === "all" || activeTab === "applications") && (
-          <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
+          <div className="overflow-hidden rounded-3xl border border-border-default bg-surface-card shadow-[0_12px_28px_rgba(40,34,86,0.07)]">
 
             {/* Table Header & Filter Bar */}
             <div className="p-5 sm:p-6 border-b border-gray-100 dark:border-gray-800 space-y-4">
@@ -999,7 +1084,7 @@ export const MyDocuments = () => {
           <div ref={uploadSectionRef} className="space-y-6">
             
             {/* Upload Card */}
-            <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
+            <div className="rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_12px_28px_rgba(40,34,86,0.07)] md:p-space-lg">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">
                   <div className="h-9 w-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
@@ -1114,7 +1199,7 @@ export const MyDocuments = () => {
             </div>
 
             {/* Uploaded Documents List */}
-            <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm space-y-4">
+            <div className="space-y-space-md rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_12px_28px_rgba(40,34,86,0.07)] md:p-space-lg">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <div className="h-9 w-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
