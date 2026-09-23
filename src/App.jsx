@@ -40,6 +40,7 @@ import ModerationQueue from "./pages/Admin/ModerationQueue";
 import AdminOverview from "./pages/Admin/Overview";
 import AdminCompanies from "./pages/Admin/Companies";
 import AdminAccounts from "./pages/Admin/Accounts";
+import AdminDuplicates from "./pages/Admin/Duplicates";
 import AdminJobs from "./pages/Admin/JobsOversight";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import EmployerOnboardingRoute from "./routes/EmployerOnboardingRoute";
@@ -106,6 +107,7 @@ export const App = () => {
             <Route path="/admin-jobs" element={<AdminJobs />} />
             <Route path="/admin-email-templates" element={<EmailTemplates />} />
             <Route path="/admin-moderation" element={<ModerationQueue />} />
+            <Route path="/admin-duplicates" element={<AdminDuplicates />} />
             <Route path="/admin/moderation" element={<ModerationQueue />} />
             <Route path="/admin/email-templates" element={<EmailTemplates />} />
             <Route path="/admin/companies" element={<AdminCompanies />} />

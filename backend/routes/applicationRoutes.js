@@ -13,6 +13,7 @@ const {
     updatePipeline,
     getApplicationReadiness,
 } = require("../controllers/applicationController");
+const { listEmployerDuplicates, reviewEmployer } = require("../controllers/duplicateController");
 const { protect, optionalAuth } = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
 
@@ -20,6 +21,10 @@ const upload = require("../middlewares/uploadMiddleware");
 // "/:id" and "/:jobId" routes so "pipeline" is never read as an id.
 router.get("/pipeline", protect, getPipeline);
 router.put("/pipeline", protect, updatePipeline);
+
+// Employer — applicants who look like one of their other applicants
+router.get("/duplicates", protect, listEmployerDuplicates);
+router.post("/duplicates/review", protect, reviewEmployer);
 
 // Jobseeker — profile completeness, CV and screening questions before applying
 router.get("/readiness/:jobId", protect, getApplicationReadiness);

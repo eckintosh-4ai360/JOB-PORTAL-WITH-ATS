@@ -74,6 +74,9 @@ export const API_PATHS = {
     START_COMPANY_REVIEW: (id) => `/api/admin/companies/${id}/review`,
     DECIDE_COMPANY: (id) => `/api/admin/companies/${id}/decision`,
     GET_ACCOUNTS: "/api/admin/accounts",
+    DUPLICATES: "/api/admin/duplicates",
+    DUPLICATES_SCAN: "/api/admin/duplicates/scan",
+    DUPLICATES_REVIEW: "/api/admin/duplicates/review",
     GET_JOBS: "/api/admin/jobs",
   },
 
@@ -93,6 +96,8 @@ export const API_PATHS = {
     WITHDRAW_APPLICATION: (id) => `/api/applications/${id}`,
     GET_READINESS: (jobId) => `/api/applications/readiness/${jobId}`,
     GET_PIPELINE: "/api/applications/pipeline",
+    DUPLICATES: "/api/applications/duplicates",
+    DUPLICATES_REVIEW: "/api/applications/duplicates/review",
     UPDATE_PIPELINE: "/api/applications/pipeline",
   },
 

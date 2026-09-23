@@ -499,6 +499,43 @@ model AssessmentAttempt {
   @@index([assessmentId, status])
 }
 
+// What one CV looks like to the duplicate detector: its file, its wording and
+// the contact details in its header. Keyed by where the CV came from — a
+// stored file URL (immutable per upload) or "analysis:<id>" for analysed text
+// — so each CV is read once, however many times detection runs.
+model CvFingerprint {
+  id        String   @id @default(cuid())
+  sourceKey String   @unique
+  fileHash  String?
+  textHash  String?
+  // MinHash signature of the wording; see utils/identitySignals.
+  minhash   Int[]    @default([])
+  emails    String[] @default([])
+  phones    String[] @default([])
+  // The CV could not be read. Kept so it is not downloaded again every scan.
+  failed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([fileHash])
+  @@index([textHash])
+}
+
+// A human decision about two identities the detector paired: the same person,
+// or different people. Scope is "platform" for admins, "employer:<userId>" for
+// an employer's own applicants. Identities are "user:<id>" or "guest:<email>".
+model DuplicateReview {
+  id          String   @id @default(cuid())
+  scope       String
+  pairKey     String
+  decision    String   // same | distinct
+  note        String?
+  decidedById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([scope, pairKey])
+}
+
 model SavedJob {
   id          String   @id @default(cuid())
   jobSeekerId String

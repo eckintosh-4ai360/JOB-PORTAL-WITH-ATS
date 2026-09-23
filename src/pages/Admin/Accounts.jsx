@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Inbox, Loader2, RefreshCw, Users } from "lucide-react";
 import moment from "moment";
 import toast from "react-hot-toast";
@@ -31,7 +32,10 @@ const Accounts = () => {
   const [pages, setPages] = useState(1);
   const [page, setPage] = useState(1);
   const [role, setRole] = useState("");
-  const [search, setSearch] = useState("");
+  // A link can open the list already searched — the duplicate accounts page
+  // links each account here by email.
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get("search") || "");
   const [isLoading, setIsLoading] = useState(true);
 
   const load = useCallback(async () => {

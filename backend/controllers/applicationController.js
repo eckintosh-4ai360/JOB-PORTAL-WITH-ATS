@@ -27,6 +27,7 @@ const {
 } = require("../utils/hiringPipeline");
 const { validateAnswers } = require("../utils/screeningQuestions");
 const { getApplicationReadiness: buildReadiness } = require("../services/applicationReadinessService");
+const { fingerprintInBackground } = require("../services/duplicateDetectionService");
 
 // The pipeline only runs forwards (utils/hiringPipeline.canTransition). A
 // candidate is emailed as they move through it, so walking a stage backwards
@@ -285,6 +286,9 @@ const applyForJob = async (req, res) => {
         const application = await prisma.application.create({
             data: applicationData,
         });
+
+        // Read the CV for duplicate detection now, off the request path.
+        fingerprintInBackground({ key: resume });
 
         // Send confirmation email to applicant 
         const recipientEmail = isLoggedIn ? req.user.email : applicationData.guestEmail;

@@ -12,6 +12,7 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
 const fraud = require("../services/fraudModerationService");
+const { fingerprintInBackground } = require("../services/duplicateDetectionService");
 const groq = require("../utils/groqClient");
 const { analyzeResume } = require("../services/resumeAnalysisService");
 const matchService = require("../services/jobMatchService");
@@ -204,6 +205,8 @@ const analyzeResumeHandler = async (req, res) => {
         });
 
         fraud.screenInBackground(`resume:${saved.id}`, () => fraud.screenResume(saved.id));
+        // The text is already here, so fingerprinting it costs no download.
+        fingerprintInBackground({ key: `analysis:${saved.id}`, text: source.text });
 
         // Feed the parsed profile into the matching profile so job matches
         // improve immediately after an analysis.

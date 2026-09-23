@@ -17,6 +17,7 @@ import { resolveFileUrl, downloadFileUrl } from "../../utils/fileUrl";
 import PipelineEditor from "../../components/employer/PipelineEditor";
 import InterviewQuestionsPanel from "../../components/employer/InterviewQuestionsPanel";
 import ApplicantAssessmentsCard from "../../components/employer/ApplicantAssessmentsCard";
+import DuplicateApplicantCard from "../../components/employer/DuplicateApplicantCard";
 
 //   Stage styling
 //   Stages are the employer's own, so their look comes from what they mean —
@@ -397,7 +398,7 @@ const AiFitPanel = ({ score, isLoading, jobSpec }) => {
   );
 };
 
-const ApplicantListItem = ({ app, stage, index, isSelected, onClick, aiScore }) => {
+const ApplicantListItem = ({ app, stage, index, isSelected, onClick, aiScore, duplicate }) => {
   const name = app.applicantName || app.applicant?.name || "Unknown Applicant";
   const initials = getInitials(name);
   const gradient = AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length];
@@ -423,6 +424,14 @@ const ApplicantListItem = ({ app, stage, index, isSelected, onClick, aiScore }) 
           {name}
           {app.isGuest && (
             <span className="ml-1.5 inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/30">Guest</span>
+          )}
+          {duplicate && (
+            <span
+              title="Looks like another of your applicants — see the details"
+              className="ml-1.5 inline-flex items-center rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-600 ring-1 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/30"
+            >
+              Possible duplicate
+            </span>
           )}
         </p>
         <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 flex-wrap">
@@ -489,6 +498,9 @@ const ApplicationViewer = () => {
 
   //   AI fit scoring, keyed by application id
   const [aiScores, setAiScores] = useState({});
+
+  //   Applicants who look like another of this employer's applicants, by application id
+  const [duplicates, setDuplicates] = useState({});
   const [jobSpec, setJobSpec] = useState(null);
   const [isLoadingScores, setIsLoadingScores] = useState(false);
   const [isRescoring, setIsRescoring] = useState(false);
@@ -536,6 +548,22 @@ const ApplicationViewer = () => {
   const allStages = pipeline ? [...pipeline.stages, pipeline.rejectedStage] : [];
   const phases = pipeline?.phases || [];
   const stageById = (id) => allStages.find((stage) => stage.id === id);
+
+  const fetchDuplicates = useCallback(async () => {
+    if (!jobId) return;
+    try {
+      const res = await axiosInstance.get(API_PATHS.APPLICATIONS.DUPLICATES, { params: { jobId } });
+      setDuplicates(res.data.matches || {});
+    } catch {
+      // A duplicate check is a courtesy; the applicant list works without it.
+      setDuplicates({});
+    }
+  }, [jobId]);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchDuplicates, 0);
+    return () => clearTimeout(timer);
+  }, [fetchDuplicates]);
 
   /**
    * Load AI fit scores for this job's applicants.
@@ -920,6 +948,7 @@ const ApplicationViewer = () => {
                       isSelected={selectedApp?._id === app._id}
                       onClick={() => setSelectedApp(app)}
                       aiScore={aiScores[app._id || app.id]}
+                      duplicate={Boolean(duplicates[app._id || app.id]?.length)}
                     />
                   ))
                 )}
@@ -974,6 +1003,17 @@ const ApplicationViewer = () => {
                     score={aiScores[selectedApp._id || selectedApp.id]}
                     isLoading={isLoadingScores}
                     jobSpec={jobSpec}
+                  />
+
+                  {/*  Other applicants who look like this one  */}
+                  <DuplicateApplicantCard
+                    matches={duplicates[selectedApp._id || selectedApp.id]}
+                    currentJobId={jobId}
+                    onSelectApplication={(applicationId) => {
+                      const other = applications.find((a) => (a._id || a.id) === applicationId);
+                      if (other) setSelectedApp(other);
+                    }}
+                    onDecided={fetchDuplicates}
                   />
 
                   {/*  Interview questions for this applicant  */}
