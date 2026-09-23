@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import {
   FileText, Upload, Eye, Download, Trash2, Loader2,
   Inbox, Info, ChevronDown, Calendar, Clock, CheckCircle2,
-  XCircle, AlertCircle, AlertTriangle, Briefcase, Building2,
+  AlertCircle, AlertTriangle, Briefcase, Building2,
   ExternalLink, Search, ArrowRight, Shield, Check,
   X, HelpCircle, FileCheck, Layers, Sparkles, Filter,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
@@ -16,6 +16,13 @@ import { resolveFileUrl, downloadFileUrl } from "../../utils/fileUrl";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
+import ApplicationProgress from "../../components/apply/ApplicationProgress";
+import {
+  candidateStatusKey,
+  candidateStatusDisplay,
+  isActiveApplication,
+  hasUpcomingInterview,
+} from "../../utils/candidateStatus";
 
 // Document Categories
 const CATEGORIES = [
@@ -41,39 +48,14 @@ const CATEGORY_STYLES = {
   Other: "bg-gray-100 text-gray-700 ring-1 ring-gray-200 dark:bg-gray-500/10 dark:text-gray-400 dark:ring-gray-500/30",
 };
 
-// Application Status Configurations
-const STATUS_CONFIGS = {
-  Applied: {
-    label: "Applied",
-    icon: Clock,
-    badge: "bg-slate-100 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-500/30",
-    dot: "bg-slate-400",
-  },
-  "Under Review": {
-    label: "Under Review",
-    icon: Loader2,
-    badge: "bg-blue-50 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/30",
-    dot: "bg-blue-500",
-    spin: true,
-  },
-  Interviewing: {
-    label: "Interviewing",
-    icon: Calendar,
-    badge: "bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/30",
-    dot: "bg-amber-500",
-  },
-  Offered: {
-    label: "Offered",
-    icon: CheckCircle2,
-    badge: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30",
-    dot: "bg-emerald-500",
-  },
-  Rejected: {
-    label: "Rejected",
-    icon: XCircle,
-    badge: "bg-red-50 text-red-600 ring-1 ring-red-200 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/30",
-    dot: "bg-red-500",
-  },
+// Which candidate statuses each tab shows. "Application received" appears
+// under All only — nothing has happened to it yet.
+const APP_TAB_KEYS = {
+  reviewing: ["under_review"],
+  shortlisted: ["shortlisted"],
+  interview: ["interview", "decision"],
+  hired: ["offer", "hired"],
+  unsuccessful: ["unsuccessful"],
 };
 
 const ALLOWED_TYPES = [
@@ -314,9 +296,9 @@ export const MyDocuments = () => {
     const hasCertificate = documents.some((d) => d.category === "Certificate");
     const hasIdDoc = documents.some((d) => d.category === "ID Document");
 
-    // Applications in Interviewing or Under Review
+    // Applications an employer is actively looking at
     const actionableApps = applications.filter(
-      (app) => app.status === "Interviewing" || app.status === "Under Review"
+      (app) => isActiveApplication(app) && app.candidateStatus?.phase !== "received"
     );
 
     // Missing categories recommendation
@@ -339,7 +321,7 @@ export const MyDocuments = () => {
   // Upcoming Interviews list
   const upcomingInterviews = useMemo(() => {
     return applications
-      .filter((app) => app.status === "Interviewing" && app.interview?.date)
+      .filter(hasUpcomingInterview)
       .sort((a, b) => new Date(a.interview.date) - new Date(b.interview.date));
   }, [applications]);
 
@@ -348,14 +330,8 @@ export const MyDocuments = () => {
     let list = [...applications];
 
     // Status filter tab
-    if (appStatusFilter === "reviewing") {
-      list = list.filter((a) => a.status === "Under Review");
-    } else if (appStatusFilter === "interview") {
-      list = list.filter((a) => a.status === "Interviewing");
-    } else if (appStatusFilter === "hired") {
-      list = list.filter((a) => a.status === "Offered");
-    } else if (appStatusFilter === "unsuccessful") {
-      list = list.filter((a) => a.status === "Rejected");
+    if (appStatusFilter !== "all") {
+      list = list.filter((a) => APP_TAB_KEYS[appStatusFilter]?.includes(candidateStatusKey(a)));
     }
 
     // Search filter
@@ -376,10 +352,12 @@ export const MyDocuments = () => {
   const appCounts = useMemo(() => {
     return {
       all: applications.length,
-      reviewing: applications.filter((a) => a.status === "Under Review").length,
-      interview: applications.filter((a) => a.status === "Interviewing").length,
-      hired: applications.filter((a) => a.status === "Offered").length,
-      unsuccessful: applications.filter((a) => a.status === "Rejected").length,
+      ...Object.fromEntries(
+        Object.entries(APP_TAB_KEYS).map(([tab, keys]) => [
+          tab,
+          applications.filter((a) => keys.includes(candidateStatusKey(a))).length,
+        ])
+      ),
     };
   }, [applications]);
 
@@ -724,10 +702,11 @@ export const MyDocuments = () => {
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
                 {[
                   { id: "all", label: "All", count: appCounts.all },
-                  { id: "reviewing", label: "Reviewing", count: appCounts.reviewing },
+                  { id: "reviewing", label: "Under review", count: appCounts.reviewing },
+                  { id: "shortlisted", label: "Shortlisted", count: appCounts.shortlisted },
                   { id: "interview", label: "Interview", count: appCounts.interview },
-                  { id: "hired", label: "Hired", count: appCounts.hired },
-                  { id: "unsuccessful", label: "Unsuccessful", count: appCounts.unsuccessful },
+                  { id: "hired", label: "Offers", count: appCounts.hired },
+                  { id: "unsuccessful", label: "Not selected", count: appCounts.unsuccessful },
                 ].map((tab) => {
                   const isSelected = appStatusFilter === tab.id;
                   return (
@@ -790,8 +769,8 @@ export const MyDocuments = () => {
                     const company = app.job?.company;
                     const companyName = company?.companyName || company?.name || "Company";
                     const companyLogo = company?.companyLogo;
-                    const statusCfg = STATUS_CONFIGS[app.status] || STATUS_CONFIGS.Applied;
-                    const StatusIcon = statusCfg.icon;
+                    const statusCfg = candidateStatusDisplay(app);
+                    const statusKey = statusCfg.key;
                     const gradient = COMPANY_GRADIENTS[index % COMPANY_GRADIENTS.length];
                     const initials = getInitials(companyName);
 
@@ -862,13 +841,17 @@ export const MyDocuments = () => {
                             className={`inline-flex shrink-0 items-center gap-1.5 self-end rounded-full px-2.5 py-1 font-label-md font-bold md:self-start ${statusCfg.badge}`}
                           >
                             <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} />
-                            <StatusIcon className={`h-3 w-3 ${statusCfg.spin ? "animate-spin" : ""}`} />
+                            <span className="material-symbols-outlined text-[14px]">{statusCfg.icon}</span>
                             {statusCfg.label}
                           </span>
                         </div>
 
+                        <div className="mt-space-md">
+                          <ApplicationProgress application={app} />
+                        </div>
+
                         {/* Interview state, previously its own table column */}
-                        {app.status === "Interviewing" && app.interview?.date ? (
+                        {statusKey === "interview" && app.interview?.date ? (
                           <div className="mt-space-md flex flex-col gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-space-sm dark:border-emerald-500/20 dark:bg-emerald-500/10 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-center gap-2">
                               <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
@@ -892,12 +875,12 @@ export const MyDocuments = () => {
                               View details
                             </button>
                           </div>
-                        ) : app.status === "Interviewing" ? (
+                        ) : statusKey === "interview" ? (
                           <div className="mt-space-md flex items-center gap-2 rounded-2xl border border-amber-100 bg-amber-50/60 p-space-sm font-label-md font-semibold text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400">
                             <Clock className="h-4 w-4 shrink-0" />
                             Interview scheduling pending
                           </div>
-                        ) : app.status === "Offered" ? (
+                        ) : statusKey === "offer" || statusKey === "hired" ? (
                           <div className="mt-space-md flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-space-sm font-label-md font-bold text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
                             <Sparkles className="h-4 w-4 shrink-0" />
                             Offer extended
@@ -916,7 +899,7 @@ export const MyDocuments = () => {
                           </div>
 
                           <div className="flex items-center gap-space-sm">
-                            {app.status === "Interviewing" && app.interview && (
+                            {statusKey === "interview" && app.interview && (
                               <button
                                 type="button"
                                 onClick={() => {

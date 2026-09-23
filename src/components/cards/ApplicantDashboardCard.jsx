@@ -1,44 +1,30 @@
-import { Clock, Briefcase, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Clock, Briefcase, CheckCircle2, XCircle, Search, Star, Calendar, Hourglass } from "lucide-react";
 import moment from "moment";
 
-//Status config 
-const STATUS_CONFIG = {
-  applied: {
-    label: "Applied",
-    icon: Clock,
-    classes: "bg-slate-50 text-slate-600 ring-1 ring-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-500/30",
-    spin: false,
-  },
-  "under review": {
-    label: "Under Review",
-    icon: Loader2,
-    classes: "bg-blue-50 text-blue-600 ring-1 ring-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/30",
-    spin: true,
-  },
-  interviewing: {
-    label: "Interviewing",
-    icon: Clock,
-    classes: "bg-amber-50 text-amber-600 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/30",
-    spin: false,
-  },
-  offered: {
-    label: "Offered",
-    icon: CheckCircle2,
-    classes: "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30",
-    spin: false,
-  },
-  rejected: {
-    label: "Rejected",
-    icon: XCircle,
-    classes: "bg-red-50 text-red-500 ring-1 ring-red-200 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/30",
-    spin: false,
-  },
-  pending: {
-    label: "Pending",
-    icon: Clock,
-    classes: "bg-slate-50 text-slate-600 ring-1 ring-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-500/30",
-    spin: false,
-  },
+// The label is the employer's own stage name; the colour comes from what the
+// stage means, since stage names are free text.
+const TONE = {
+  slate: "bg-slate-50 text-slate-600 ring-1 ring-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-500/30",
+  blue: "bg-blue-50 text-blue-600 ring-1 ring-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/30",
+  violet: "bg-violet-50 text-violet-600 ring-1 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:ring-violet-500/30",
+  amber: "bg-amber-50 text-amber-600 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/30",
+  indigo: "bg-indigo-50 text-indigo-600 ring-1 ring-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:ring-indigo-500/30",
+  emerald: "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30",
+  red: "bg-red-50 text-red-500 ring-1 ring-red-200 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/30",
+};
+
+const PHASE_STYLE = {
+  received: { icon: Clock, classes: TONE.slate },
+  under_review: { icon: Search, classes: TONE.blue },
+  shortlisted: { icon: Star, classes: TONE.violet },
+  interview: { icon: Calendar, classes: TONE.amber },
+  decision: { icon: Hourglass, classes: TONE.indigo },
+};
+
+const stageStyle = (phase, stageType) => {
+  if (stageType === "rejected") return { icon: XCircle, classes: TONE.red };
+  if (stageType === "offer" || stageType === "hired") return { icon: CheckCircle2, classes: TONE.emerald };
+  return PHASE_STYLE[phase] || PHASE_STYLE.received;
 };
 
 // Colour palette for avatar background (index-based) 
@@ -50,8 +36,8 @@ const AVATAR_GRADIENTS = [
   "from-pink-400 to-rose-500",
 ];
 
-const ApplicantDashboardCard = ({ applicant, position, time, status = "pending", index = 0 }) => {
-  const cfg = STATUS_CONFIG[status?.toLowerCase()] ?? STATUS_CONFIG.pending;
+const ApplicantDashboardCard = ({ applicant, position, time, status, phase, stageType, index = 0 }) => {
+  const cfg = stageStyle(phase, stageType);
   const StatusIcon = cfg.icon;
 
   // Derive initials from name string
@@ -97,8 +83,8 @@ const ApplicantDashboardCard = ({ applicant, position, time, status = "pending",
       <span
         className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.classes}`}
       >
-        <StatusIcon className={`h-3 w-3 ${cfg.spin ? "animate-spin" : ""}`} />
-        {cfg.label}
+        <StatusIcon className="h-3 w-3" />
+        {status || "Applied"}
       </span>
     </div>
   );

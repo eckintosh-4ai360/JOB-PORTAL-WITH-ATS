@@ -5,6 +5,7 @@ const {
     getOverview,
     listCompanies,
     getCompany,
+    startCompanyReview,
     decideCompany,
     listAccounts,
     listJobs,
@@ -19,6 +20,7 @@ router.get("/overview", getOverview);
 
 router.get("/companies", listCompanies);
 router.get("/companies/:id", getCompany);
+router.post("/companies/:id/review", startCompanyReview);
 router.post("/companies/:id/decision", decideCompany);
 
 router.get("/accounts", listAccounts);

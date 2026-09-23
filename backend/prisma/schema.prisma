@@ -39,6 +39,7 @@ model User {
   candidateProfile   CandidateProfile?
   resumeAnalyses     ResumeAnalysis[]
   jobMatches         JobMatch[]
+  hiringPipeline     HiringPipeline?
 
   @@index([email])
   @@index([clerkId])
@@ -302,6 +303,23 @@ model Job {
   duplicateOfId    String?
   jobType          String?
   companyLogo      String?
+
+  // Search facets read out of the advert when it is written, by
+  // utils/jobFacets. Employers never type these in — the information is
+  // already in the title and requirements — but a filter can only be exact
+  // and fast if the value it filters on is a column. Existing rows are
+  // filled in by scripts/backfillJobFacets.js.
+  // intern | entry | mid | senior | lead | executive
+  seniority        String?
+  // secondary | certificate | diploma | bachelor | master | doctorate
+  educationLevel   String?
+  // Canonical skills, so a skills filter never depends on free text.
+  searchSkills     String[]      @default([])
+
+  // Employer-specific questions asked when applying — see
+  // utils/screeningQuestions for the shape. Null or empty means none.
+  screeningQuestions Json?
+
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
@@ -317,6 +335,9 @@ model Job {
   @@index([moderationState])
   @@index([contentHash])
   @@index([deletedAt])
+  @@index([seniority])
+  @@index([educationLevel])
+  @@index([createdAt])
 }
 
 model Application {
@@ -331,7 +352,12 @@ model Application {
   resume            String
   coverLetter       String?
   coverLetterFile   String?
-  status            String    @default("Applied")
+  // A stage id from the employer's HiringPipeline (or the default one), or
+  // "rejected". Candidates never see it — only the phase it maps to.
+  status            String    @default("applied")
+  // The screening questions as asked and the answers given, so later edits
+  // to the job's questions never rewrite what an applicant said.
+  screeningAnswers  Json?
   interviewDate     DateTime?
   interviewTime     String?
   interviewLocation String?
@@ -348,6 +374,19 @@ model Application {
   // carry no applicantId) alone. The controller's own check gives the friendly
   // message; this is what makes the rule true when two submits race.
   @@unique([jobId, applicantId])
+}
+
+// The stages an employer moves applications through. One per employer; an
+// employer without a row uses the default pipeline in utils/hiringPipeline.
+// Kept off Company because public job reads include the whole company row, and
+// an employer's internal stage names are not public.
+model HiringPipeline {
+  id         String   @id @default(cuid())
+  employerId String   @unique
+  employer   User     @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  stages     Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model SavedJob {

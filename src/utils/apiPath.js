@@ -45,6 +45,15 @@ export const API_PATHS = {
 
   JOBS: {
     GET_ALL_JOBS: "/api/jobs",
+
+    // Advanced search. SEARCH accepts a natural-language `q` plus any of the
+    // filters, and answers with ranked jobs, facet counts and its reading of
+    // the query. SUGGEST powers autocomplete; OPTIONS supplies the filter
+    // vocabularies so the client never keeps its own copy of them.
+    SEARCH: "/api/jobs/search",
+    SEARCH_SUGGEST: "/api/jobs/search/suggest",
+    SEARCH_OPTIONS: "/api/jobs/search/options",
+
     GET_COMPANIES: "/api/jobs/companies",
     GET_JOB_BY_ID: (id) => `/api/jobs/${id}`,
     POST_JOB: "/api/jobs",
@@ -62,6 +71,7 @@ export const API_PATHS = {
     OVERVIEW: "/api/admin/overview",
     GET_COMPANIES: "/api/admin/companies",
     GET_COMPANY: (id) => `/api/admin/companies/${id}`,
+    START_COMPANY_REVIEW: (id) => `/api/admin/companies/${id}/review`,
     DECIDE_COMPANY: (id) => `/api/admin/companies/${id}/decision`,
     GET_ACCOUNTS: "/api/admin/accounts",
     GET_JOBS: "/api/admin/jobs",
@@ -81,6 +91,9 @@ export const API_PATHS = {
     UPDATE_STATUS: (id) => `/api/applications/${id}/status`,
     GET_MY_APPLICATIONS: "/api/applications/my-applications",
     WITHDRAW_APPLICATION: (id) => `/api/applications/${id}`,
+    GET_READINESS: (jobId) => `/api/applications/readiness/${jobId}`,
+    GET_PIPELINE: "/api/applications/pipeline",
+    UPDATE_PIPELINE: "/api/applications/pipeline",
   },
 
   IMAGE: {

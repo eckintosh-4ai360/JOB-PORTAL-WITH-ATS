@@ -1,11 +1,20 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
 const {
+    sendCompanyUnderReviewEmail,
     sendCompanyApprovedEmail,
     sendCompanyRejectedEmail,
 } = require("../utils/emailService");
 
-const APPROVAL_STATES = ["pending", "approved", "rejected"];
+// pending = submitted and queued, in_review = a reviewer has picked it up.
+const APPROVAL_STATES = ["pending", "in_review", "approved", "rejected"];
+
+// The hiring contact is who asked to be reviewed, but fall back to the account
+// holder so a company never moves state without hearing about it.
+const reviewRecipient = (company) => ({
+    to: company.contactEmail || company.user?.email || null,
+    contactName: company.contactName || company.user?.name,
+});
 
 const getPagination = (query) => {
     const page = Math.max(Number.parseInt(query.page, 10) || 1, 1);
@@ -161,6 +170,51 @@ const getCompany = async (req, res) => {
     }
 };
 
+// @desc    Pick up a submitted company for review
+// @route   POST /api/admin/companies/:id/review
+// @access  Private (Admin only)
+const startCompanyReview = async (req, res) => {
+    try {
+        // Conditional on the current state, so two reviewers opening the same
+        // company at once send the employer one email, not two.
+        const { count } = await prisma.company.updateMany({
+            where: { id: req.params.id, approvalState: "pending" },
+            data: { approvalState: "in_review", reviewedById: req.user._id },
+        });
+
+        const updated = await prisma.company.findUnique({
+            where: { id: req.params.id },
+            select: companyDetailSelect,
+        });
+
+        if (!updated) {
+            return res.status(404).json({ message: "Company not found" });
+        }
+
+        if (count === 0) {
+            return res.status(409).json({
+                message: "Only a submitted company can be moved into review.",
+                company: toClient(updated),
+            });
+        }
+
+        const { to, contactName } = reviewRecipient(updated);
+        if (to) {
+            // Not awaited: a mail outage must not undo a state already written.
+            sendCompanyUnderReviewEmail({ to, contactName, companyName: updated.name });
+        }
+
+        res.status(200).json({
+            message: `${updated.name} is now under review.`,
+            emailedTo: to,
+            company: toClient(updated),
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
 // @desc    Approve or reject a company
 // @route   POST /api/admin/companies/:id/decision
 // @access  Private (Admin only)
@@ -181,11 +235,19 @@ const decideCompany = async (req, res) => {
 
         const company = await prisma.company.findUnique({
             where: { id: req.params.id },
-            select: { id: true, name: true },
+            select: { id: true, name: true, approvalState: true },
         });
 
         if (!company) {
             return res.status(404).json({ message: "Company not found" });
+        }
+
+        // Every company passes through review before a decision, so the
+        // employer always gets the under-review email before the outcome.
+        if (company.approvalState === "pending") {
+            return res.status(409).json({
+                message: "Start the review before approving or rejecting this company.",
+            });
         }
 
         const updated = await prisma.company.update({
@@ -201,13 +263,10 @@ const decideCompany = async (req, res) => {
             select: companyDetailSelect,
         });
 
-        // Tell the employer. The hiring contact is who asked to be reviewed, but
-        // fall back to the account holder so a decision is never silently made
-        // against a company that hears nothing. Not awaited: a mail outage must
-        // not lose a decision that is already written.
-        const recipient = updated.contactEmail || updated.user?.email;
+        // Tell the employer. Not awaited: a mail outage must not lose a decision
+        // that is already written.
+        const { to: recipient, contactName } = reviewRecipient(updated);
         if (recipient) {
-            const contactName = updated.contactName || updated.user?.name;
             if (decision === "approved") {
                 sendCompanyApprovedEmail({
                     to: recipient,
@@ -347,6 +406,7 @@ module.exports = {
     getOverview,
     listCompanies,
     getCompany,
+    startCompanyReview,
     decideCompany,
     listAccounts,
     listJobs,

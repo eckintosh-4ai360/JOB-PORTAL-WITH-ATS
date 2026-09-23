@@ -47,7 +47,7 @@ const DEFAULT_EMAIL_TEMPLATES = [
     {
         key: "application-status-updated",
         name: "Application status updated",
-        description: "Sent for application status changes without a dedicated message.",
+        description: "Sent when the candidate-facing status changes and there is no dedicated message. {{status}} is what the candidate sees (e.g. Interview), never the internal stage name.",
         subject: "Application Status Updated - {{jobTitle}}",
         variables: ["applicantName", "jobTitle", "status"],
         html: emailShell(`
@@ -68,6 +68,19 @@ const DEFAULT_EMAIL_TEMPLATES = [
             <p>Hi <strong>{{applicantName}}</strong>,</p>
             <p>Great news! The employer is currently reviewing your application for <strong>{{jobTitle}}</strong>.</p>
             <p>We'll notify you as soon as there's a further update.</p>
+        `),
+    },
+    {
+        key: "application-shortlisted",
+        name: "Application shortlisted",
+        description: "Sent when an employer shortlists an application.",
+        subject: "You've Been Shortlisted — {{jobTitle}}",
+        variables: ["applicantName", "jobTitle"],
+        html: emailShell(`
+            <h2 style="color: #2563eb;">You've Been Shortlisted</h2>
+            <p>Hi <strong>{{applicantName}}</strong>,</p>
+            <p>Good news — your application for <strong>{{jobTitle}}</strong> has been shortlisted.</p>
+            <p>The employer may be in touch about next steps. We'll email you as soon as there's a further update.</p>
         `),
     },
     {
@@ -104,6 +117,19 @@ const DEFAULT_EMAIL_TEMPLATES = [
         `),
     },
     {
+        key: "application-hired",
+        name: "Hired",
+        description: "Sent when an employer marks a candidate as hired.",
+        subject: "Welcome aboard — {{jobTitle}}",
+        variables: ["applicantName", "jobTitle"],
+        html: emailShell(`
+            <h2 style="color: #059669;">Congratulations — You're Hired!</h2>
+            <p>Hi <strong>{{applicantName}}</strong>,</p>
+            <p>The employer has confirmed your hire for the position of <strong>{{jobTitle}}</strong>.</p>
+            <p>They will contact you directly about your start date and onboarding. Best of luck in your new role!</p>
+        `),
+    },
+    {
         key: "application-rejected",
         name: "Application update",
         description: "Sent when an employer rejects an application.",
@@ -115,6 +141,33 @@ const DEFAULT_EMAIL_TEMPLATES = [
             <p>Thank you for your interest in the <strong>{{jobTitle}}</strong> position and for taking the time to apply.</p>
             <p>After careful consideration, the employer has decided to move forward with other candidates at this time.</p>
             <p>We encourage you to keep exploring other opportunities on our platform. Don't be discouraged — the right role is out there!</p>
+        `),
+    },
+    {
+        key: "company-submitted",
+        name: "Company verification submitted",
+        description: "Sent to an employer when they submit their company setup for verification.",
+        subject: "We received {{companyName}}'s verification request",
+        variables: ["contactName", "companyName"],
+        html: emailShell(`
+            <h2 style="color: #2563eb;">Verification submitted</h2>
+            <p>Hi <strong>{{contactName}}</strong>,</p>
+            <p>We have received the registration details for <strong>{{companyName}}</strong> and added your company to our verification queue.</p>
+            <p>A reviewer will check your business registration certificate and details. We will email you when the review starts and again once a decision is made.</p>
+            <p>Your company profile stays visible in the meantime, but you can post jobs only once it is verified.</p>
+        `),
+    },
+    {
+        key: "company-under-review",
+        name: "Company under review",
+        description: "Sent to an employer when a reviewer starts checking their company.",
+        subject: "{{companyName}} is now under review",
+        variables: ["contactName", "companyName"],
+        html: emailShell(`
+            <h2 style="color: #d97706;">Your company is under review</h2>
+            <p>Hi <strong>{{contactName}}</strong>,</p>
+            <p>A reviewer has started checking the registration details for <strong>{{companyName}}</strong>.</p>
+            <p>You do not need to do anything right now. We will email you as soon as a decision is made.</p>
         `),
     },
     {
@@ -238,8 +291,28 @@ const sendOfferEmail = async ({ to, applicantName, jobTitle }) => sendTemplatedE
     key: "job-offer", to, data: { applicantName, jobTitle },
 });
 
+const sendShortlistedEmail = async ({ to, applicantName, jobTitle }) => sendTemplatedEmail({
+    key: "application-shortlisted", to, data: { applicantName, jobTitle },
+});
+
+const sendHiredEmail = async ({ to, applicantName, jobTitle }) => sendTemplatedEmail({
+    key: "application-hired", to, data: { applicantName, jobTitle },
+});
+
 const sendRejectionEmail = async ({ to, applicantName, jobTitle }) => sendTemplatedEmail({
     key: "application-rejected", to, data: { applicantName, jobTitle },
+});
+
+const sendCompanySubmittedEmail = async ({ to, contactName, companyName }) => sendTemplatedEmail({
+    key: "company-submitted",
+    to,
+    data: { contactName: contactName || "there", companyName },
+});
+
+const sendCompanyUnderReviewEmail = async ({ to, contactName, companyName }) => sendTemplatedEmail({
+    key: "company-under-review",
+    to,
+    data: { contactName: contactName || "there", companyName },
 });
 
 const sendCompanyApprovedEmail = async ({ to, contactName, companyName, note }) => sendTemplatedEmail({
@@ -270,6 +343,10 @@ module.exports = {
     sendInterviewScheduledEmail,
     sendOfferEmail,
     sendRejectionEmail,
+    sendShortlistedEmail,
+    sendHiredEmail,
+    sendCompanySubmittedEmail,
+    sendCompanyUnderReviewEmail,
     sendCompanyApprovedEmail,
     sendCompanyRejectedEmail,
 };

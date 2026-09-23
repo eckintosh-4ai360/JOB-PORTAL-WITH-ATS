@@ -6,12 +6,7 @@ import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
 import JobMatchPanel from "../../components/ai/JobMatchPanel";
-import AttachmentPicker from "../../components/apply/AttachmentPicker";
-import {
-  useSavedAttachments,
-  emptyAttachment,
-  defaultAttachment,
-} from "../../hooks/useSavedAttachments";
+import ApplyDrawer from "../../components/apply/ApplyDrawer";
 import { useAppliedJobs } from "../../hooks/useAppliedJobs";
 import toast from "react-hot-toast";
 
@@ -55,28 +50,18 @@ const JobDetails = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+  const canApply = user?.role === "jobseeker";
 
   const [job, setJob] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Application Modal state
   const [showApplyModal, setShowApplyModal] = useState(false);
-  const [resumeAttachment, setResumeAttachment] = useState(emptyAttachment);
-  const [coverAttachment, setCoverAttachment] = useState(emptyAttachment);
-  const [coverNote, setCoverNote] = useState("");
-  const [applicantName, setApplicantName] = useState("");
-  const [applicantEmail, setApplicantEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  //   Files this applicant has already uploaded, so the form can offer them
-  //   instead of asking for the same CV on every job.
-  const { resumeOptions, coverLetterOptions } = useSavedAttachments(showApplyModal);
 
   //   An account can only apply once, so say so before the form is filled in
   //   rather than after the CV has been uploaded.
   const { hasApplied, markApplied } = useAppliedJobs();
-  const alreadyApplied = hasApplied(jobId);
+  const alreadyApplied = canApply && hasApplied(jobId);
 
   //   Until the applicant picks something, the newest saved file stands in.
   //   Derived rather than written into state, so the saved files arriving does
@@ -163,6 +148,13 @@ const JobDetails = () => {
 
   const handleApplySubmit = async (e) => {
     e.preventDefault();
+
+    if (!canApply) {
+      toast.error("Only jobseekers can apply for jobs.");
+      setShowApplyModal(false);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (!resumeChoice.url && !resumeChoice.file) {
@@ -408,21 +400,42 @@ const JobDetails = () => {
 
               {/* Right Action Cluster */}
               <div className="flex flex-col sm:flex-row lg:flex-col shrink-0 gap-space-sm items-stretch lg:min-w-[220px]">
-                {alreadyApplied ? (
-                  <div className="w-full rounded-xl border border-border-default bg-surface-container-low px-5 py-4 text-center">
-                    <p className="flex items-center justify-center gap-2 font-label-lg font-bold text-on-surface">
-                      <span className="material-symbols-outlined text-[20px] text-primary">task_alt</span>
-                      Already applied
-                    </p>
-                    <Link
-                      to="/applications"
-                      className="mt-1 inline-block font-body-sm text-primary hover:underline"
-                    >
-                      Track your application
-                    </Link>
-                  </div>
-                ) : (
-                  <>
+                {canApply &&
+                  (alreadyApplied ? (
+                    <div className="w-full rounded-xl border border-border-default bg-surface-container-low px-5 py-4 text-center">
+                      <p className="flex items-center justify-center gap-2 font-label-lg font-bold text-on-surface">
+                        <span className="material-symbols-outlined text-[20px] text-primary">task_alt</span>
+                        Already applied
+                      </p>
+                      <Link
+                        to="/applications"
+                        className="mt-1 inline-block font-body-sm text-primary hover:underline"
+                      >
+                        Track your application
+                      </Link>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setShowApplyModal(true)}
+                        type="button"
+                        className="w-full h-12 px-6 rounded-xl bg-primary-container text-on-primary font-label-lg font-bold flex items-center justify-center gap-2 shadow-md hover:bg-brand-indigo-dark transition-all transform active:scale-98 cursor-pointer"
+                      >
+                        <span>Apply Now</span>
+                        <span className="material-symbols-outlined text-[20px]">
+                          arrow_forward
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => setShowApplyModal(true)}
+                        type="button"
+                        className="w-full h-11 px-5 rounded-xl bg-brand-indigo-light text-primary font-label-lg font-bold flex items-center justify-center gap-2 hover:bg-brand-indigo-subtle transition-colors cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">bolt</span>
+                        <span>Quick Apply with CV</span>
+                      </button>
+                    </>
                     <button
                       onClick={() => setShowApplyModal(true)}
                       type="button"
@@ -433,17 +446,7 @@ const JobDetails = () => {
                         arrow_forward
                       </span>
                     </button>
-
-                    <button
-                      onClick={() => setShowApplyModal(true)}
-                      type="button"
-                      className="w-full h-11 px-5 rounded-xl bg-brand-indigo-light text-primary font-label-lg font-bold flex items-center justify-center gap-2 hover:bg-brand-indigo-subtle transition-colors cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">bolt</span>
-                      <span>Quick Apply with CV</span>
-                    </button>
-                  </>
-                )}
+                  ))}
 
                 <div className="grid grid-cols-2 gap-space-xs pt-1">
                   <button
@@ -706,7 +709,7 @@ const JobDetails = () => {
       </main>
 
       {/* ================= APPLY MODAL ================= */}
-      {showApplyModal && (
+      {canApply && showApplyModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm animate-fadeIn">
           <div
             role="dialog"
@@ -821,6 +824,12 @@ const JobDetails = () => {
             </form>
           </div>
         </div>
+      {canApply && showApplyModal && (
+        <ApplyDrawer
+          job={{ ...job, companyName }}
+          onClose={() => setShowApplyModal(false)}
+          onApplied={markApplied}
+        />
       )}
 
       <Footer />

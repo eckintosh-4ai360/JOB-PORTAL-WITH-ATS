@@ -1,6 +1,8 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
 const fraud = require("../services/fraudModerationService");
+const { deriveJobFacets } = require("../utils/jobFacets");
+const { validateQuestions } = require("../utils/screeningQuestions");
 
 // @desc    Create a new job posting
 // @route   POST /api/jobs
@@ -25,7 +27,13 @@ const createJob = async (req, res) => {
             companyLogo,
             deadline,
             tags,
+            screeningQuestions,
         } = req.body;
+
+        const screening = validateQuestions(screeningQuestions);
+        if (screening.error) {
+            return res.status(400).json({ message: screening.error });
+        }
 
         if (req.user.role !== "employer" && req.user.role !== "admin") {
             return res.status(403).json({ message: "Only employers and admins can post jobs" });
@@ -73,7 +81,9 @@ const createJob = async (req, res) => {
                         : "COMPANY_PENDING_REVIEW",
                     message: reviewed.approvalState === "rejected"
                         ? `Your company was not approved${reviewed.approvalNote ? `: ${reviewed.approvalNote}` : "."} Update your details and resubmit for review.`
-                        : "Your company is awaiting review. You can post jobs once it has been approved.",
+                        : reviewed.approvalState === "in_review"
+                            ? "Your company is under review. You can post jobs once it has been approved."
+                            : "Your company is awaiting review. You can post jobs once it has been approved.",
                 });
             }
         }
@@ -119,17 +129,30 @@ const createJob = async (req, res) => {
             }
         }
 
+        const effectiveRequirements = requirements || description || "See job description for details.";
+        const effectiveTags = Array.isArray(tags) ? tags.filter(Boolean) : [];
+
+        // Experience level, education and skills are read out of the advert
+        // rather than asked for, so search can filter on them exactly.
+        const facets = deriveJobFacets({
+            title,
+            description,
+            requirements: effectiveRequirements,
+            tags: effectiveTags,
+        });
+
         const job = await prisma.job.create({
             data: {
                 title,
                 description,
-                requirements: requirements || description || "See job description for details.",
+                requirements: effectiveRequirements,
                 location: location || "Remote (Ghana)",
                 latitude: latitude ? Number(latitude) : undefined,
                 longitude: longitude ? Number(longitude) : undefined,
                 category: category || "Other",
                 customCategory: category === "other" ? customCategory : undefined,
-                tags: Array.isArray(tags) ? tags.filter(Boolean) : [],
+                tags: effectiveTags,
+                ...facets,
                 type: effectiveType,
                 jobType: effectiveType,
                 workModel: workModel || undefined,
@@ -140,6 +163,7 @@ const createJob = async (req, res) => {
                 companyLogo: effectiveLogo,
                 companyId: req.user._id,
                 companyProfileId: employerCompany ? employerCompany.id : undefined,
+                screeningQuestions: screening.questions.length > 0 ? screening.questions : undefined,
             },
             include: {
                 company: {
@@ -387,9 +411,33 @@ const updateJob = async (req, res) => {
         }
 
         const { companyId, id, createdAt, updatedAt, ...updateData } = req.body;
+
+        // Stored as-is otherwise, so questions go through the same checks as
+        // on create. An empty list clears them.
+        if (updateData.screeningQuestions !== undefined) {
+            const screening = validateQuestions(updateData.screeningQuestions);
+            if (screening.error) {
+                return res.status(400).json({ message: screening.error });
+            }
+            updateData.screeningQuestions = screening.questions.length > 0 ? screening.questions : null;
+        }
         if (updateData.deadline) updateData.deadline = new Date(updateData.deadline);
         if (updateData.salaryMin) updateData.salaryMin = Number(updateData.salaryMin);
         if (updateData.salaryMax) updateData.salaryMax = Number(updateData.salaryMax);
+
+        // An edited advert can mean something different — a title going from
+        // "Engineer" to "Senior Engineer" changes which searches should find
+        // it — so the search facets are read again from the merged posting.
+        const touchesText = ["title", "description", "requirements", "tags"]
+            .some((field) => updateData[field] !== undefined);
+        if (touchesText) {
+            Object.assign(updateData, deriveJobFacets({
+                title: updateData.title ?? job.title,
+                description: updateData.description ?? job.description,
+                requirements: updateData.requirements ?? job.requirements,
+                tags: updateData.tags ?? job.tags,
+            }));
+        }
 
         const updatedJob = await prisma.job.update({
             where: { id: req.params.id },

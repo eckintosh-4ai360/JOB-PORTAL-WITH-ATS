@@ -81,11 +81,22 @@ const ReviewStatusBanner = () => {
     );
   }
 
+  if (state === "in_review") {
+    return (
+      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 dark:border-sky-500/30 dark:bg-sky-500/10">
+        <Clock className="h-5 w-5 shrink-0 text-sky-600 dark:text-sky-400" />
+        <p className="flex-1 text-sm font-bold text-sky-800 dark:text-sky-300">
+          A reviewer is checking your company now. We will email you as soon as a decision is made.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
       <ShieldCheck className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
       <p className="flex-1 text-sm font-bold text-amber-800 dark:text-amber-300">
-        Your company is awaiting review. We check your registration details before you can post jobs — your profile
+        Your verification request was submitted and is waiting for a reviewer. We check your registration details before you can post jobs — your profile
         stays visible in the meantime.
       </p>
     </div>

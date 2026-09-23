@@ -244,7 +244,9 @@ export const EmployerDashboard = () => {
                         applicant={data?.applicant || ""}
                         position={data?.job?.title || ""}
                         time={data?.updatedAt}
-                        status={data?.status || "pending"}
+                        status={data?.status}
+                        phase={data?.phase}
+                        stageType={data?.stageType}
                       />
                     ))}
                   </div>
