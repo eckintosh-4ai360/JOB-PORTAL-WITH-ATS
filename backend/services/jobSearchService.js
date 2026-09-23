@@ -268,6 +268,26 @@ const andTsQuery = (phrases) => {
 };
 
 /**
+ * How many of the words a candidate typed a posting must actually contain.
+ *
+ * Matching on *any* of them is the wrong default, and cheap to demonstrate:
+ * English stemming reduces "developer" and "develop" to one stem, so a nursing
+ * advert that says "develop patient care plans" matches a search for "software
+ * developer" on a single word, in the lowest-weight field, and lands in the
+ * results next to the real thing.
+ *
+ * So short queries must match in full — "software developer" means both words.
+ * Longer ones relax, because past three or four words a candidate is describing
+ * a role rather than naming it, and demanding every word back would return
+ * nothing at all.
+ */
+const requiredMatches = (groupCount) => {
+    if (groupCount <= 2) return groupCount;
+    if (groupCount === 3) return 2;
+    return Math.ceil(groupCount * 0.6);
+};
+
+/**
  * Widen the role text into every phrase that means the same job.
  *
  * Both the whole phrase and its adjacent word pairs are looked up, so
@@ -564,8 +584,18 @@ const prepare = async ({ q, filters, boosts, viewerId, textOverride, exclude }) 
     const spelling = await correctQuery(roleTerms);
     const expansions = semanticExpansions(spelling.terms);
 
-    // The words the candidate actually typed (plus any spelling repair, plus
-    // the skills they named) search the whole posting.
+    // One group per word the candidate typed, each holding that word and its
+    // correction if we made one — so a misspelling and its repair count as the
+    // single word they are, not as two separate requirements.
+    const termGroups = roleTerms
+        .map((term) => {
+            const fix = spelling.corrections.find((correction) => correction.from === term);
+            return orTsQuery(fix ? [term, fix.to] : [term]);
+        })
+        .filter(Boolean);
+
+    // Used for ranking, where partial credit is the point: a posting matching
+    // one of two words should still score, it just should not qualify.
     const recall = orTsQuery([...spelling.terms, ...rankingSkills]);
     // Synonyms search only the title and tags — see EXPANSION_WEIGHTS.
     const recallExpanded = orTsQuery(expansions);
@@ -588,6 +618,8 @@ const prepare = async ({ q, filters, boosts, viewerId, textOverride, exclude }) 
         expansions,
         recall,
         recallExpanded,
+        termGroups,
+        requiredMatches: requiredMatches(termGroups.length),
         strict,
         exact,
         phrase: rolePhrase,
@@ -631,11 +663,16 @@ const whereClause = (ctx, p, skip = null) => {
         parts.push(`${ctx.doc} @@ to_tsquery('english', ${p.add(ctx.exact)})`);
     }
 
-    if ((ctx.recall || ctx.recallExpanded) && skip !== "query") {
+    if ((ctx.termGroups.length || ctx.recallExpanded) && skip !== "query") {
         const alternatives = [];
 
-        if (ctx.recall) {
-            alternatives.push(`${ctx.doc} @@ to_tsquery('english', ${p.add(ctx.recall)})`);
+        if (ctx.termGroups.length) {
+            // Counted rather than AND-ed, so the threshold can sit anywhere
+            // between "any word" and "every word" as the query gets longer.
+            const matched = ctx.termGroups
+                .map((group) => `(CASE WHEN ${ctx.doc} @@ to_tsquery('english', ${p.add(group)}) THEN 1 ELSE 0 END)`)
+                .join(" + ");
+            alternatives.push(`(${matched}) >= ${ctx.requiredMatches}`);
         }
         if (ctx.recallExpanded) {
             alternatives.push(
@@ -827,7 +864,7 @@ const loadFacets = async (ctx) => {
 const findRelaxations = async (ctx) => {
     const p0 = makeParams();
     const active = Object.keys(buildFilterClauses(ctx.filters, p0));
-    const candidates = ctx.recall || ctx.recallExpanded ? [...active, "query"] : active;
+    const candidates = ctx.termGroups.length || ctx.recallExpanded ? [...active, "query"] : active;
     if (candidates.length === 0 || candidates.length > 8) return [];
 
     const results = await Promise.all(

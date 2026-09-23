@@ -20,23 +20,9 @@ import { API_PATHS } from "../utils/apiPath";
 /** Filters that hold several values at once. */
 const LIST_PARAMS = ["workModel", "type", "experienceLevel", "industry", "companyStage", "skills", "exclude"];
 
-/**
- * The URL parameter each kind of interpreted chip corresponds to, where one
- * exists. A chip with no entry here — a salary range, a date window read out of
- * the sentence — is dismissed purely through `exclude`.
- */
-const CHIP_PARAMS = {
-    location: { param: "location", list: false },
-    workModel: { param: "workModel", list: true },
-    employmentType: { param: "type", list: true },
-    seniority: { param: "experienceLevel", list: true },
-    education: { param: "education", list: false },
-    industry: { param: "industry", list: true },
-    companyStage: { param: "companyStage", list: true },
-    skill: { param: "skills", list: true },
-    datePosted: { param: "datePosted", list: false },
-    verified: { param: "verified", list: false },
-};
+// `exclude` is in that list so a shared link carrying one still works — the
+// server subtracts it from its own reading of the query — but nothing in the
+// UI sets it any more: the reading is not shown, so there is nothing to dismiss.
 
 /** Filters that hold exactly one. */
 const SINGLE_PARAMS = ["q", "location", "education", "datePosted", "salaryMin", "salaryMax", "sort", "company", "companyName"];
@@ -195,42 +181,6 @@ export const useJobSearch = () => {
         setSearchParams(new URLSearchParams(), { replace: true });
     }, [setSearchParams]);
 
-    /**
-     * Dismiss one chip from the interpreted-query row.
-     *
-     * A chip can have either of two origins, and removing it has to cover both.
-     * If it came from a control, clearing that URL parameter is enough. If the
-     * search engine read it out of the sentence there is no parameter to clear,
-     * and the next search would read the same words again — so the dismissal is
-     * recorded in `exclude` and the server subtracts it from its own parse.
-     *
-     * Doing both at once means the caller never has to know where a chip came
-     * from, and the words stay in the query where they go on informing
-     * relevance. "Stop filtering on this" is not "I never typed it".
-     */
-    const removeInterpreted = useCallback(
-        (chip) => {
-            const changes = {};
-
-            const mapping = CHIP_PARAMS[chip.type];
-            if (mapping?.list) {
-                const current = readList(searchParams, mapping.param);
-                changes[mapping.param] = current.filter((entry) => entry !== chip.value);
-            } else if (mapping) {
-                changes[mapping.param] = null;
-            } else if (chip.type === "salary") {
-                changes.salaryMin = null;
-                changes.salaryMax = null;
-            }
-
-            const dismissed = readList(searchParams, "exclude");
-            changes.exclude = [...new Set([...dismissed, `${chip.type}:${chip.value}`])];
-
-            commit(changes);
-        },
-        [commit, searchParams]
-    );
-
     //   The two free-text inputs. Both write to the URL on a delay so a search
     //   is not fired for every character typed.
     const [draft, setDraft] = useDebouncedParam(searchParams, commit, "q");
@@ -308,7 +258,6 @@ export const useJobSearch = () => {
         commit,
         toggleListValue,
         clearAll,
-        removeInterpreted,
         readList: (key) => readList(searchParams, key),
     };
 };

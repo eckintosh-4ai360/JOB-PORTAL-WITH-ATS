@@ -475,16 +475,30 @@ const parseQuery = (raw) => {
 };
 
 /**
- * Whether a query still has enough unexplained content to be worth sending to
- * the AI intent pass. A query the lexicon already resolved does not need one.
+ * Whether a query is prose rather than a job title, and so worth the AI pass.
+ *
+ * The distinction matters more than it looks. "DevOps Cloud Infrastructure Lead
+ * Engineer" is five words the lexicon handles perfectly, and handing it to a
+ * model only invites it to summarise the role back as "engineer" — throwing
+ * away the four words that made the search specific. "Something I can do from
+ * my house a few days a week" is the opposite: almost nothing survives the
+ * parser, and a model is the only thing that will make sense of it.
+ *
+ * So the test is how much of the query the lexicon could account for. A title
+ * is short and almost entirely accounted for — every word is either a role word
+ * or a recognised filter. A sentence is long and mostly scaffolding.
  */
+const MIN_SENTENCE_WORDS = 6;
+const ACCOUNTED_THRESHOLD = 0.6;
+
 const hasUnresolvedIntent = (parsed) => {
     if (!parsed.text) return false;
-    const recognised = parsed.interpreted.length;
-    const words = parsed.text.split(" ").length;
-    // Short queries are almost always just a job title — nothing to interpret.
-    if (words < 4) return false;
-    return parsed.terms.length >= 3 || recognised === 0;
+
+    const words = parsed.text.split(" ").filter(Boolean);
+    if (words.length < MIN_SENTENCE_WORDS) return false;
+
+    const accounted = parsed.terms.length + parsed.interpreted.length;
+    return accounted / words.length < ACCOUNTED_THRESHOLD;
 };
 
 module.exports = {
