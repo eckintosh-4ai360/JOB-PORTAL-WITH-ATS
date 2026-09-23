@@ -63,16 +63,6 @@ const JobDetails = () => {
   const { hasApplied, markApplied } = useAppliedJobs();
   const alreadyApplied = canApply && hasApplied(jobId);
 
-  //   Until the applicant picks something, the newest saved file stands in.
-  //   Derived rather than written into state, so the saved files arriving does
-  //   not overwrite a choice already made.
-  const resumeChoice = resumeAttachment.url || resumeAttachment.file
-    ? resumeAttachment
-    : defaultAttachment(resumeOptions);
-  const coverChoice = coverAttachment.url || coverAttachment.file
-    ? coverAttachment
-    : defaultAttachment(coverLetterOptions);
-
   useEffect(() => {
     const fetchJob = async () => {
       setIsLoading(true);
@@ -143,57 +133,6 @@ const JobDetails = () => {
     } else {
       navigator.clipboard.writeText(window.location.href);
       toast.success("Job link copied to clipboard!");
-    }
-  };
-
-  const handleApplySubmit = async (e) => {
-    e.preventDefault();
-
-    if (!canApply) {
-      toast.error("Only jobseekers can apply for jobs.");
-      setShowApplyModal(false);
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      if (!resumeChoice.url && !resumeChoice.file) {
-        toast.error("Please attach a resume or pick one you have already uploaded.");
-        setIsSubmitting(false);
-        return;
-      }
-
-      const formData = new FormData();
-      // A saved file travels as its URL; a fresh one as the file itself.
-      formData.append("resume", resumeChoice.file || resumeChoice.url);
-      if (coverChoice.file || coverChoice.url) {
-        formData.append("coverLetterFile", coverChoice.file || coverChoice.url);
-      }
-      if (coverNote) formData.append("coverLetter", coverNote);
-
-      if (!isAuthenticated) {
-        if (!applicantName || !applicantEmail) {
-          toast.error("Please enter your name and email address.");
-          setIsSubmitting(false);
-          return;
-        }
-        formData.append("guestName", applicantName);
-        formData.append("guestEmail", applicantEmail);
-      }
-
-      await axiosInstance.post(API_PATHS.APPLICATIONS.APPLY_FOR_JOB(jobId), formData);
-      toast.success("Application successfully submitted!");
-      markApplied(jobId);
-      setShowApplyModal(false);
-      setCoverNote("");
-      setResumeAttachment(emptyAttachment);
-      setCoverAttachment(emptyAttachment);
-    } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Failed to submit application. Please try again."
-      );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -415,27 +354,6 @@ const JobDetails = () => {
                       </Link>
                     </div>
                   ) : (
-                    <>
-                      <button
-                        onClick={() => setShowApplyModal(true)}
-                        type="button"
-                        className="w-full h-12 px-6 rounded-xl bg-primary-container text-on-primary font-label-lg font-bold flex items-center justify-center gap-2 shadow-md hover:bg-brand-indigo-dark transition-all transform active:scale-98 cursor-pointer"
-                      >
-                        <span>Apply Now</span>
-                        <span className="material-symbols-outlined text-[20px]">
-                          arrow_forward
-                        </span>
-                      </button>
-
-                      <button
-                        onClick={() => setShowApplyModal(true)}
-                        type="button"
-                        className="w-full h-11 px-5 rounded-xl bg-brand-indigo-light text-primary font-label-lg font-bold flex items-center justify-center gap-2 hover:bg-brand-indigo-subtle transition-colors cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">bolt</span>
-                        <span>Quick Apply with CV</span>
-                      </button>
-                    </>
                     <button
                       onClick={() => setShowApplyModal(true)}
                       type="button"
@@ -708,122 +626,6 @@ const JobDetails = () => {
         </section>
       </main>
 
-      {/* ================= APPLY MODAL ================= */}
-      {canApply && showApplyModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="apply-modal-title"
-            className="animate-slide-in-right ml-auto flex h-full w-full flex-col overflow-hidden bg-surface-card shadow-2xl md:w-1/2"
-          >
-            <div className="flex items-start justify-between gap-4 border-b border-border-default px-6 py-5 md:px-8 md:py-7">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-brand-indigo-light text-primary flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[26px]">send</span>
-                </div>
-                <div className="min-w-0">
-                  <h3 id="apply-modal-title" className="font-headline-md font-bold text-on-surface truncate">
-                    Apply for {job.title}
-                  </h3>
-                  <p className="font-body-md text-text-secondary truncate">{companyName}</p>
-                </div>
-              </div>
-            <button
-              onClick={() => setShowApplyModal(false)}
-              type="button"
-              aria-label="Close application form"
-              className="shrink-0 text-text-muted hover:text-on-surface p-1 rounded-lg cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[24px]">close</span>
-            </button>
-            </div>
-
-            <form onSubmit={handleApplySubmit} className="flex min-h-0 flex-1 flex-col">
-              <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6 md:px-8 md:py-8">
-              {!isAuthenticated && (
-                <>
-                  <div className="flex flex-col gap-2">
-                    <label className="font-label-caps uppercase text-text-muted">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={applicantName}
-                      onChange={(e) => setApplicantName(e.target.value)}
-                      placeholder="e.g. Kwame Mensah"
-                      className="w-full p-3 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="font-label-caps uppercase text-text-muted">
-                      Email Address *
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={applicantEmail}
-                      onChange={(e) => setApplicantEmail(e.target.value)}
-                      placeholder="kwame@example.com"
-                      className="w-full p-3 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-                </>
-              )}
-
-              <AttachmentPicker
-                label="Resume / CV"
-                required
-                options={resumeOptions}
-                value={resumeChoice}
-                onChange={setResumeAttachment}
-              />
-
-              {coverLetterOptions.length > 0 && (
-                <AttachmentPicker
-                  label="Cover letter document (optional)"
-                  options={coverLetterOptions}
-                  value={coverChoice}
-                  onChange={setCoverAttachment}
-                />
-              )}
-
-              <div className="flex flex-col gap-2">
-                <label className="font-label-caps uppercase text-text-muted">
-                  Why are you a strong fit? (Optional)
-                </label>
-                <textarea
-                  rows="3"
-                  value={coverNote}
-                  onChange={(e) => setCoverNote(e.target.value)}
-                  placeholder="Summarize your relevant skills, tools, and background..."
-                  className="w-full min-h-32 resize-y p-3 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-
-              </div>
-              <div className="flex flex-col-reverse gap-3 border-t border-border-default px-6 py-5 sm:flex-row sm:items-center sm:justify-end md:px-8">
-                <button
-                  type="button"
-                  onClick={() => setShowApplyModal(false)}
-                  className="w-full px-4 py-3 rounded-xl font-label-md text-text-secondary hover:bg-surface-container cursor-pointer sm:w-auto"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full px-space-lg py-3 rounded-xl bg-primary-container text-on-primary font-label-md font-bold hover:bg-brand-indigo-dark shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer sm:w-auto"
-                >
-                  {isSubmitting ? "Submitting..." : "Submit Application"}
-                  <span className="material-symbols-outlined text-[16px]">send</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
       {canApply && showApplyModal && (
         <ApplyDrawer
           job={{ ...job, companyName }}

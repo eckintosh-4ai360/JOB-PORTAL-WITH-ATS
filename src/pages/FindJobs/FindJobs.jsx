@@ -200,49 +200,6 @@ const FindJobs = () => {
     }
   };
 
-  const handleQuickApplySubmit = async (event) => {
-    event.preventDefault();
-    if (!quickApplyJob) return;
-
-    if (!canApply) {
-      toast.error("Only jobseekers can apply for jobs.");
-      setQuickApplyJob(null);
-      return;
-    }
-
-    setIsSubmittingApply(true);
-    try {
-      if (!resumeChoice.url && !resumeChoice.file) {
-        toast.error("Please attach a resume or pick one you have already uploaded.");
-        setIsSubmittingApply(false);
-        return;
-      }
-
-      const jobId = quickApplyJob._id || quickApplyJob.id;
-      const formData = new FormData();
-      // A saved file travels as its URL; a fresh one as the file itself.
-      formData.append("resume", resumeChoice.file || resumeChoice.url);
-      if (coverChoice.file || coverChoice.url) {
-        formData.append("coverLetterFile", coverChoice.file || coverChoice.url);
-      }
-      if (applyNote) formData.append("coverLetter", applyNote);
-
-      await axiosInstance.post(API_PATHS.APPLICATIONS.APPLY_FOR_JOB(jobId), formData);
-      toast.success(
-        `Application sent to ${quickApplyJob.companyName || quickApplyJob.company?.companyName || "Employer"}!`
-      );
-      markApplied(jobId);
-      setQuickApplyJob(null);
-      setResumeAttachment(emptyAttachment);
-      setCoverAttachment(emptyAttachment);
-      setApplyNote("");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to submit quick application");
-    } finally {
-      setIsSubmittingApply(false);
-    }
-  };
-
   const clearCompanyFilter = useCallback(() => {
     commit({ company: null, companyName: null });
   }, [commit]);
