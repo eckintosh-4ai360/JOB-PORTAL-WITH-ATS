@@ -74,7 +74,9 @@ const createJob = async (req, res) => {
                         : "COMPANY_PENDING_REVIEW",
                     message: reviewed.approvalState === "rejected"
                         ? `Your company was not approved${reviewed.approvalNote ? `: ${reviewed.approvalNote}` : "."} Update your details and resubmit for review.`
-                        : "Your company is awaiting review. You can post jobs once it has been approved.",
+                        : reviewed.approvalState === "in_review"
+                            ? "Your company is under review. You can post jobs once it has been approved."
+                            : "Your company is awaiting review. You can post jobs once it has been approved.",
                 });
             }
         }

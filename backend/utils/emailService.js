@@ -118,6 +118,33 @@ const DEFAULT_EMAIL_TEMPLATES = [
         `),
     },
     {
+        key: "company-submitted",
+        name: "Company verification submitted",
+        description: "Sent to an employer when they submit their company setup for verification.",
+        subject: "We received {{companyName}}'s verification request",
+        variables: ["contactName", "companyName"],
+        html: emailShell(`
+            <h2 style="color: #2563eb;">Verification submitted</h2>
+            <p>Hi <strong>{{contactName}}</strong>,</p>
+            <p>We have received the registration details for <strong>{{companyName}}</strong> and added your company to our verification queue.</p>
+            <p>A reviewer will check your business registration certificate and details. We will email you when the review starts and again once a decision is made.</p>
+            <p>Your company profile stays visible in the meantime, but you can post jobs only once it is verified.</p>
+        `),
+    },
+    {
+        key: "company-under-review",
+        name: "Company under review",
+        description: "Sent to an employer when a reviewer starts checking their company.",
+        subject: "{{companyName}} is now under review",
+        variables: ["contactName", "companyName"],
+        html: emailShell(`
+            <h2 style="color: #d97706;">Your company is under review</h2>
+            <p>Hi <strong>{{contactName}}</strong>,</p>
+            <p>A reviewer has started checking the registration details for <strong>{{companyName}}</strong>.</p>
+            <p>You do not need to do anything right now. We will email you as soon as a decision is made.</p>
+        `),
+    },
+    {
         key: "company-approved",
         name: "Company approved",
         description: "Sent to an employer when a reviewer approves their company.",
@@ -242,6 +269,18 @@ const sendRejectionEmail = async ({ to, applicantName, jobTitle }) => sendTempla
     key: "application-rejected", to, data: { applicantName, jobTitle },
 });
 
+const sendCompanySubmittedEmail = async ({ to, contactName, companyName }) => sendTemplatedEmail({
+    key: "company-submitted",
+    to,
+    data: { contactName: contactName || "there", companyName },
+});
+
+const sendCompanyUnderReviewEmail = async ({ to, contactName, companyName }) => sendTemplatedEmail({
+    key: "company-under-review",
+    to,
+    data: { contactName: contactName || "there", companyName },
+});
+
 const sendCompanyApprovedEmail = async ({ to, contactName, companyName, note }) => sendTemplatedEmail({
     key: "company-approved",
     to,
@@ -270,6 +309,8 @@ module.exports = {
     sendInterviewScheduledEmail,
     sendOfferEmail,
     sendRejectionEmail,
+    sendCompanySubmittedEmail,
+    sendCompanyUnderReviewEmail,
     sendCompanyApprovedEmail,
     sendCompanyRejectedEmail,
 };

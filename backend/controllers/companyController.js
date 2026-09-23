@@ -1,6 +1,7 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
 const fraud = require("../services/fraudModerationService");
+const { sendCompanySubmittedEmail } = require("../utils/emailService");
 
 const ORGANIZATION_TYPES = new Set([
     "Sole proprietorship",
@@ -606,6 +607,16 @@ const updateMyCompanyProfile = async (req, res) => {
 
         if (isCompletingSetup) {
             fraud.screenInBackground(`company:${company.id}`, () => fraud.screenCompany(company.id));
+
+            // Not awaited: a mail outage must not fail a submission already saved.
+            const recipient = company.contactEmail || req.user.email;
+            if (recipient) {
+                sendCompanySubmittedEmail({
+                    to: recipient,
+                    contactName: company.contactName || req.user.name,
+                    companyName: company.name,
+                });
+            }
         }
 
         // Auto-link any unlinked jobs posted by this employer
