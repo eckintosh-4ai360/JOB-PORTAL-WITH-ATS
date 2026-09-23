@@ -158,5 +158,30 @@ export const API_PATHS = {
     SEARCH: "/api/talent/search",
     INVITE: "/api/talent/invite",
   },
+
+  ASSESSMENTS: {
+    // Employer — building and sending
+    LIST: "/api/assessments",
+    CREATE: "/api/assessments",
+    GET: (id) => `/api/assessments/${id}`,
+    UPDATE: (id) => `/api/assessments/${id}`,
+    SET_STATUS: (id) => `/api/assessments/${id}/status`,
+    DELETE: (id) => `/api/assessments/${id}`,
+    ELIGIBLE: (id) => `/api/assessments/${id}/eligible`,
+    SEND: (id) => `/api/assessments/${id}/send`,
+    GENERATE: "/api/assessments/generate",
+
+    // Employer — results and marking
+    ATTEMPTS: "/api/assessments/attempts",
+    ATTEMPT: (attemptId) => `/api/assessments/attempts/${attemptId}`,
+    SCORE: (attemptId) => `/api/assessments/attempts/${attemptId}/score`,
+
+    // Candidate
+    MINE: "/api/assessments/mine",
+    TAKE: (attemptId) => `/api/assessments/take/${attemptId}`,
+    START: (attemptId) => `/api/assessments/take/${attemptId}/start`,
+    SAVE_ANSWERS: (attemptId) => `/api/assessments/take/${attemptId}/answers`,
+    SUBMIT: (attemptId) => `/api/assessments/take/${attemptId}/submit`,
+  },
 };
 

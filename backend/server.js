@@ -17,6 +17,7 @@ const companyRoutes = require("./routes/companyRoutes");
 const salaryRoutes = require("./routes/salaryRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const talentRoutes = require("./routes/talentRoutes");
+const assessmentRoutes = require("./routes/assessmentRoutes");
 const moderationRoutes = require("./routes/moderationRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 
@@ -47,6 +48,7 @@ app.use('/api/saved-jobs', savedJobRoutes);
 app.use('/api/email-templates', emailTemplateRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/talent', talentRoutes);
+app.use('/api/assessments', assessmentRoutes);
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/admin', adminRoutes);
 

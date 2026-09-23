@@ -42,6 +42,8 @@ model User {
   hiringPipeline     HiringPipeline?
   talentInvitesSent     TalentInvite[] @relation("TalentInvitesSent")
   talentInvitesReceived TalentInvite[] @relation("TalentInvitesReceived")
+  assessments           Assessment[]   @relation("EmployerAssessments")
+  assessmentAttempts    AssessmentAttempt[] @relation("CandidateAssessmentAttempts")
 
   @@index([email])
   @@index([clerkId])
@@ -337,6 +339,7 @@ model Job {
   requirementSpec  JobRequirementSpec?
   matches          JobMatch[]
   talentInvites    TalentInvite[]
+  assessments      Assessment[]
 
   @@index([companyId])
   @@index([companyProfileId])
@@ -377,6 +380,7 @@ model Application {
 
   aiScore           ApplicantScore?
   interviewGuide    InterviewGuide?
+  assessmentAttempts AssessmentAttempt[]
 
   @@index([jobId])
   @@index([applicantId])
@@ -431,6 +435,68 @@ model TalentInvite {
 
   @@unique([candidateId, jobId])
   @@index([employerId, createdAt])
+}
+
+// A test an employer builds and sends to applicants. Questions live here while
+// it is being edited; each attempt keeps its own copy from the moment it was
+// sent, so editing an assessment never changes a test someone is taking.
+// See utils/assessmentQuestions for the question shape.
+model Assessment {
+  id               String   @id @default(cuid())
+  employerId       String
+  employer         User     @relation("EmployerAssessments", fields: [employerId], references: [id], onDelete: Cascade)
+  // Optional: an assessment tied to a job is sent to that job's applicants.
+  jobId            String?
+  job              Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  title            String
+  instructions     String?
+  questions        Json
+  // null means untimed.
+  timeLimitMinutes Int?
+  passMark         Int      @default(60)
+  defaultDueDays   Int      @default(7)
+  // draft | active | archived
+  status           String   @default("draft")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  attempts         AssessmentAttempt[]
+
+  @@index([employerId, status])
+}
+
+// One applicant's sitting of an assessment.
+model AssessmentAttempt {
+  id               String      @id @default(cuid())
+  assessmentId     String
+  assessment       Assessment  @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  applicationId    String
+  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  candidateId      String
+  candidate        User        @relation("CandidateAssessmentAttempts", fields: [candidateId], references: [id], onDelete: Cascade)
+  // invited | in_progress | submitted | scored. "expired" is derived from dueAt.
+  status           String      @default("invited")
+  // The questions as sent, answer key included. Never sent to the candidate
+  // with the key.
+  questions        Json
+  timeLimitMinutes Int?
+  passMark         Int
+  invitedAt        DateTime    @default(now())
+  dueAt            DateTime
+  startedAt        DateTime?
+  submittedAt      DateTime?
+  // { [questionId]: { value, autoPoints, points, note } }
+  answers          Json?
+  score            Float?
+  maxScore         Float
+  percent          Int?
+  scoredAt         DateTime?
+  scoredById       String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@unique([assessmentId, applicationId])
+  @@index([candidateId])
+  @@index([assessmentId, status])
 }
 
 model SavedJob {

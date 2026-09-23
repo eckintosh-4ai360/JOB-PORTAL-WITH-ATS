@@ -45,6 +45,7 @@ const Navbar = () => {
     { label: "Find Jobs", path: "/find-jobs" },
     { label: "Saved Jobs", path: "/saved-jobs" },
     { label: "Applications & Docs", path: "/applications" },
+    { label: "Assessments", path: "/my-assessments" },
     { label: "AI Resume Match", path: "/resume-analyzer" },
   ];
 
@@ -56,6 +57,9 @@ const Navbar = () => {
     }
     if (path === "/applications") {
       return ["/applications", "/documents", "/my-applications"].includes(location.pathname);
+    }
+    if (path === "/my-assessments") {
+      return location.pathname === "/my-assessments" || location.pathname.startsWith("/assessment/");
     }
     return location.pathname.startsWith(path);
   };
@@ -282,6 +286,16 @@ const Navbar = () => {
                           description
                         </span>
                         Applications &amp; Docs
+                      </Link>
+                      <Link
+                        to="/my-assessments"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 font-label-md text-text-secondary hover:text-primary hover:bg-surface-container-low transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          quiz
+                        </span>
+                        Assessments
                       </Link>
                       <Link
                         to="/resume-analyzer"

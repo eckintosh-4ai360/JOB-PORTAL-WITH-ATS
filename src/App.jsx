@@ -28,6 +28,11 @@ import EmployerDashboard from "./pages/Employer/EmployerDashboard";
 import ApplicationViewer from "./pages/Employer/AppplicationViewer";
 import ManageJobs from "./pages/Employer/ManageJobs";
 import TalentSearch from "./pages/Employer/TalentSearch";
+import Assessments from "./pages/Employer/Assessments/Assessments";
+import AssessmentBuilder from "./pages/Employer/Assessments/AssessmentBuilder";
+import AssessmentDetail from "./pages/Employer/Assessments/AssessmentDetail";
+import MyAssessments from "./pages/Candidate/MyAssessments";
+import TakeAssessment from "./pages/Candidate/TakeAssessment";
 import EmployerProfilePage from "./pages/Employer/EmployerProfilePage";
 import EmployerSetup from "./pages/Employer/EmployerSetup";
 import EmailTemplates from "./pages/Admin/EmailTemplates";
@@ -63,6 +68,8 @@ export const App = () => {
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/saved-jobs" element={<SavedJobs />} />
             <Route path="/applications" element={<MyDocuments />} />
+            <Route path="/my-assessments" element={<MyAssessments />} />
+            <Route path="/assessment/:attemptId" element={<TakeAssessment />} />
             {/* Keep old bookmarks and shared links working while directing the
                 candidate to the single applications-and-documents hub. */}
             <Route path="/documents" element={<Navigate to="/applications" replace />} />
@@ -83,6 +90,10 @@ export const App = () => {
               <Route path="/email-templates" element={<EmailTemplates />} />
               <Route path="/applicants" element={<ApplicationViewer />} />
               <Route path="/talent-search" element={<TalentSearch />} />
+              <Route path="/assessments" element={<Assessments />} />
+              <Route path="/assessments/new" element={<AssessmentBuilder />} />
+              <Route path="/assessments/:id" element={<AssessmentDetail />} />
+              <Route path="/assessments/:id/edit" element={<AssessmentBuilder />} />
               <Route path="/company-profile" element={<EmployerProfilePage />} />
             </Route>
           </Route>

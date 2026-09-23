@@ -144,6 +144,24 @@ const DEFAULT_EMAIL_TEMPLATES = [
         `),
     },
     {
+        key: "assessment-invite",
+        name: "Assessment invitation",
+        description: "Sent when an employer asks an applicant to complete an assessment.",
+        subject: "Please complete an assessment — {{jobTitle}}",
+        variables: ["candidateName", "companyName", "jobTitle", "assessmentTitle", "dueDate", "timeLimit", "assessmentUrl"],
+        html: emailShell(`
+            <h2 style="color: #2563eb;">You've been asked to complete an assessment</h2>
+            <p>Hi <strong>{{candidateName}}</strong>,</p>
+            <p><strong>{{companyName}}</strong> would like you to complete <strong>{{assessmentTitle}}</strong> as part of your application for <strong>{{jobTitle}}</strong>.</p>
+            <div style="background: #eff6ff; border-left: 4px solid #2563eb; padding: 16px; border-radius: 4px; margin: 16px 0;">
+                <p style="margin: 0 0 8px 0;"><strong>Complete by:</strong> {{dueDate}}</p>
+                <p style="margin: 0;"><strong>Time allowed:</strong> {{timeLimit}}</p>
+            </div>
+            <p>Find a quiet moment before you start — a timed assessment cannot be paused once it begins. Your answers save as you go.</p>
+            <p><a href="{{assessmentUrl}}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 8px; text-decoration: none;">Open the assessment</a></p>
+        `),
+    },
+    {
         key: "talent-invite",
         name: "Invitation to apply",
         description: "Sent when an employer finds a candidate in Talent Search and invites them to apply. The employer never sees the candidate's address.",
@@ -317,6 +335,20 @@ const sendRejectionEmail = async ({ to, applicantName, jobTitle }) => sendTempla
     key: "application-rejected", to, data: { applicantName, jobTitle },
 });
 
+const sendAssessmentInviteEmail = async ({ to, candidateName, companyName, jobTitle, assessmentTitle, dueAt, timeLimitMinutes, assessmentUrl }) => sendTemplatedEmail({
+    key: "assessment-invite",
+    to,
+    data: {
+        candidateName: candidateName || "there",
+        companyName,
+        jobTitle,
+        assessmentTitle,
+        dueDate: new Date(dueAt).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
+        timeLimit: timeLimitMinutes ? `${timeLimitMinutes} minutes once you start` : "No time limit",
+        assessmentUrl,
+    },
+});
+
 const sendTalentInviteEmail = async ({ to, candidateName, companyName, jobTitle, jobUrl }) => sendTemplatedEmail({
     key: "talent-invite",
     to,
@@ -366,6 +398,7 @@ module.exports = {
     sendShortlistedEmail,
     sendHiredEmail,
     sendTalentInviteEmail,
+    sendAssessmentInviteEmail,
     sendCompanySubmittedEmail,
     sendCompanyUnderReviewEmail,
     sendCompanyApprovedEmail,

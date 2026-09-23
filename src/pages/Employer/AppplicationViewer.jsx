@@ -16,6 +16,7 @@ import { API_PATHS } from "../../utils/apiPath";
 import { resolveFileUrl, downloadFileUrl } from "../../utils/fileUrl";
 import PipelineEditor from "../../components/employer/PipelineEditor";
 import InterviewQuestionsPanel from "../../components/employer/InterviewQuestionsPanel";
+import ApplicantAssessmentsCard from "../../components/employer/ApplicantAssessmentsCard";
 
 //   Stage styling
 //   Stages are the employer's own, so their look comes from what they mean —
@@ -982,6 +983,9 @@ const ApplicationViewer = () => {
                     canTailor={!selectedApp.isGuest}
                     hasAssessment={Boolean(aiScores[selectedApp._id || selectedApp.id])}
                   />
+
+                  {/*  Assessment results for this applicant  */}
+                  <ApplicantAssessmentsCard applicationId={selectedApp._id || selectedApp.id} />
 
                   {/*  Change Status ─ */}
                   <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
