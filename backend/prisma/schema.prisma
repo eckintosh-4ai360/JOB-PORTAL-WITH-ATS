@@ -39,6 +39,7 @@ model User {
   candidateProfile   CandidateProfile?
   resumeAnalyses     ResumeAnalysis[]
   jobMatches         JobMatch[]
+  hiringPipeline     HiringPipeline?
 
   @@index([email])
   @@index([clerkId])
@@ -347,7 +348,9 @@ model Application {
   resume            String
   coverLetter       String?
   coverLetterFile   String?
-  status            String    @default("Applied")
+  // A stage id from the employer's HiringPipeline (or the default one), or
+  // "rejected". Candidates never see it — only the phase it maps to.
+  status            String    @default("applied")
   interviewDate     DateTime?
   interviewTime     String?
   interviewLocation String?
@@ -364,6 +367,19 @@ model Application {
   // carry no applicantId) alone. The controller's own check gives the friendly
   // message; this is what makes the rule true when two submits race.
   @@unique([jobId, applicantId])
+}
+
+// The stages an employer moves applications through. One per employer; an
+// employer without a row uses the default pipeline in utils/hiringPipeline.
+// Kept off Company because public job reads include the whole company row, and
+// an employer's internal stage names are not public.
+model HiringPipeline {
+  id         String   @id @default(cuid())
+  employerId String   @unique
+  employer   User     @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  stages     Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model SavedJob {
