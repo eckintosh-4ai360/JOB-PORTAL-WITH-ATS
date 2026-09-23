@@ -109,6 +109,25 @@ const buildPhraseTable = () => {
 
 const PHRASE_TABLE = buildPhraseTable();
 
+// Filter phrases only — skills and industries are what an explicit "with …"
+// is expected to name, so they are left out.
+const FILTER_MATCHERS = PHRASE_TABLE
+    .filter((entry) => entry.type !== "skill" && entry.type !== "industry")
+    .map((entry) => new RegExp(entry.matcher.source, "g"));
+
+const LEADING_ARTICLE = /^(?:a|an|the|some)\s+/;
+
+/**
+ * Whether a phrase is nothing but filter words. "with a bachelor degree" names
+ * an education level, not a skill, and must be left for the phrase table to
+ * read as one. "remote teams" keeps a word of its own, so it stays a skill.
+ */
+const isOnlyFilterWords = (phrase) => {
+    let rest = phrase;
+    for (const matcher of FILTER_MATCHERS) rest = rest.replace(matcher, " ");
+    return rest.split(/\s+/).every((word) => !word || STOP_WORDS.has(word) || CONNECTIVES.has(word));
+};
+
 /**
  * A two-letter place name ("Ho", "Wa") is a coin flip inside a sentence, so it
  * only counts when a preposition puts it in a location slot or it is the whole
@@ -354,14 +373,21 @@ const parseQuery = (raw) => {
     // --- Unknown skills named explicitly --------------------------------------
     // "with Odoo experience", "using Laravel" — the lexicon cannot list every
     // tool in existence, so a stated skill is taken at its word.
-    claim(/(?:with|using|skilled in|proficient in|knowledge of|experience in|experience with)\s+([a-z0-9+#.][a-z0-9+#.\s-]{1,28}?)(?:\s+(?:experience|skills?|background))?(?=\s*(?:,|\.|and|or|in|at|for|$))/g, (match) => {
+    // The closing words need a boundary: without one the "or" inside
+    // "bachelor" ended the phrase, and "with a bachelor degree" became the
+    // skill "a bachel".
+    claim(/(?:with|using|skilled in|proficient in|knowledge of|experience in|experience with)\s+([a-z0-9+#.][a-z0-9+#.\s-]{1,28}?)(?:\s+(?:experience|skills?|background))?(?=\s*(?:,|\.|$)|\s+(?:and|or|in|at|for)(?![a-z0-9]))/g, (match) => {
         const candidate = normalize(match[1]);
         if (!candidate || candidate.length < 2) return false;
 
-        const parts = candidate.split(/\s+(?:and|or|,)\s+/).map((part) => part.trim()).filter(Boolean);
+        const parts = candidate
+            .split(/\s+(?:and|or|,)\s+/)
+            .map((part) => part.trim().replace(LEADING_ARTICLE, ""))
+            .filter(Boolean);
         let added = false;
         for (const part of parts) {
             if (STOP_WORDS.has(part) || CONNECTIVES.has(part)) continue;
+            if (isOnlyFilterWords(part)) continue;
             const skill = canonicalSkill(part);
             if (!skill || boosts.skills.includes(skill)) continue;
             boosts.skills.push(skill);
@@ -412,9 +438,13 @@ const parseQuery = (raw) => {
                     }
                     continue;
                 case "education":
-                    if (filters.education) continue;
-                    filters.education = entry.key;
-                    record("education", entry.key, entry.label);
+                    // Only the first level named filters, but every education
+                    // word is consumed — "a bachelor degree" must not leave
+                    // "degree" behind as role text a job then has to contain.
+                    if (!filters.education) {
+                        filters.education = entry.key;
+                        record("education", entry.key, entry.label);
+                    }
                     break;
                 case "industry":
                     // Never consumed: the word is usually part of the role text
