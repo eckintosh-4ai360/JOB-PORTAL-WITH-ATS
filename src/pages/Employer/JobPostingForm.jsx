@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
@@ -8,6 +8,8 @@ import toast from "react-hot-toast";
 import { LocationPicker } from "../../components/input/LocationPicker";
 import ScreeningQuestionsEditor from "../../components/employer/ScreeningQuestionsEditor";
 import JobDescriptionAssistant from "../../components/employer/JobDescriptionAssistant";
+import TemplatePicker from "../../components/employer/TemplatePicker";
+import SaveTemplateDialog from "../../components/employer/SaveTemplateDialog";
 import { toEditorQuestions, toPayloadQuestions } from "../../utils/screeningQuestions";
 import { DEPARTMENT_OPTIONS, JOB_TYPE_OPTIONS } from "../../utils/jobOptions";
 
@@ -20,9 +22,18 @@ const JobPostingForm = () => {
   // get every field in both cases instead of a reduced edit dialog.
   const isEditing = Boolean(jobId);
 
+  // A new posting can start from a job template, by link (?template=) or by
+  // choosing one here. Editing never does — that would overwrite a live advert.
+  const [searchParams] = useSearchParams();
+  const templateParam = isEditing ? null : searchParams.get("template");
+
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingJob, setIsLoadingJob] = useState(isEditing);
+  const [isLoadingTemplate, setIsLoadingTemplate] = useState(Boolean(templateParam));
+  const [appliedTemplate, setAppliedTemplate] = useState(null);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isSaveTemplateOpen, setIsSaveTemplateOpen] = useState(false);
 
   // Form State
   const [companyName, setCompanyName] = useState(user?.companyName || "");
@@ -103,6 +114,47 @@ const JobPostingForm = () => {
     };
   }, [isEditing, jobId, navigate, user?.companyName]);
 
+  // Fill the form from a template. Fields the template leaves empty keep what
+  // is already here, apart from pay, where a template without one means none.
+  const applyTemplate = useCallback((template) => {
+    setTitle(template.title || "");
+    if (template.category) setDepartment(template.category);
+    if (template.type) setJobType(template.type);
+    if (template.workModel) setWorkModel(template.workModel);
+    if (template.location) {
+      setLocation(template.location);
+      setLatitude(template.latitude ?? null);
+      setLongitude(template.longitude ?? null);
+    }
+    setDescription(template.description || "");
+    setRequirements(template.requirements || "");
+    setTagsInput(Array.isArray(template.tags) ? template.tags.join(", ") : "");
+    setSalaryMin(template.salaryMin != null ? String(template.salaryMin) : "");
+    setSalaryMax(template.salaryMax != null ? String(template.salaryMax) : "");
+    setScreeningQuestions(toEditorQuestions(template.screeningQuestions));
+    setAppliedTemplate({ id: template.id || template._id, name: template.name });
+  }, []);
+
+  useEffect(() => {
+    if (!templateParam) return;
+
+    let cancelled = false;
+    axiosInstance
+      .get(API_PATHS.JOB_TEMPLATES.GET(templateParam))
+      .then((res) => {
+        if (!cancelled && res.data?.template) applyTemplate(res.data.template);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Could not load that template. You can still fill in the posting yourself.");
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingTemplate(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [templateParam, applyTemplate]);
+
   const tagsList = tagsInput.split(",").map((t) => t.trim()).filter(Boolean);
 
   // Sections the job description assistant hands back once the employer
@@ -142,6 +194,36 @@ const JobPostingForm = () => {
 
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
+  };
+
+  // What a template keeps: everything but the deadline and the company.
+  const templatePayload = () => ({
+    title,
+    category: department,
+    type: jobType,
+    workModel,
+    location,
+    latitude,
+    longitude,
+    description,
+    requirements,
+    tags: tagsList,
+    salaryMin: Number(salaryMin) || null,
+    salaryMax: Number(salaryMax) || null,
+    screeningQuestions: toPayloadQuestions(screeningQuestions),
+  });
+
+  const openSaveTemplate = () => {
+    if (!title.trim() || !description.trim()) {
+      toast.error("Add a job title and description before saving this as a template.");
+      return;
+    }
+    const problem = screeningProblem();
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
+    setIsSaveTemplateOpen(true);
   };
 
   const handleSubmit = async (e) => {
@@ -200,6 +282,8 @@ const JobPostingForm = () => {
       const res = await axiosInstance.post(API_PATHS.JOBS.POST_JOB, {
         ...payload,
         companyName,
+        // Counted against the template, so the ones in use rise to the top.
+        templateId: appliedTemplate?.id || undefined,
       });
       toast.success("Job successfully published to SPG Talent Network!");
       const newJobId = res.data?.job?.id || res.data?.job?._id;
@@ -219,12 +303,14 @@ const JobPostingForm = () => {
     }
   };
 
-  if (isLoadingJob) {
+  if (isLoadingJob || isLoadingTemplate) {
     return (
-      <DashboardLayout activeMenu="manage-jobs">
+      <DashboardLayout activeMenu={isEditing ? "manage-jobs" : "post-job"}>
         <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 bg-surface text-on-surface">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="font-body-md text-text-muted">Loading this job posting…</p>
+          <p className="font-body-md text-text-muted">
+            {isLoadingJob ? "Loading this job posting…" : "Filling in from your template…"}
+          </p>
         </div>
       </DashboardLayout>
     );
@@ -343,6 +429,30 @@ const JobPostingForm = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
             {/* LEFT COLUMN: Main Stepper Form (col-span-8) */}
             <div className="lg:col-span-8 bg-surface-card rounded-2xl p-space-md md:p-space-lg border border-border-default shadow-sm flex flex-col gap-space-md">
+              {!isEditing && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-border-default bg-surface-container-low px-4 py-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="material-symbols-outlined text-[20px] text-primary">dashboard_customize</span>
+                    <p className="font-body-sm text-text-secondary">
+                      {appliedTemplate ? (
+                        <>
+                          Started from <span className="font-semibold text-text-primary">{appliedTemplate.name}</span>. Change
+                          anything below before you publish.
+                        </>
+                      ) : (
+                        "Hiring for a role you've posted before? Start from one of your job templates."
+                      )}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsPickerOpen(true)}
+                    className="shrink-0 rounded-lg border border-border-default bg-surface-card px-3 py-1.5 font-label-md font-semibold text-primary transition-colors hover:bg-surface-container"
+                  >
+                    {appliedTemplate ? "Change template" : "Choose a template"}
+                  </button>
+                </div>
+              )}
               <form onSubmit={step === 4 ? handleSubmit : handleNext}>
                 {/* STEP 1: Job Details & Role */}
                 {step === 1 && (
@@ -777,6 +887,16 @@ const JobPostingForm = () => {
                     <div />
                   )}
 
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={openSaveTemplate}
+                    title="Save this posting's details to reuse for a future opening"
+                    className="px-space-md py-2.5 rounded-xl border border-border-default bg-surface-card hover:bg-surface-container text-on-surface font-label-md font-semibold transition-colors flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">bookmark_add</span>
+                    <span>Save as template</span>
+                  </button>
                   {step < 4 ? (
                     <button
                       type="submit"
@@ -807,6 +927,7 @@ const JobPostingForm = () => {
                       </span>
                     </button>
                   )}
+                  </div>
                 </div>
               </form>
             </div>
@@ -890,6 +1011,27 @@ const JobPostingForm = () => {
         </section>
         </main>
       </div>
+
+      {/* Outside the posting form: each dialog is a form of its own. */}
+      {isPickerOpen && (
+        <TemplatePicker
+          currentId={appliedTemplate?.id}
+          onClose={() => setIsPickerOpen(false)}
+          onPick={(template) => {
+            applyTemplate(template);
+            setIsPickerOpen(false);
+            setStep(1);
+            toast.success(`Filled in from "${template.name}"`);
+          }}
+        />
+      )}
+      {isSaveTemplateOpen && (
+        <SaveTemplateDialog
+          defaultName={title}
+          payload={templatePayload()}
+          onClose={() => setIsSaveTemplateOpen(false)}
+        />
+      )}
     </DashboardLayout>
   );
 };
