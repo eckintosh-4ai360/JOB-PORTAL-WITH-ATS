@@ -1,9 +1,26 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
+
+/** A job's representative monthly pay: the midpoint of its range, or whichever end is set. */
+const jobPay = (job) => {
+  const min = Number(job.salaryMin) > 0 ? Number(job.salaryMin) : 0;
+  const max = Number(job.salaryMax) > 0 ? Number(job.salaryMax) : 0;
+  if (min && max) return (min + max) / 2;
+  return min || max;
+};
+
+const median = (values) => {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+};
+
+const formatCount = (value) => value.toLocaleString("en-GB");
 
 const BrowseCompanies = () => {
   const [search, setSearch] = useState("");
@@ -66,6 +83,17 @@ const BrowseCompanies = () => {
     });
   }, [allCompanies, search, selectedHq, selectedStage, selectedIndustry]);
 
+  // Directory-wide figures, so they stay put while the candidate filters.
+  const directoryStats = useMemo(() => {
+    const jobs = allCompanies.flatMap((c) => (Array.isArray(c.jobs) ? c.jobs : []));
+    const pay = jobs.map(jobPay).filter((value) => value > 0);
+    return {
+      employers: allCompanies.length,
+      openPositions: allCompanies.reduce((sum, c) => sum + (Number(c.openRoles) || 0), 0),
+      medianPay: median(pay),
+    };
+  }, [allCompanies]);
+
   return (
     <div className="bg-surface min-h-screen text-on-surface flex flex-col pt-20">
       <Navbar />
@@ -102,23 +130,27 @@ const BrowseCompanies = () => {
               <div className="flex items-center gap-space-md shrink-0 flex-wrap">
                 <div className="px-space-md py-space-sm rounded-2xl bg-surface-card border border-border-default shadow-xs flex flex-col">
                   <span className="font-numeric-metric text-[26px] text-primary">
-                    340+
+                    {isLoading ? "—" : formatCount(directoryStats.employers)}
                   </span>
-                  <span className="font-label-md text-text-muted">Listed Employers</span>
+                  <span className="font-label-md text-text-muted">
+                    Listed {directoryStats.employers === 1 ? "Employer" : "Employers"}
+                  </span>
                 </div>
                 <div className="px-space-md py-space-sm rounded-2xl bg-salary-surface border border-salary-emerald/20 shadow-xs flex flex-col">
                   <span className="font-numeric-metric text-[26px] text-salary-emerald">
-                    1,280+
+                    {isLoading ? "—" : formatCount(directoryStats.openPositions)}
                   </span>
                   <span className="font-label-md text-salary-emerald font-semibold">
-                    Open Positions
+                    Open {directoryStats.openPositions === 1 ? "Position" : "Positions"}
                   </span>
                 </div>
                 <div className="px-space-md py-space-sm rounded-2xl bg-surface-card border border-border-default shadow-xs flex flex-col">
                   <span className="font-numeric-metric text-[26px] text-secondary">
-                    GH₵ 42k
+                    {isLoading || directoryStats.medianPay === null
+                      ? "—"
+                      : `GH₵ ${formatCount(Math.round(directoryStats.medianPay))}`}
                   </span>
-                  <span className="font-label-md text-text-muted">Median Salary</span>
+                  <span className="font-label-md text-text-muted">Median Salary / mo</span>
                 </div>
               </div>
             </div>
