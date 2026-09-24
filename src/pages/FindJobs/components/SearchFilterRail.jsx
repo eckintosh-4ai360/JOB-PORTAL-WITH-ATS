@@ -120,8 +120,6 @@ const SearchFilterRail = ({
         [facets]
     );
 
-    const topSkills = (facets.skill || []).slice(0, 12);
-    const selectedSkills = readList("skills");
     const salaryMin = Number(filters.salaryMin) || 0;
 
     if (!options) {
@@ -266,31 +264,6 @@ const SearchFilterRail = ({
                         />
                     ))}
                 </FilterSection>
-
-                {topSkills.length > 0 && (
-                    <FilterSection icon="bolt" title="Skills">
-                        <div className="flex flex-wrap gap-1.5">
-                            {topSkills.map((skill) => {
-                                const active = selectedSkills.includes(skill.value);
-                                return (
-                                    <button
-                                        key={skill.value}
-                                        type="button"
-                                        onClick={() => onToggle("skills", skill.value)}
-                                        className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-label-md capitalize transition-colors cursor-pointer ${
-                                            active
-                                                ? "bg-primary text-on-primary"
-                                                : "bg-surface-container text-on-surface-variant hover:bg-brand-indigo-light hover:text-primary"
-                                        }`}
-                                    >
-                                        {skill.value}
-                                        <span className="opacity-70">{skill.count}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </FilterSection>
-                )}
 
                 <FilterSection icon="schedule" title="Date posted">
                     <div className="grid grid-cols-2 gap-2">
