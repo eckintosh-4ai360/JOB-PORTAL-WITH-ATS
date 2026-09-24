@@ -15,6 +15,40 @@ const hasValidCoordinates = (latitude, longitude) =>
   Number.isFinite(Number(latitude)) &&
   Number.isFinite(Number(longitude));
 
+// Map providers return every administrative level (street, district, region,
+// postcode, country). A job card needs a scannable locality, while the stored
+// coordinates retain the exact point for maps and distance calculations.
+const compactLocationName = (place, fallback = "") => {
+  const address = place?.address || {};
+  const area = address.neighbourhood || address.suburb || address.quarter;
+  const locality =
+    address.city ||
+    address.town ||
+    address.village ||
+    address.municipality ||
+    address.city_district ||
+    address.county ||
+    address.state_district ||
+    address.state;
+  const country = address.country;
+  const parts = [area, locality, country]
+    .filter(Boolean)
+    .filter((part, index, all) =>
+      all.findIndex((item) => item.toLowerCase() === part.toLowerCase()) === index
+    );
+
+  if (parts.length) return parts.join(", ");
+
+  // Keep a useful, compact fallback if a reverse-geocoding response does not
+  // include structured address parts.
+  return (place?.display_name || fallback)
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .slice(0, 3)
+    .join(", ");
+};
+
 export const LocationPicker = ({
   label = "Location",
   required = false,
@@ -92,7 +126,7 @@ export const LocationPicker = ({
       setIsSearching(true);
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&countrycodes=gh&q=${encodeURIComponent(query)}&limit=5`
+          `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&countrycodes=gh&q=${encodeURIComponent(query)}&limit=5`
         );
         const data = await response.json();
         setSuggestions(data || []);
@@ -110,10 +144,10 @@ export const LocationPicker = ({
   const reverseGeocode = async (lat, lng) => {
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+        `https://nominatim.openstreetmap.org/reverse?format=json&addressdetails=1&lat=${lat}&lon=${lng}`
       );
       const data = await res.json();
-      return data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      return compactLocationName(data, `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
     } catch {
       return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
     }
@@ -121,7 +155,7 @@ export const LocationPicker = ({
 
   // Main input selection
   const handleSelectSuggestion = (item) => {
-    const formatted = item.display_name;
+    const formatted = compactLocationName(item);
     const lat = parseFloat(item.lat);
     const lng = parseFloat(item.lon);
 
@@ -281,7 +315,7 @@ export const LocationPicker = ({
 
   // Handle modal search suggestion selection
   const handleModalSelectSuggestion = (item) => {
-    const formatted = item.display_name;
+    const formatted = compactLocationName(item);
     const lat = parseFloat(item.lat);
     const lng = parseFloat(item.lon);
 
@@ -312,7 +346,7 @@ export const LocationPicker = ({
       setIsModalSearching(true);
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&countrycodes=gh&q=${encodeURIComponent(modalQuery)}&limit=5`
+          `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&countrycodes=gh&q=${encodeURIComponent(modalQuery)}&limit=5`
         );
         const data = await response.json();
         setModalSuggestions(data || []);
