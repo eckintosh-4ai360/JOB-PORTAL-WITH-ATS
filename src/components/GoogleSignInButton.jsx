@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { useClerk, useSignIn } from "@clerk/react";
+import { useClerk } from "@clerk/react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 // GoogleSignInButton
 const GoogleSignInButton = ({ role = null, label = "Continue with Google" }) => {
     const clerk = useClerk();
-    const { signIn } = useSignIn();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
 
@@ -25,8 +24,12 @@ const GoogleSignInButton = ({ role = null, label = "Continue with Google" }) => 
                 return;
             }
 
-            if (!signIn) {
-                toast.error("Google sign-in is still loading. Please try again in a moment.");
+            // The redirect callback page uses Clerk's classic SignIn flow, so
+            // get that resource directly from the loaded Clerk client rather
+            // than the v6 useSignIn() Signal API.
+            const signIn = clerk.client?.signIn;
+            if (typeof signIn?.authenticateWithRedirect !== "function") {
+                toast.error("Clerk could not load. Check the Clerk publishable key and restart the app.");
                 return;
             }
 

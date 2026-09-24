@@ -19,7 +19,7 @@ const getPostLoginPath = (user) => {
 };
 
 const SSOCallback = () => {
-    const { handleRedirectCallback, session } = useClerk();
+    const { handleRedirectCallback, session, loaded } = useClerk();
     const { login } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -36,12 +36,18 @@ const SSOCallback = () => {
     // Step 1 — complete Clerk OAuth redirect
     useEffect(() => {
         if (callbackHandledRef.current) return;
-        callbackHandledRef.current = true;
+        if (!loaded) return;
 
-        if (isExistingSession) {
+        // A completed OAuth flow returns here with Clerk's session already
+        // active. It only needs our backend-token exchange below; running the
+        // redirect handler again can send the user to Clerk's Account Portal.
+        if (isExistingSession || session) {
+            callbackHandledRef.current = true;
             setCallbackReady(true);
             return;
         }
+
+        callbackHandledRef.current = true;
 
         const complete = async () => {
             try {
@@ -62,7 +68,7 @@ const SSOCallback = () => {
             }
         };
         complete();
-    }, [handleRedirectCallback, isExistingSession]);
+    }, [handleRedirectCallback, isExistingSession, loaded, session]);
 
     // Step 2 — once Clerk session is ready, exchange for JWT
     useEffect(() => {

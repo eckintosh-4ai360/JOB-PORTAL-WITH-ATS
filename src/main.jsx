@@ -14,6 +14,8 @@ createRoot(document.getElementById('root')).render(
       publishableKey={PUBLISHABLE_KEY}
       signInUrl="/login"
       signUpUrl="/signup"
+      signInForceRedirectUrl="/sso-callback"
+      signUpForceRedirectUrl="/sso-callback"
     >
       <AuthProvider>
         <ThemeProvider>
