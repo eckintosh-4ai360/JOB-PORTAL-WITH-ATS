@@ -1,21 +1,35 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import toast from "react-hot-toast";
 
+const EMPTY_FILTERS = { role: "", location: "", seniority: "", industry: "" };
+
+const money = (value) => `GH₵ ${Math.round(value).toLocaleString("en-GB")}`;
+
+/** "GH₵ 6.5k", for the tight spots where the full figure does not fit. */
+const moneyShort = (value) =>
+  value >= 1000
+    ? `GH₵ ${(value / 1000).toFixed(1).replace(/\.0$/, "")}k`
+    : `GH₵ ${Math.round(value)}`;
+
+const signed = (percent) => `${percent > 0 ? "+" : ""}${percent}%`;
+
+const clampPercent = (value) => Math.max(0, Math.min(100, value));
+
 const SalariesInsights = () => {
-  const [targetRole, setTargetRole] = useState("Operations Manager");
-  const [targetLocation, setTargetLocation] = useState("Accra, Ghana (HQ Hub)");
-  const [tenure, setTenure] = useState("Senior (4-7 Yrs)");
-  const [sector, setSector] = useState("Business & Professional Services");
+  // `draft` is what the form shows; `filters` is what the figures are for, so
+  // the cards do not change under the candidate while they are still typing.
+  const [draft, setDraft] = useState(EMPTY_FILTERS);
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
 
-  // Data from API
-  const [salaryRoles, setSalaryRoles] = useState([]);
-  const [skillsPremium, setSkillsPremium] = useState([]);
+  const [options, setOptions] = useState(null);
+  const [insights, setInsights] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   // Modal form state
   const [subRole, setSubRole] = useState("");
@@ -23,24 +37,55 @@ const SalariesInsights = () => {
   const [subExp, setSubExp] = useState("3-5");
   const [subLoc, setSubLoc] = useState("Accra, Ghana");
 
+  // The same vocabularies job search filters on, so "Senior" or "Healthcare"
+  // here means exactly what it means there.
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const [benchRes, skillsRes] = await Promise.all([
-          axiosInstance.get(API_PATHS.SALARIES.GET_BENCHMARKS),
-          axiosInstance.get(API_PATHS.SALARIES.GET_SKILLS),
-        ]);
-        if (benchRes.data?.roles) setSalaryRoles(benchRes.data.roles);
-        if (skillsRes.data?.skillsPremium) setSkillsPremium(skillsRes.data.skillsPremium);
-      } catch (err) {
-        console.warn("Failed to load salary data:", err?.message || err);
-      } finally {
-        setIsLoading(false);
-      }
+    let cancelled = false;
+    axiosInstance
+      .get(API_PATHS.JOBS.SEARCH_OPTIONS)
+      .then((response) => {
+        if (!cancelled) setOptions(response.data);
+      })
+      .catch(() => {
+        // The selects fall back to "any"; the figures still load.
+      });
+    return () => {
+      cancelled = true;
     };
-    fetchData();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const params = Object.fromEntries(Object.entries(filters).filter(([, value]) => value));
+
+    axiosInstance
+      .get(API_PATHS.SALARIES.GET_INSIGHTS, { params })
+      .then((response) => {
+        if (cancelled) return;
+        setInsights(response.data);
+        setLoadFailed(false);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.warn("Failed to load salary insights:", err?.message || err);
+        setLoadFailed(true);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [filters]);
+
+  const updateDraft = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
+
+  const applyFilters = (next) => {
+    const cleaned = { ...next, role: next.role.trim() };
+    setDraft(cleaned);
+    setIsLoading(true);
+    setFilters(cleaned);
+  };
 
   const handleContributeSubmit = async (e) => {
     e.preventDefault();
@@ -51,14 +96,27 @@ const SalariesInsights = () => {
         experience: subExp,
         location: subLoc,
       });
-      toast.success("Thank you! Your salary submission has been anonymized and queued for audit.");
+      toast.success("Thank you! Your salary was recorded anonymously.");
+      setShowSubmitModal(false);
+      setSubRole("");
+      setSubComp("");
     } catch {
-      toast.success("Thank you! Your salary submission has been recorded.");
+      toast.error("Your salary could not be recorded. Please try again.");
     }
-    setShowSubmitModal(false);
-    setSubRole("");
-    setSubComp("");
   };
+
+  const summary = insights?.summary;
+  const pay = summary?.pay;
+  const flexiblePay = summary?.flexiblePay;
+  const minSample = insights?.minSample ?? 3;
+  const roles = insights?.roles || [];
+  const skills = insights?.skills || [];
+  const popularRoles = insights?.popularRoles || [];
+  const scope = filters.location ? `in ${filters.location}` : "across Ghana";
+  const notEnough = `Needs ${minSample}+ adverts with pay`;
+  const roleScale = Math.max(...roles.map((r) => r.p90), 1);
+  const hasFigures = Boolean(insights) && !loadFailed;
+  const fade = isLoading && insights ? "opacity-60" : "";
 
   return (
     <div className="bg-surface min-h-screen text-on-surface flex flex-col pt-20">
@@ -88,31 +146,19 @@ const SalariesInsights = () => {
                 </p>
               </div>
 
-              {/* Submissions Avatars Badge */}
+              {/* Data Source Badge */}
               <div className="flex items-center gap-space-sm shrink-0 bg-surface-card p-3 rounded-2xl border border-border-default shadow-xs">
-                <div className="flex -space-x-2 overflow-hidden">
-                  <img
-                    className="inline-block h-10 w-10 rounded-full ring-2 ring-surface-card object-cover"
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60"
-                    alt="Contributor"
-                  />
-                  <img
-                    className="inline-block h-10 w-10 rounded-full ring-2 ring-surface-card object-cover"
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60"
-                    alt="Contributor"
-                  />
-                  <img
-                    className="inline-block h-10 w-10 rounded-full ring-2 ring-surface-card object-cover"
-                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=60"
-                    alt="Contributor"
-                  />
-                </div>
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-indigo-light text-primary">
+                  <span className="material-symbols-outlined text-[22px]">monitoring</span>
+                </span>
                 <div className="flex flex-col">
                   <span className="font-label-lg text-on-surface font-bold">
-                    1,840+ Submissions
+                    {hasFigures
+                      ? `${insights.dataPoints.toLocaleString("en-GB")} ${insights.dataPoints === 1 ? "Advert" : "Adverts"} with Pay`
+                      : "—"}
                   </span>
                   <span className="font-body-sm text-text-muted">
-                    Audited by SPG Insights
+                    Live from job adverts, last 12 months
                   </span>
                 </div>
               </div>
@@ -123,7 +169,7 @@ const SalariesInsights = () => {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  toast.success(`Showing benchmarks for ${targetRole}`);
+                  applyFilters(draft);
                 }}
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-space-sm items-center"
               >
@@ -138,9 +184,10 @@ const SalariesInsights = () => {
                     </span>
                     <input
                       type="text"
-                      value={targetRole}
-                      onChange={(e) => setTargetRole(e.target.value)}
-                      placeholder="e.g. Solutions Architect"
+                      value={draft.role}
+                      onChange={(e) => updateDraft("role", e.target.value)}
+                      placeholder="All roles, or e.g. Accountant"
+                      aria-label="Role"
                       className="w-full bg-transparent font-label-lg text-on-surface focus:outline-none"
                     />
                   </div>
@@ -156,21 +203,25 @@ const SalariesInsights = () => {
                       location_on
                     </span>
                     <select
-                      value={targetLocation}
-                      onChange={(e) => setTargetLocation(e.target.value)}
+                      value={draft.location}
+                      onChange={(e) => updateDraft("location", e.target.value)}
+                      aria-label="Location"
                       className="w-full bg-transparent font-label-lg text-on-surface focus:outline-none cursor-pointer"
                     >
-                      <option>Accra, Ghana</option>
-                      <option>Kumasi, Ghana</option>
-                      <option>Tema, Ghana</option>
-                      <option>Takoradi, Ghana</option>
-                      <option>Tamale, Ghana</option>
-                      <option>Remote (Ghana)</option>
+                      <option value="">Anywhere in Ghana</option>
+                      {(options?.locations || [])
+                        .filter((place) => place.key !== "Ghana")
+                        .map((place) => (
+                          <option key={place.key} value={place.key}>
+                            {place.key}
+                            {place.region && place.region !== place.key ? ` — ${place.region}` : ""}
+                          </option>
+                        ))}
                     </select>
                   </div>
                 </div>
 
-                {/* Tenure */}
+                {/* Seniority */}
                 <div className="lg:col-span-2 flex flex-col gap-1">
                   <label className="font-label-caps uppercase text-text-muted">
                     Tenure Band
@@ -180,19 +231,22 @@ const SalariesInsights = () => {
                       trending_up
                     </span>
                     <select
-                      value={tenure}
-                      onChange={(e) => setTenure(e.target.value)}
+                      value={draft.seniority}
+                      onChange={(e) => updateDraft("seniority", e.target.value)}
+                      aria-label="Experience level"
                       className="w-full bg-transparent font-label-lg text-on-surface focus:outline-none cursor-pointer"
                     >
-                      <option>Junior (0-2 Yrs)</option>
-                      <option>Mid-Level (2-4 Yrs)</option>
-                      <option>Senior (4-7 Yrs)</option>
-                      <option>Lead / Staff (7+ Yrs)</option>
+                      <option value="">Any level</option>
+                      {(options?.seniority || []).map((level) => (
+                        <option key={level.key} value={level.key}>
+                          {level.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
-                {/* Sector */}
+                {/* Industry */}
                 <div className="lg:col-span-2 flex flex-col gap-1">
                   <label className="font-label-caps uppercase text-text-muted">
                     Industry Domain
@@ -202,17 +256,17 @@ const SalariesInsights = () => {
                       hub
                     </span>
                     <select
-                      value={sector}
-                      onChange={(e) => setSector(e.target.value)}
+                      value={draft.industry}
+                      onChange={(e) => updateDraft("industry", e.target.value)}
+                      aria-label="Industry"
                       className="w-full bg-transparent font-label-lg text-on-surface focus:outline-none cursor-pointer"
                     >
-                      <option>Business &amp; Professional Services</option>
-                      <option>Healthcare &amp; Social Care</option>
-                      <option>Education &amp; Training</option>
-                      <option>Finance &amp; Banking</option>
-                      <option>Construction &amp; Manufacturing</option>
-                      <option>Hospitality, Retail &amp; Tourism</option>
-                      <option>Technology &amp; Engineering</option>
+                      <option value="">All industries</option>
+                      {(options?.industries || []).map((industry) => (
+                        <option key={industry.key} value={industry.key}>
+                          {industry.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -234,28 +288,28 @@ const SalariesInsights = () => {
                 </div>
               </form>
 
-              {/* Trending Queries */}
-              <div className="mt-space-md pt-space-sm border-t border-border-default flex flex-wrap items-center gap-2">
-                <span className="font-label-caps uppercase text-text-muted tracking-wider">
-                  Trending Queries:
-                </span>
-                {[
-                  "Registered Nurse",
-                  "Sales Manager",
-                  "Accountant",
-                  "Teacher",
-                  "Operations Manager",
-                ].map((q) => (
-                  <button
-                    key={q}
-                    type="button"
-                    onClick={() => setTargetRole(q)}
-                    className="px-3 py-1 rounded-full bg-surface-container text-text-secondary hover:bg-brand-indigo-light hover:text-primary font-label-md transition-colors"
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
+              {/* Popular roles with enough adverts to produce figures */}
+              {popularRoles.length > 0 && (
+                <div className="mt-space-md pt-space-sm border-t border-border-default flex flex-wrap items-center gap-2">
+                  <span className="font-label-caps uppercase text-text-muted tracking-wider">
+                    Popular Roles:
+                  </span>
+                  {popularRoles.map((role) => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => applyFilters({ ...draft, role })}
+                      className={`px-3 py-1 rounded-full font-label-md transition-colors ${
+                        filters.role === role
+                          ? "bg-primary text-on-primary"
+                          : "bg-surface-container text-text-secondary hover:bg-brand-indigo-light hover:text-primary"
+                      }`}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -263,7 +317,12 @@ const SalariesInsights = () => {
         {/* ================= 4 KEY MARKET METRIC PULSE CARDS ================= */}
         <section className="w-full py-space-lg">
           <div className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+            {loadFailed && (
+              <p className="mb-space-md rounded-2xl border border-border-default bg-surface-card p-4 font-body-md text-text-secondary">
+                Salary figures could not be loaded right now. Please try again shortly.
+              </p>
+            )}
+            <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md transition-opacity ${fade}`} aria-busy={isLoading}>
               {/* Card 1 */}
               <div className="group relative flex min-h-48 flex-col justify-between gap-4 overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-surface-card to-surface-card p-5 shadow-[0_10px_26px_rgba(16,185,129,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_34px_rgba(16,185,129,0.16)]">
                 <div className="flex items-center justify-between">
@@ -279,20 +338,37 @@ const SalariesInsights = () => {
                 <div>
                   <div className="flex items-baseline gap-1">
                     <span className="font-headline-lg text-headline-lg text-on-surface">
-                      GH₵ 58,500
+                      {pay ? money(pay.median) : "—"}
                     </span>
-                    <span className="font-label-md text-text-muted">/mo</span>
+                    {pay && <span className="font-label-md text-text-muted">/mo</span>}
                   </div>
-                  <div className="flex items-center gap-1 mt-1 text-salary-emerald font-numeric-metric text-[13px]">
-                    <span className="material-symbols-outlined text-[16px]">
-                      arrow_upward
-                    </span>
-                    <span>+14.2% YoY</span>
-                    <span className="text-text-muted font-normal text-xs ml-1">in Accra</span>
-                  </div>
+                  {pay && summary.yearOnYear != null ? (
+                    <div
+                      className={`flex items-center gap-1 mt-1 font-numeric-metric text-[13px] ${
+                        summary.yearOnYear >= 0 ? "text-salary-emerald" : "text-error"
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">
+                        {summary.yearOnYear >= 0 ? "arrow_upward" : "arrow_downward"}
+                      </span>
+                      <span>{signed(summary.yearOnYear)} YoY</span>
+                      <span className="text-text-muted font-normal text-xs ml-1">{scope}</span>
+                    </div>
+                  ) : (
+                    <p className="font-body-sm text-text-secondary mt-1">
+                      {pay
+                        ? `From ${summary.advertsWithPay} adverts ${scope}`
+                        : hasFigures
+                          ? `${notEnough} ${scope}`
+                          : "Loading…"}
+                    </p>
+                  )}
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-emerald-100">
-                  <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600" />
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-500"
+                    style={{ width: `${pay ? clampPercent((pay.median / pay.p90) * 100) : 0}%` }}
+                  />
                 </div>
               </div>
 
@@ -311,16 +387,29 @@ const SalariesInsights = () => {
                 <div>
                   <div className="flex items-baseline gap-1">
                     <span className="font-headline-lg text-headline-lg text-primary">
-                      GH₵ 110,000
+                      {pay ? money(pay.p90) : "—"}
                     </span>
-                    <span className="font-label-md text-text-muted">/mo</span>
+                    {pay && <span className="font-label-md text-text-muted">/mo</span>}
                   </div>
                   <p className="font-body-sm text-text-secondary mt-1">
-                    Experienced professionals across industries
+                    {pay
+                      ? `Middle half earn ${moneyShort(pay.p25)} – ${moneyShort(pay.p75)}`
+                      : hasFigures
+                        ? notEnough
+                        : "Loading…"}
                   </p>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-violet-100">
-                  <div className="h-full w-[90%] rounded-full bg-gradient-to-r from-primary to-secondary" />
+                {/* The middle half of pay, drawn against the 90th percentile */}
+                <div className="relative h-2 w-full overflow-hidden rounded-full bg-violet-100">
+                  {pay && (
+                    <div
+                      className="absolute inset-y-0 rounded-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
+                      style={{
+                        left: `${clampPercent((pay.p25 / pay.p90) * 100)}%`,
+                        width: `${clampPercent(((pay.p75 - pay.p25) / pay.p90) * 100)}%`,
+                      }}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -339,16 +428,23 @@ const SalariesInsights = () => {
                 <div>
                   <div className="flex items-baseline gap-1">
                     <span className="font-headline-lg text-headline-lg text-on-surface">
-                      74%
+                      {summary?.flexible.share != null ? `${summary.flexible.share}%` : "—"}
                     </span>
                     <span className="font-label-md text-text-muted">Hybrid / Remote</span>
                   </div>
                   <p className="font-body-sm text-text-secondary mt-1">
-                    Some roles offer remote flexibility
+                    {summary?.flexible.share != null
+                      ? `${summary.flexible.count} of ${summary.adverts} adverts offer remote or hybrid work`
+                      : hasFigures
+                        ? `Needs ${minSample}+ adverts`
+                        : "Loading…"}
                   </p>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-sky-100">
-                  <div className="h-full w-[74%] rounded-full bg-gradient-to-r from-sky-400 to-sky-600" />
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600 transition-all duration-500"
+                    style={{ width: `${summary?.flexible.share ?? 0}%` }}
+                  />
                 </div>
               </div>
 
@@ -356,7 +452,7 @@ const SalariesInsights = () => {
               <div className="group relative flex min-h-48 flex-col justify-between gap-4 overflow-hidden rounded-3xl border border-amber-100 bg-gradient-to-br from-amber-50 via-surface-card to-surface-card p-5 shadow-[0_10px_26px_rgba(245,158,11,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_34px_rgba(245,158,11,0.16)]">
                 <div className="flex items-center justify-between">
                   <span className="font-label-caps uppercase text-text-muted tracking-wider">
-                    Ghana Remote Opportunity
+                    Remote Pay Premium
                   </span>
                   <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-[0_8px_16px_rgba(245,158,11,0.28)]">
                     <span className="material-symbols-outlined text-[18px]">
@@ -367,16 +463,29 @@ const SalariesInsights = () => {
                 <div>
                   <div className="flex items-baseline gap-1">
                     <span className="font-headline-lg text-headline-lg text-secondary">
-                      +38%
+                      {flexiblePay?.premium != null ? signed(flexiblePay.premium) : "—"}
                     </span>
-                    <span className="font-label-md text-text-muted">vs Local Avg</span>
+                    <span className="font-label-md text-text-muted">vs On-site</span>
                   </div>
                   <p className="font-body-sm text-text-secondary mt-1">
-                    Flexible roles open to Ghana-based professionals
+                    {flexiblePay?.premium != null
+                      ? `Remote & hybrid median ${moneyShort(flexiblePay.median)} vs ${moneyShort(flexiblePay.onsiteMedian)} on-site`
+                      : hasFigures
+                        ? `Needs ${minSample}+ paid adverts each for remote/hybrid and on-site`
+                        : "Loading…"}
                   </p>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-amber-100">
-                  <div className="h-full w-[85%] rounded-full bg-gradient-to-r from-amber-400 to-orange-500" />
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500"
+                    style={{
+                      width: `${
+                        pay && flexiblePay?.premium != null
+                          ? clampPercent((flexiblePay.median / pay.p90) * 100)
+                          : 0
+                      }%`,
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -385,7 +494,7 @@ const SalariesInsights = () => {
 
         {/* ================= BENCHMARK VISUALIZER & SKILLS PREMIUM ================= */}
         <section className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
+          <div className={`grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start transition-opacity ${fade}`}>
             {/* Left: Role Benchmark Visualizer (col-span-7) */}
             <div className="lg:col-span-7 rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_16px_36px_rgba(40,34,86,0.08)] md:p-space-lg flex flex-col gap-space-md">
               <div className="flex items-center justify-between pb-2 border-b border-border-default">
@@ -394,13 +503,15 @@ const SalariesInsights = () => {
                     Compensation Percentiles by Role
                   </h3>
                   <p className="font-body-sm text-text-muted">
-                    Based on 1,840+ verified candidate disclosures &amp; employer audits
+                    {hasFigures
+                      ? `Based on ${insights.dataPoints.toLocaleString("en-GB")} job adverts with published pay ${scope}, last 12 months`
+                      : "Based on job adverts with published pay"}
                   </p>
                 </div>
                 <button
                   onClick={() => setShowSubmitModal(true)}
                   type="button"
-                  className="px-space-md py-2 rounded-xl bg-brand-indigo-light text-primary font-label-md font-bold hover:bg-brand-indigo-subtle transition-colors flex items-center gap-1"
+                  className="px-space-md py-2 rounded-xl bg-brand-indigo-light text-primary font-label-md font-bold hover:bg-brand-indigo-subtle transition-colors flex items-center gap-1 shrink-0"
                 >
                   <span className="material-symbols-outlined text-[16px]">add</span>
                   <span>Submit Data</span>
@@ -408,15 +519,26 @@ const SalariesInsights = () => {
               </div>
 
               <div className="flex flex-col gap-space-md">
-                {salaryRoles.length === 0 && !isLoading && (
-                  <p className="font-body-md text-text-muted text-center py-8">No salary benchmarks available yet.</p>
+                {!insights && isLoading &&
+                  [0, 1, 2].map((row) => (
+                    <div key={row} className="h-[88px] animate-pulse rounded-2xl bg-surface-container" />
+                  ))}
+                {hasFigures && roles.length === 0 && (
+                  <p className="font-body-md text-text-muted text-center py-8">
+                    No role has {minSample}+ adverts with pay {scope} yet.
+                  </p>
                 )}
-                {salaryRoles.map((r) => (
-                  <div key={r.role || r._id} className="group rounded-2xl border border-border-default bg-surface-container-low p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-surface-card hover:shadow-sm flex flex-col gap-2">
-                    <div className="flex items-center justify-between font-label-md">
-                      <span className="font-bold text-on-surface">{r.role}</span>
-                      <span className="font-numeric-metric text-salary-emerald font-bold">
-                        GH₵ {(r.median / 1000).toFixed(1)}k Median
+                {roles.map((r) => (
+                  <div key={r.role} className="group rounded-2xl border border-border-default bg-surface-container-low p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-surface-card hover:shadow-sm flex flex-col gap-2">
+                    <div className="flex items-center justify-between gap-2 font-label-md">
+                      <span className="font-bold text-on-surface">
+                        {r.role}
+                        <span className="ml-2 font-normal text-text-muted">
+                          {r.adverts} adverts
+                        </span>
+                      </span>
+                      <span className="font-numeric-metric text-salary-emerald font-bold shrink-0">
+                        {moneyShort(r.median)} Median
                       </span>
                     </div>
 
@@ -424,14 +546,14 @@ const SalariesInsights = () => {
                     <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-surface-container">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
-                        style={{ width: `${(r.median / 160000) * 100}%` }}
+                        style={{ width: `${clampPercent((r.median / roleScale) * 100)}%` }}
                       />
                     </div>
 
                     <div className="flex items-center justify-between text-[11px] text-text-muted font-body-sm">
-                      <span>25%: GH₵ {(r.p25 / 1000).toFixed(0)}k</span>
-                      <span>75%: GH₵ {(r.p75 / 1000).toFixed(0)}k</span>
-                      <span>Top 10%: GH₵ {(r.p90 / 1000).toFixed(0)}k</span>
+                      <span>25%: {moneyShort(r.p25)}</span>
+                      <span>75%: {moneyShort(r.p75)}</span>
+                      <span>Top 10%: {moneyShort(r.p90)}</span>
                     </div>
                   </div>
                 ))}
@@ -445,34 +567,44 @@ const SalariesInsights = () => {
                   High-Demand Skill Premiums
                 </h3>
                 <p className="font-body-sm text-text-muted">
-                  Additional compensation uplift observed when specialized
+                  Median pay of adverts asking for a skill, compared with all adverts
                 </p>
               </div>
 
               <div className="flex flex-col gap-2">
-                {skillsPremium.length === 0 && !isLoading && (
-                  <p className="font-body-md text-text-muted text-center py-4">No skill premiums available yet.</p>
+                {!insights && isLoading &&
+                  [0, 1, 2].map((row) => (
+                    <div key={row} className="h-[66px] animate-pulse rounded-2xl bg-surface-container" />
+                  ))}
+                {hasFigures && skills.length === 0 && (
+                  <p className="font-body-md text-text-muted text-center py-4">
+                    No skill appears in {minSample}+ adverts with pay {scope} yet.
+                  </p>
                 )}
-                {skillsPremium.map((s) => (
+                {skills.map((s) => (
                   <div
-                    key={s.skill || s._id}
+                    key={s.skill}
                     className="group flex items-center justify-between rounded-2xl border border-border-default bg-surface-container-low p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-salary-emerald/30 hover:bg-salary-surface hover:shadow-sm"
                   >
                     <div>
-                      <h4 className="font-label-md font-bold text-on-surface">
+                      <h4 className="font-label-md font-bold text-on-surface capitalize">
                         {s.skill}
                       </h4>
                       <p className="font-body-sm text-text-muted text-[12px]">
-                        {s.reason}
+                        Asked for in {s.adverts} adverts · median {moneyShort(s.median)}
                       </p>
                     </div>
 
                     <div className="flex flex-col items-end shrink-0 ml-2">
-                      <span className="font-numeric-metric text-salary-emerald font-bold text-[15px]">
-                        {s.premium}
+                      <span
+                        className={`font-numeric-metric font-bold text-[15px] ${
+                          s.premium > 0 ? "text-salary-emerald" : "text-text-secondary"
+                        }`}
+                      >
+                        {signed(s.premium)}
                       </span>
                       <span className="text-[10px] font-label-caps uppercase text-text-muted">
-                        {s.demand} Demand
+                        Pay Uplift
                       </span>
                     </div>
                   </div>
@@ -506,7 +638,7 @@ const SalariesInsights = () => {
                   Anonymous Salary Disclosure
                 </h3>
                 <p className="font-body-sm text-text-secondary">
-                  100% encrypted and aggregated to help all workers make informed decisions
+                  Stored without your name or account. Submissions join these figures once verified.
                 </p>
               </div>
             </div>
@@ -528,14 +660,17 @@ const SalariesInsights = () => {
 
               <div className="flex flex-col gap-1">
                 <label className="font-label-caps uppercase text-text-muted">
-                  Monthly Base Compensation (GH₵)
+                  Monthly Base Pay (GH₵)
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   required
+                  min="1"
+                  step="1"
+                  inputMode="numeric"
                   value={subComp}
                   onChange={(e) => setSubComp(e.target.value)}
-                  placeholder="e.g. GH₵ 65,000 / month"
+                  placeholder="e.g. 6500"
                   className="p-2.5 rounded-xl bg-surface-container-low border border-border-default font-body-sm text-on-surface focus:outline-none"
                 />
               </div>

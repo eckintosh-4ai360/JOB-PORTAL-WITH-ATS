@@ -1055,6 +1055,12 @@ const hydrate = async (ranked) => {
 
 module.exports = {
     searchJobs,
+    // Shared with salary insights, so a salary figure for "Accra" or "Hybrid"
+    // is drawn from the same adverts job search files under that label.
+    makeParams,
+    locationPatterns,
+    WORK_MODEL_BUCKET,
+    INDUSTRY_BUCKET,
     jobDocument,
     jobDocumentIndexed,
     EXPANSION_WEIGHTS,

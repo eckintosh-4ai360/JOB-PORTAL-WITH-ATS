@@ -151,6 +151,7 @@ export const API_PATHS = {
 
   SALARIES: {
     GET_BENCHMARKS: "/api/salaries/benchmarks",
+    GET_INSIGHTS: "/api/salaries/insights",
     GET_SKILLS: "/api/salaries/skills",
     GET_SUBMISSIONS: "/api/salaries/submissions",
     SUBMIT: "/api/salaries/submit",

@@ -1,5 +1,7 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
+const { computeSalaryInsights } = require("../services/salaryInsightsService");
+const { SENIORITY_LEVELS, INDUSTRIES } = require("../utils/searchLexicon");
 
 // @desc    Get all salary benchmarks (market data)
 // @route   GET /api/salaries/benchmarks
@@ -16,6 +18,31 @@ const getSalaryBenchmarks = async (req, res) => {
         });
     } catch (error) {
         console.error("Error fetching salary benchmarks:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+// @desc    Salary insights computed from the pay published on job adverts
+// @route   GET /api/salaries/insights?role=&location=&seniority=&industry=
+// @access  Public
+const getSalaryInsights = async (req, res) => {
+    try {
+        const text = (value, max) => (typeof value === "string" ? value.trim().slice(0, max) : "");
+        const seniority = text(req.query.seniority, 20);
+        const industry = text(req.query.industry, 30);
+
+        const insights = await computeSalaryInsights({
+            role: text(req.query.role, 80),
+            location: text(req.query.location, 60),
+            // Anything outside the lexicon would silently match nothing, so it
+            // is dropped rather than turned into an empty result.
+            seniority: SENIORITY_LEVELS.some((level) => level.key === seniority) ? seniority : "",
+            industry: INDUSTRIES.some((entry) => entry.key === industry) ? industry : "",
+        });
+
+        res.status(200).json(insights);
+    } catch (error) {
+        console.error("Error computing salary insights:", error);
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
@@ -91,6 +118,7 @@ const submitSalary = async (req, res) => {
 
 module.exports = {
     getSalaryBenchmarks,
+    getSalaryInsights,
     getSkillPremiums,
     getSalarySubmissions,
     submitSalary,
