@@ -7,6 +7,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const canPostJobs = user?.role === "employer" || user?.role === "admin";
   const needsCompanySetup =
     user?.role === "employer" && user?.employerOnboardingComplete === false;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -67,9 +68,7 @@ const Navbar = () => {
   const handlePostJob = () => {
     if (isAuthenticated && needsCompanySetup) {
       navigate("/company-setup");
-    } else if (isAuthenticated && user?.role === "employer") {
-      navigate("/post-job");
-    } else if (isAuthenticated) {
+    } else if (isAuthenticated && canPostJobs) {
       navigate("/post-job");
     } else {
       navigate("/login", { state: { from: { pathname: "/post-job" } } });
@@ -336,19 +335,21 @@ const Navbar = () => {
             </Link>
           )}
 
-          {/* Post a Job CTA */}
-          <button
-            onClick={handlePostJob}
-            type="button"
-            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#3d197f] to-[#6b35c6] px-3.5 py-2 text-sm font-semibold whitespace-nowrap text-white shadow-[0_5px_12px_rgba(72,35,154,0.28)] transition-all hover:brightness-110 active:scale-[0.98] sm:px-4"
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              {needsCompanySetup ? "checklist" : "add_circle"}
-            </span>
-            <span className="whitespace-nowrap">
-              {needsCompanySetup ? "Finish setup" : "Post a Job"}
-            </span>
-          </button>
+          {/* Visitors can start the employer sign-in flow; candidates cannot post jobs. */}
+          {(!isAuthenticated || canPostJobs) && (
+            <button
+              onClick={handlePostJob}
+              type="button"
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#3d197f] to-[#6b35c6] px-3.5 py-2 text-sm font-semibold whitespace-nowrap text-white shadow-[0_5px_12px_rgba(72,35,154,0.28)] transition-all hover:brightness-110 active:scale-[0.98] sm:px-4"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {needsCompanySetup ? "checklist" : "add_circle"}
+              </span>
+              <span className="whitespace-nowrap">
+                {needsCompanySetup ? "Finish setup" : "Post a Job"}
+              </span>
+            </button>
+          )}
 
           {/* Mobile hamburger menu toggle */}
           <button
