@@ -424,7 +424,7 @@ const JobPostingForm = () => {
           </div>
         </section>
 
-        {/* ================= PRIMARY WORKSPACE: FORM & LIVE PREVIEW ================= */}
+        {/*  PRIMARY WORKSPACE: FORM & LIVE PREVIEW  */}
         <section className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin mt-space-lg w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
             {/* LEFT COLUMN: Main Stepper Form (col-span-8) */}

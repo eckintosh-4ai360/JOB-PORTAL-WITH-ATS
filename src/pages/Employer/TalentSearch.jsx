@@ -9,16 +9,6 @@ import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 
-/**
- * Talent Search.
- *
- * Describe the person you need in a sentence and get candidates back. Who can
- * be found is limited on the server: this employer's own applicants, and —
- * for verified companies — candidates who chose to be discoverable. Results
- * carry no contact details; reaching someone new goes through an invitation
- * the platform emails on the employer's behalf.
- */
-
 const SCOPES = [
   { id: "all", label: "Everyone" },
   { id: "applicants", label: "My applicants" },

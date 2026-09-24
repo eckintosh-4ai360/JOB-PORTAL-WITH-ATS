@@ -178,7 +178,7 @@ const DashboardLayout = ({ children, activeMenu }) => {
         />
         {/* Top Branding Section */}
         <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-          <div className={`relative flex shrink-0 items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
+          <div className={`relative flex shrink-0 items-center ${isCollapsed ? "flex-col justify-center gap-2" : "justify-between"}`}>
             <Link to="/" className={`flex min-w-0 items-center group ${isCollapsed ? "justify-center" : "space-x-3"}`} title={isCollapsed ? (isAdmin ? "SPG Admin" : "SPG Portal") : undefined}>
               <div className={`h-9 w-9 flex items-center justify-center shadow-md transition-transform group-hover:scale-105 active:scale-100 ${
                 isAdmin
@@ -213,7 +213,7 @@ const DashboardLayout = ({ children, activeMenu }) => {
                   isAdmin
                     ? "bg-violet-100/70 text-violet-600 hover:bg-violet-200 dark:bg-slate-800/80 dark:text-violet-300 dark:hover:bg-slate-700"
                     : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
-                } ${isCollapsed ? "absolute right-0 top-1/2 -translate-y-1/2" : ""}`}
+                }`}
               >
                 {isCollapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
               </button>

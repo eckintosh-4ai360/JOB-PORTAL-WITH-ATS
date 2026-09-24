@@ -16,12 +16,6 @@ import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { toApiCriteria, loadCriteria, saveCriteria } from "../../utils/shortlistCriteria";
 
-/**
- * Shortlisting. Each job has a private shortlist the employer builds by hand
- * or from suggestions — applicants checked against criteria the employer sets,
- * with every check shown. Candidates are told nothing until the employer moves
- * shortlisted people to a stage of their pipeline.
- */
 
 const RESULT_STYLES = {
   met: { icon: Check, className: "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30" },
@@ -77,7 +71,6 @@ const ShortlistKpiCard = ({ label, value, detail, icon: Icon, tone, children }) 
   );
 };
 
-/** Mirrors notifyCandidate on the API: what a move shows the candidate, and whether it emails. */
 const candidateEffect = (phases, fromStage, toStage) => {
   const phaseLabel = (stage) => phases.find((phase) => phase.key === stage?.phase)?.label || "Application received";
   const outcome = { offer: "Offer made", hired: "Hired" }[toStage?.type];
@@ -85,7 +78,6 @@ const candidateEffect = (phases, fromStage, toStage) => {
   return { sees: outcome ? `${phaseLabel(toStage)} · ${outcome}` : phaseLabel(toStage), emails };
 };
 
-/** Whether a candidate can move forward to a stage — mirrors canTransition on the API. */
 const canAdvance = (stages, candidate, target) => {
   if (candidate.stage.type === "rejected" || candidate.stage.type === "hired") return "settled";
   const from = stages.findIndex((stage) => stage.id === candidate.stage.id);
@@ -856,7 +848,7 @@ const Shortlisting = () => {
                 </p>
               </div>
             ) : (
-              /* ---------------- Finding candidates ---------------- */
+              /*  Finding candidates  */
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1 dark:border-gray-700 dark:bg-gray-900">

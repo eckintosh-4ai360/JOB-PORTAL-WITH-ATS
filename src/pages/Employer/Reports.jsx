@@ -11,11 +11,7 @@ import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { REPORT_FORMATS, cleanParams, downloadReport } from "../../utils/reportDownload";
 
-/**
- * Reports: pick one, filter it, check the preview, and download it as a PDF,
- * an Excel workbook or a CSV file. Every file is built on the server from the
- * same data as the preview.
- */
+
 
 const REPORT_ICONS = {
   applicants: Users,
@@ -80,8 +76,7 @@ const SUMMARY_CARD_STYLES = [
   { accent: "bg-amber-500", icon: "bg-amber-100 text-amber-600", value: "text-amber-700", glow: "bg-amber-300/25", Icon: Star },
 ];
 
-// A PDF lists at most this many rows (utils/reportWriters on the API).
-const PDF_MAX_ROWS = 1000;
+ const PDF_MAX_ROWS = 1000;
 
 const EMPTY_FILTERS = { jobId: "", from: "", to: "", status: "", shortlisted: false };
 
@@ -133,8 +128,7 @@ const Reports = () => {
   const supports = (key) => Boolean(report?.filters?.includes(key));
   const reportReady = Boolean(report);
 
-  // Only the filters this report reads are sent — and so named in its file.
-  const params = cleanParams({
+   const params = cleanParams({
     jobId: supports("jobId") ? filters.jobId : "",
     from: supports("from") ? filters.from : "",
     to: supports("to") ? filters.to : "",
@@ -142,9 +136,6 @@ const Reports = () => {
     shortlisted: supports("shortlisted") && filters.shortlisted ? "true" : "",
   });
   const paramsKey = JSON.stringify(params);
-
-  // The preview follows the report and its filters, after a short pause so
-  // typing a date does not build a report per keystroke.
   useEffect(() => {
     if (!reportReady) return undefined;
     const timer = setTimeout(() => {
