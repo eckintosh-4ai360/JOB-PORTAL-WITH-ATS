@@ -8,6 +8,7 @@ import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { resolveFileUrl, downloadFileUrl } from "../../utils/fileUrl";
+import { COMPANY_STAGES, isCompanyStage } from "../../utils/companyStages";
 import {
   StatTile, StatePill, FilterTabs, SearchBox, EmptyRow, DetailRow, Pagination,
 } from "./components/AdminUI";
@@ -43,6 +44,8 @@ const Companies = () => {
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [note, setNote] = useState("");
   const [isDeciding, setIsDeciding] = useState(false);
+  const [stageDraft, setStageDraft] = useState("");
+  const [isUpdatingStage, setIsUpdatingStage] = useState(false);
 
   const loadOverview = useCallback(async () => {
     try {
@@ -86,10 +89,12 @@ const Companies = () => {
   const openCompany = async (company) => {
     setSelected(company);
     setNote("");
+    setStageDraft(isCompanyStage(company.stage) ? company.stage : "");
     setIsLoadingDetail(true);
     try {
       const res = await axiosInstance.get(API_PATHS.ADMIN.GET_COMPANY(company.id));
       setSelected(res.data.company);
+      setStageDraft(isCompanyStage(res.data.company?.stage) ? res.data.company.stage : "");
     } catch (err) {
       toast.error(err.response?.data?.message || "Could not load that company.");
     } finally {
@@ -137,6 +142,29 @@ const Companies = () => {
       toast.error(err.response?.data?.message || "Could not save that decision.");
     } finally {
       setIsDeciding(false);
+    }
+  };
+
+  const saveCompanyStage = async () => {
+    if (!selected) return;
+    if (!isCompanyStage(stageDraft)) {
+      toast.error("Choose a valid company stage before saving.");
+      return;
+    }
+
+    setIsUpdatingStage(true);
+    try {
+      const res = await axiosInstance.patch(API_PATHS.ADMIN.UPDATE_COMPANY_STAGE(selected.id), {
+        stage: stageDraft,
+      });
+      toast.success(res.data.message);
+      setSelected(res.data.company);
+      setStageDraft(res.data.company.stage);
+      loadCompanies();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not update the company stage.");
+    } finally {
+      setIsUpdatingStage(false);
     }
   };
 
@@ -406,6 +434,7 @@ const Companies = () => {
                     <DetailRow label="Organisation type" value={selected.organizationType} />
                     <DetailRow label="Registration number / TIN" value={selected.registrationNumber} mono />
                     <DetailRow label="Industry" value={selected.industry} />
+                    <DetailRow label="Company stage" value={selected.stage || "Not set"} />
                     <DetailRow label="Headquarters" value={selected.hq} />
                     <DetailRow label="Employees" value={selected.employees} />
                     <DetailRow
@@ -414,6 +443,37 @@ const Companies = () => {
                     />
                     <DetailRow label="Trust state" value={selected.trustState} />
                   </div>
+
+                  <section className="mt-4 rounded-2xl border border-violet-100 bg-violet-50/60 p-4 dark:border-violet-500/20 dark:bg-violet-500/10">
+                    <p className="text-[11px] font-extrabold uppercase tracking-wider text-violet-700 dark:text-violet-300">
+                      Company stage review
+                    </p>
+                    <p className="mt-1 text-xs text-slate-600 dark:text-gray-300">
+                      Confirm the employer&apos;s selected maturity stage or correct it. This controls the public job-search filter.
+                    </p>
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                      <select
+                        value={stageDraft}
+                        onChange={(event) => setStageDraft(event.target.value)}
+                        disabled={isUpdatingStage || isLoadingDetail}
+                        className="min-w-0 flex-1 rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20 disabled:opacity-60 dark:border-violet-500/30 dark:bg-gray-900 dark:text-gray-100"
+                      >
+                        <option value="">Select company stage</option>
+                        {COMPANY_STAGES.map((stage) => (
+                          <option key={stage.value} value={stage.value}>{stage.label}</option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={saveCompanyStage}
+                        disabled={isUpdatingStage || isLoadingDetail || stageDraft === selected.stage}
+                        className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isUpdatingStage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                        Save stage
+                      </button>
+                    </div>
+                  </section>
 
                   <h3 className="mt-4 text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                     Hiring contact

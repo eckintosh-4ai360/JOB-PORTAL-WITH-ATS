@@ -5,9 +5,11 @@ const {
     sendCompanyApprovedEmail,
     sendCompanyRejectedEmail,
 } = require("../utils/emailService");
+const { COMPANY_STAGES } = require("../utils/searchLexicon");
 
 // pending = submitted and queued, in_review = a reviewer has picked it up.
 const APPROVAL_STATES = ["pending", "in_review", "approved", "rejected"];
+const COMPANY_STAGE_LABELS = new Set(COMPANY_STAGES.map((stage) => stage.label));
 
 // The hiring contact is who asked to be reviewed, but fall back to the account
 // holder so a company never moves state without hearing about it.
@@ -297,6 +299,35 @@ const decideCompany = async (req, res) => {
     }
 };
 
+// @desc    Correct a company's self-selected maturity stage during review
+// @route   PATCH /api/admin/companies/:id/stage
+// @access  Private (Admin only)
+const updateCompanyStage = async (req, res) => {
+    try {
+        const stage = typeof req.body?.stage === "string" ? req.body.stage.trim() : "";
+        if (!COMPANY_STAGE_LABELS.has(stage)) {
+            return res.status(422).json({ message: "Choose a valid company stage." });
+        }
+
+        const company = await prisma.company.update({
+            where: { id: req.params.id },
+            data: { stage },
+            select: companyDetailSelect,
+        });
+
+        res.status(200).json({
+            message: `${company.name}'s company stage was updated.`,
+            company: toClient(company),
+        });
+    } catch (error) {
+        if (error.code === "P2025") {
+            return res.status(404).json({ message: "Company not found" });
+        }
+        console.error(error);
+        res.status(500).json({ message: "Could not update the company stage." });
+    }
+};
+
 // @desc    Every account on the platform
 // @route   GET /api/admin/accounts
 // @access  Private (Admin only)
@@ -408,6 +439,7 @@ module.exports = {
     getCompany,
     startCompanyReview,
     decideCompany,
+    updateCompanyStage,
     listAccounts,
     listJobs,
 };

@@ -7,6 +7,7 @@ const {
     getCompany,
     startCompanyReview,
     decideCompany,
+    updateCompanyStage,
     listAccounts,
     listJobs,
 } = require("../controllers/adminController");
@@ -28,6 +29,7 @@ router.get("/companies", listCompanies);
 router.get("/companies/:id", getCompany);
 router.post("/companies/:id/review", startCompanyReview);
 router.post("/companies/:id/decision", decideCompany);
+router.patch("/companies/:id/stage", updateCompanyStage);
 
 router.get("/accounts", listAccounts);
 
