@@ -26,6 +26,7 @@ import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import uploadImage from "../../utils/uploadingImage";
 import { resolveFileUrl } from "../../utils/fileUrl";
+import { COMPANY_STAGES, isCompanyStage } from "../../utils/companyStages";
 import { useAuth } from "../../context/AuthContext";
 
 const STEPS = [
@@ -117,6 +118,7 @@ const EMPTY_FORM = {
   registrationDocName: "",
   industry: "",
   employees: "",
+  stage: "",
   hq: "",
   website: "",
   logo: "",
@@ -133,7 +135,7 @@ const EMPTY_FORM = {
 };
 
 const STEP_FIELDS = [
-  ["name", "legalName", "organizationType", "registrationNumber", "registrationDocUrl", "industry", "employees", "hq"],
+  ["name", "legalName", "organizationType", "registrationNumber", "registrationDocUrl", "industry", "employees", "stage", "hq"],
   ["logo", "description", "website"],
   ["contactName", "contactTitle", "contactEmail", "contactPhone", "stack", "perks"],
   ["authorityConfirmed", "termsAccepted", "fairHiringAcknowledged"],
@@ -241,6 +243,7 @@ const EmployerSetup = () => {
           registrationDocName: profile.registrationDocName || "",
           industry: profile.industry || "",
           employees: profile.employees || "",
+          stage: isCompanyStage(profile.stage) ? profile.stage : "",
           hq: profile.hq || "",
           website: profile.website || "",
           logo: profile.logo || user?.companyLogo || "",
@@ -303,6 +306,7 @@ const EmployerSetup = () => {
       if (!clean(form.registrationDocUrl)) nextErrors.registrationDocUrl = "Upload your business registration certificate.";
       if (!form.industry) nextErrors.industry = "Select an industry.";
       if (!form.employees) nextErrors.employees = "Select a company size.";
+      if (!form.stage) nextErrors.stage = "Select your company's current stage.";
       if (!form.hq || !form.hq.toLowerCase().includes("ghana")) nextErrors.hq = "Select a Ghana-based location.";
     }
 
@@ -587,6 +591,17 @@ const EmployerSetup = () => {
             {EMPLOYEE_BANDS.map((band) => <option key={band} value={band}>{band} employees</option>)}
           </select>
           <FieldError message={errors.employees} />
+        </div>
+        <div>
+          <FieldLabel required>Company stage</FieldLabel>
+          <select value={form.stage} onChange={(event) => updateField("stage", event.target.value)} className={inputClass("stage")}>
+            <option value="">Select company stage</option>
+            {COMPANY_STAGES.map((stage) => <option key={stage.value} value={stage.value}>{stage.label}</option>)}
+          </select>
+          <p className="mt-1.5 text-xs text-slate-500 dark:text-gray-400">
+            Choose the company&apos;s current funding or maturity stage. A platform reviewer can correct it if needed.
+          </p>
+          <FieldError message={errors.stage} />
         </div>
         <div className="md:col-span-2">
           <FieldLabel required>Primary hiring location</FieldLabel>

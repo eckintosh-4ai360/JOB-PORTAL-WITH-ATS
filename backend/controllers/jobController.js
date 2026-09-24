@@ -110,7 +110,9 @@ const createJob = async (req, res) => {
                         logo: effectiveLogo,
                         description: req.user.companyDescription || `${companyDisplayName} is hiring on SPG Talent Network.`,
                         hq: location || "Accra, Ghana",
-                        stage: "Growth",
+                        // A maturity stage must be selected by the employer or
+                        // confirmed by an admin; do not invent one for a legacy profile.
+                        stage: null,
                         industry: category || "General Services",
                         employees: "20-100",
                         verified: false,
@@ -236,7 +238,7 @@ const getCompanies = async (req, res) => {
                 logo: emp.companyLogo || "",
                 companyLogo: emp.companyLogo || "",
                 hq: "Ghana / Remote",
-                stage: "Growth / Enterprise",
+                stage: "Not specified",
                 industry: "General Services",
                 employees: "20-500",
                 openRoles: emp.postedJobs.length,

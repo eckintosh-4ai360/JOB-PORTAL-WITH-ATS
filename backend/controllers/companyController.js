@@ -2,6 +2,7 @@ const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
 const fraud = require("../services/fraudModerationService");
 const { sendCompanySubmittedEmail } = require("../utils/emailService");
+const { COMPANY_STAGES } = require("../utils/searchLexicon");
 
 const ORGANIZATION_TYPES = new Set([
     "Sole proprietorship",
@@ -23,6 +24,8 @@ const EMPLOYEE_BANDS = new Set([
     "1,001-5,000",
     "5,001+",
 ]);
+
+const COMPANY_STAGE_LABELS = new Set(COMPANY_STAGES.map((stage) => stage.label));
 
 // The jobs a candidate can actually see, matching the public job listing. A
 // removed or moderation-hidden advert must not count as an open role.
@@ -60,6 +63,7 @@ const validateCompanySetup = (data) => {
     const legalName = text(data.legalName);
     const description = text(data.description);
     const hq = text(data.hq);
+    const stage = text(data.stage);
     const contactName = text(data.contactName);
     const contactTitle = text(data.contactTitle);
     const contactEmail = text(data.contactEmail);
@@ -87,6 +91,9 @@ const validateCompanySetup = (data) => {
     }
     if (!EMPLOYEE_BANDS.has(data.employees)) {
         errors.employees = "Choose your company size.";
+    }
+    if (!COMPANY_STAGE_LABELS.has(stage)) {
+        errors.stage = "Choose your company's current stage.";
     }
     if (!hq || !hq.toLowerCase().includes("ghana")) {
         errors.hq = "Choose a Ghana-based office or remote location.";
@@ -230,7 +237,7 @@ const getCompanies = async (req, res) => {
                 companyLogo: emp.companyLogo || "",
                 cover: null,
                 hq: "Ghana / Remote",
-                stage: "Growth",
+                stage: "Not specified",
                 industry: "General Services",
                 employees: "20-100",
                 website: "",
@@ -256,7 +263,7 @@ const getCompanies = async (req, res) => {
             companyLogo: comp.logo || "",
             cover: comp.cover || null,
             hq: comp.hq || "Ghana (Remote)",
-            stage: comp.stage || "Growth",
+            stage: comp.stage || "Not specified",
             industry: comp.industry || "General Services",
             employees: comp.employees || "10-50",
             website: comp.website || "",
@@ -318,7 +325,7 @@ const getCompanyById = async (req, res) => {
                 companyLogo: user.companyLogo || "",
                 cover: null,
                 hq: "Ghana / Remote",
-                stage: "Growth",
+                stage: "Not specified",
                 industry: "General Services",
                 employees: "20-100",
                 website: "",
@@ -362,7 +369,7 @@ const getCompanyById = async (req, res) => {
             companyLogo: company.logo || "",
             cover: company.cover || null,
             hq: company.hq || "Ghana (Remote)",
-            stage: company.stage || "Growth",
+            stage: company.stage || "Not specified",
             industry: company.industry || "General Services",
             employees: company.employees || "10-50",
             website: company.website || "",
@@ -481,12 +488,21 @@ const updateMyCompanyProfile = async (req, res) => {
         } = req.body;
 
         const isCompletingSetup = completeSetup === true;
+        const requestedStage = typeof stage === "string" ? stage.trim() : "";
+        if (stage !== undefined && requestedStage && !COMPANY_STAGE_LABELS.has(requestedStage)) {
+            return res.status(422).json({
+                message: "Choose a valid company stage.",
+                errors: { stage: "Choose your company's current stage." },
+            });
+        }
+
         if (isCompletingSetup) {
             const errors = validateCompanySetup({
                 name,
                 logo,
                 description,
                 hq,
+                stage,
                 employees,
                 industry,
                 website,
