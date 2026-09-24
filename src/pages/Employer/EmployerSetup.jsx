@@ -307,7 +307,7 @@ const EmployerSetup = () => {
       if (!form.industry) nextErrors.industry = "Select an industry.";
       if (!form.employees) nextErrors.employees = "Select a company size.";
       if (!form.stage) nextErrors.stage = "Select your company's current stage.";
-      if (!form.hq || !form.hq.toLowerCase().includes("ghana")) nextErrors.hq = "Select a Ghana-based location.";
+      if (clean(form.hq).length < 2) nextErrors.hq = "Enter your primary office or hiring location.";
     }
 
     if (targetStep === 1) {
@@ -607,11 +607,21 @@ const EmployerSetup = () => {
           <FieldLabel required>Primary hiring location</FieldLabel>
           <div className="relative">
             <MapPin className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400 dark:text-gray-500" />
-            <select value={form.hq} onChange={(event) => updateField("hq", event.target.value)} className={`${inputClass("hq")} pl-10`}>
-              <option value="">Select your Ghana office or hiring location</option>
-              {GHANA_LOCATIONS.map((location) => <option key={location} value={location}>{location}</option>)}
-            </select>
+            <input
+              list="company-location-suggestions"
+              value={form.hq}
+              onChange={(event) => updateField("hq", event.target.value)}
+              placeholder="Type your office or hiring location"
+              aria-describedby="company-location-help"
+              className={`${inputClass("hq")} pl-10`}
+            />
+            <datalist id="company-location-suggestions">
+              {GHANA_LOCATIONS.map((location) => <option key={location} value={location} />)}
+            </datalist>
           </div>
+          <p id="company-location-help" className="mt-1.5 text-xs text-slate-500 dark:text-gray-400">
+            Type any location, or choose one of the suggested Ghana locations.
+          </p>
           <FieldError message={errors.hq} />
         </div>
       </div>

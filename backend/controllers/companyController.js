@@ -95,8 +95,8 @@ const validateCompanySetup = (data) => {
     if (!COMPANY_STAGE_LABELS.has(stage)) {
         errors.stage = "Choose your company's current stage.";
     }
-    if (!hq || !hq.toLowerCase().includes("ghana")) {
-        errors.hq = "Choose a Ghana-based office or remote location.";
+    if (hq.length < 2) {
+        errors.hq = "Enter your primary office or hiring location.";
     }
     if (!text(data.logo)) {
         errors.logo = "Upload or provide a link to your company logo.";
