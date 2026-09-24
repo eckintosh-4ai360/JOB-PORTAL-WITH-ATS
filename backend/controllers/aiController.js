@@ -142,7 +142,7 @@ const loadJobContext = async (jobId) => {
 /**
  * @desc   Analyse a resume — ATS score, quality score, grammar, missing skills, suggestions
  * @route  POST /api/ai/resume/analyze
- * @access Public (guests get an unsaved analysis; signed-in users get it stored)
+ * @access Private
  */
 const analyzeResumeHandler = async (req, res) => {
     try {
@@ -161,15 +161,6 @@ const analyzeResumeHandler = async (req, res) => {
             targetRole: targetRole || (job ? job.title : ""),
             jobContext,
         });
-
-        // Guests get the analysis but nothing is persisted.
-        if (!req.user?._id) {
-            return res.status(200).json({
-                analysis: { ...analysis, fileName: source.fileName },
-                saved: false,
-                guest: true,
-            });
-        }
 
         const resumeHash = matchService.sha(source.text);
 

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 /**
  * Resume input panel.
@@ -22,7 +23,9 @@ const ResumeUploadPanel = ({
   const [pastedText, setPastedText] = useState("");
   const [selectedDocId, setSelectedDocId] = useState("");
   const [dragActive, setDragActive] = useState(false);
+  const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const fileInputRef = useRef(null);
+  const location = useLocation();
 
   const resumeDocuments = documents.filter(
     (doc) => doc.category === "Resume" || /\.(pdf|docx?|txt)$/i.test(doc.name || "")
@@ -30,7 +33,27 @@ const ResumeUploadPanel = ({
 
   const submitFile = (file) => {
     if (!file) return;
+    if (!isAuthenticated) {
+      setAuthPromptOpen(true);
+      return;
+    }
     onAnalyze({ file });
+  };
+
+  const requestFileSelection = () => {
+    if (!isAuthenticated) {
+      setAuthPromptOpen(true);
+      return;
+    }
+    fileInputRef.current?.click();
+  };
+
+  const analyzeText = () => {
+    if (!isAuthenticated) {
+      setAuthPromptOpen(true);
+      return;
+    }
+    onAnalyze({ resumeText: pastedText });
   };
 
   const handleDrop = (event) => {
@@ -137,7 +160,7 @@ const ResumeUploadPanel = ({
           />
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={requestFileSelection}
             disabled={isAnalyzing}
             className="mt-1 rounded-xl bg-primary px-space-md py-2.5 font-label-md font-bold text-on-primary transition-colors hover:bg-brand-indigo-dark disabled:opacity-60"
           >
@@ -162,7 +185,7 @@ const ResumeUploadPanel = ({
             </span>
             <button
               type="button"
-              onClick={() => onAnalyze({ resumeText: pastedText })}
+              onClick={analyzeText}
               disabled={isAnalyzing || pastedText.trim().split(/\s+/).length < 40}
               className="rounded-xl bg-primary px-space-md py-2.5 font-label-md font-bold text-on-primary transition-colors hover:bg-brand-indigo-dark disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -220,10 +243,64 @@ const ResumeUploadPanel = ({
             info
           </span>
           <span>
-            You can analyse a resume without an account — nothing is saved. Sign in to store your
-            results, track your score over time, and see matched jobs.
+            Sign in or create an account to analyse your resume, save your report, and see matched
+            jobs.
           </span>
         </p>
+      )}
+
+      {authPromptOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-space-md"
+          onMouseDown={() => setAuthPromptOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="resume-auth-title"
+            className="w-full max-w-md rounded-3xl bg-surface-card p-space-lg shadow-2xl"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-space-sm">
+              <div>
+                <span className="material-symbols-outlined text-[32px] text-primary" aria-hidden="true">
+                  lock
+                </span>
+                <h3 id="resume-auth-title" className="mt-2 font-headline-sm font-bold text-text-primary">
+                  Sign in to analyse your resume
+                </h3>
+              </div>
+              <button
+                type="button"
+                aria-label="Close sign-in prompt"
+                onClick={() => setAuthPromptOpen(false)}
+                className="rounded-lg p-1 text-text-muted transition-colors hover:bg-surface-container hover:text-text-primary"
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">close</span>
+              </button>
+            </div>
+            <p className="mt-space-sm font-body-md text-text-secondary">
+              Create an account or sign in before uploading a file. Your analysis and job matches
+              will then be saved to your account.
+            </p>
+            <div className="mt-space-md flex flex-wrap gap-space-sm">
+              <Link
+                to="/signup"
+                state={{ from: location }}
+                className="rounded-xl bg-primary px-space-md py-2.5 font-label-md font-bold text-on-primary transition-colors hover:bg-brand-indigo-dark"
+              >
+                Create account
+              </Link>
+              <Link
+                to="/login"
+                state={{ from: location }}
+                className="rounded-xl border border-border-default bg-surface-container-low px-space-md py-2.5 font-label-md font-bold text-primary transition-colors hover:bg-surface-container"
+              >
+                Sign in
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -27,9 +27,8 @@ import {
 /**
  * AI resume analyzer and job matching page.
  *
- * Public: a guest can analyse a resume and see the full report, but nothing is
- * stored and no job matches are produced. Signed in: the analysis is saved, the
- * parsed profile feeds the matching engine, and every open role is scored.
+ * Visitors can preview the tool, while signed-in users can upload a resume,
+ * save the resulting analysis, and receive job matches.
  */
 const TABS = [
   { id: "analysis", label: "Resume report", icon: "fact_check" },
@@ -140,6 +139,11 @@ const ResumeAnalyzer = () => {
   // --- Analysis -----------------------------------------------------------
 
   const handleAnalyze = async ({ file, resumeText, documentId, useSavedResume } = {}) => {
+    if (!isAuthenticated) {
+      toast.error("Sign in or create an account before analysing a resume.");
+      return;
+    }
+
     setIsAnalyzing(true);
     const toastId = toast.loading("Reading your resume…");
 
@@ -285,8 +289,8 @@ const ResumeAnalyzer = () => {
                   {
                     icon: "lock",
                     tone: "text-secondary bg-surface-container",
-                    metric: "Nothing stored",
-                    label: "When you are not signed in",
+                    metric: "Sign-in required",
+                    label: "To start an analysis",
                   },
                 ].map((stat) => (
                   <div

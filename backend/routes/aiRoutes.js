@@ -21,7 +21,7 @@ const {
 } = require("../controllers/employerAiController");
 const { getCareerPaths, createCareerPaths } = require("../controllers/careerController");
 
-const { protect, optionalAuth } = require("../middlewares/authMiddleware");
+const { protect } = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
 const aiRateLimit = require("../middlewares/aiRateLimit");
 
@@ -30,7 +30,6 @@ const analyzeLimit = aiRateLimit({
     scope: "resume-analyze",
     windowMs: 60 * 60 * 1000,
     max: 20,
-    guestMax: 3, // the public analyzer is the most abusable surface
 });
 const matchLimit = aiRateLimit({ scope: "job-match", windowMs: 60 * 60 * 1000, max: 60 });
 const employerLimit = aiRateLimit({ scope: "applicant-score", windowMs: 60 * 60 * 1000, max: 40 });
@@ -42,9 +41,7 @@ const careerLimit = aiRateLimit({ scope: "career-paths", windowMs: 60 * 60 * 100
 router.get("/status", getAiStatus);
 
 // --- Resume analysis ---
-// Public: guests may analyse a resume (nothing is stored) so the marketing page
-// works before sign-up. optionalAuth means a signed-in user gets it saved.
-router.post("/resume/analyze", optionalAuth, analyzeLimit, upload.single("resume"), analyzeResume);
+router.post("/resume/analyze", protect, analyzeLimit, upload.single("resume"), analyzeResume);
 router.get("/resume/analysis", protect, getLatestAnalysis);
 router.get("/resume/history", protect, getAnalysisHistory);
 
