@@ -14,6 +14,7 @@ const {
     searchJobsHandler,
     suggestHandler,
     searchOptionsHandler,
+    trendingHandler,
 } = require("../controllers/searchController");
 const { protect, optionalAuth } = require("../middlewares/authMiddleware");
 
@@ -24,6 +25,7 @@ const { protect, optionalAuth } = require("../middlewares/authMiddleware");
 router.get("/companies", getCompanies);
 router.get("/search/suggest", suggestHandler);
 router.get("/search/options", searchOptionsHandler);
+router.get("/search/trending", trendingHandler);
 // Signed in, search is ranked with the candidate's own match scores, so the
 // auth is optional rather than required.
 router.get("/search", optionalAuth, searchJobsHandler);

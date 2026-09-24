@@ -35,15 +35,6 @@ const SORT_OPTIONS = [
   { key: "salary", label: "Highest paying" },
 ];
 
-const TRENDING = [
-  "Customer Service",
-  "Registered Nurse",
-  "Remote in Ghana",
-  "Teaching",
-  "Sales Manager",
-  "Software Engineer",
-];
-
 /**
  * Which URL parameter each relaxable filter lives in, so the empty state can
  * offer to drop it. The names on the left are what the search service calls
@@ -94,6 +85,8 @@ const FindJobs = () => {
   const [fetchedSavedJobIds, setSavedJobIds] = useState(EMPTY_SET);
   const [rawMatchScores, setMatchScores] = useState({});
   const [needsResumeAnalysis, setNeedsResumeAnalysis] = useState(false);
+  const [trendingTerms, setTrendingTerms] = useState([]);
+  const [isTrendingLoading, setIsTrendingLoading] = useState(true);
 
   const [applyJob, setApplyJob] = useState(null);
 
@@ -102,6 +95,32 @@ const FindJobs = () => {
 
   const companyFilterName = searchParams.get("companyName") || "";
   const companyFilter = searchParams.get("company") || "";
+
+  // The terms are calculated from current live postings and recent application
+  // activity on the server, so this strip changes as the market changes.
+  useEffect(() => {
+    let cancelled = false;
+
+    axiosInstance
+      .get(API_PATHS.JOBS.TRENDING)
+      .then((response) => {
+        if (cancelled) return;
+        const terms = Array.isArray(response.data?.trending)
+          ? response.data.trending.filter((term) => typeof term === "string" && term.trim())
+          : [];
+        setTrendingTerms(terms.slice(0, 8));
+      })
+      .catch(() => {
+        if (!cancelled) setTrendingTerms([]);
+      })
+      .finally(() => {
+        if (!cancelled) setIsTrendingLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   //   Saved jobs are the candidate's, so they are loaded once per session
   //   rather than with every search.
@@ -277,19 +296,23 @@ const FindJobs = () => {
                     <span className="material-symbols-outlined text-[16px] text-white">trending_up</span>
                     Trending:
                   </span>
-                  {TRENDING.map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => {
-                        setDraft(tag);
-                        commit({ q: tag });
-                      }}
-                      className="rounded-full border border-white/20 bg-white/12 px-space-sm py-1 font-label-md text-white transition-colors hover:bg-white hover:text-[#5927c7] cursor-pointer"
-                    >
-                      {tag}
-                    </button>
-                  ))}
+                  {isTrendingLoading ? (
+                    <span className="font-label-md text-white/75">Loading current searches…</span>
+                  ) : (
+                    trendingTerms.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => {
+                          setDraft(tag);
+                          commit({ q: tag });
+                        }}
+                        className="rounded-full border border-white/20 bg-white/12 px-space-sm py-1 font-label-md text-white transition-colors hover:bg-white hover:text-[#5927c7] cursor-pointer"
+                      >
+                        {tag}
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
             </div>

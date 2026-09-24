@@ -53,6 +53,7 @@ export const API_PATHS = {
     SEARCH: "/api/jobs/search",
     SEARCH_SUGGEST: "/api/jobs/search/suggest",
     SEARCH_OPTIONS: "/api/jobs/search/options",
+    TRENDING: "/api/jobs/search/trending",
 
     GET_COMPANIES: "/api/jobs/companies",
     GET_JOB_BY_ID: (id) => `/api/jobs/${id}`,

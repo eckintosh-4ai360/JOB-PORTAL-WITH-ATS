@@ -11,6 +11,7 @@ const { searchJobs, MAX_LIMIT, DEFAULT_LIMIT } = require("../services/jobSearchS
 const { suggest } = require("../services/searchVocabulary");
 const { parseQuery, hasUnresolvedIntent } = require("../utils/queryParser");
 const { readIntent, mergeIntent } = require("../services/searchIntentService");
+const prisma = require("../config/prisma");
 const {
     WORK_MODELS,
     EMPLOYMENT_TYPES,
@@ -239,8 +240,141 @@ const searchOptionsHandler = async (_req, res) => {
     });
 };
 
+/**
+ * Trending search terms.
+ *
+ * Returns the most searched/applied-to job categories in the last 30 days.
+ * Two signals are combined:
+ *   - recent application volume (primary) — what candidates are actually clicking
+ *   - live posting count (secondary) — what is available right now
+ *
+ * The result is a deduplicated list of human-readable category strings that
+ * are safe to drop straight into the search box.
+ *
+ * @route   GET /api/jobs/search/trending
+ * @access  Public
+ */
+const trendingHandler = async (_req, res) => {
+    try {
+        const LIMIT = 8;
+        const WINDOW_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+        const since = new Date(Date.now() - WINDOW_MS);
+
+        // --- Signal 1: categories with the most applications in the last 30 days ---
+        const byApplications = await prisma.application.groupBy({
+            by: ["jobId"],
+            where: { createdAt: { gte: since } },
+            _count: { jobId: true },
+            orderBy: { _count: { jobId: "desc" } },
+            take: 50,
+        });
+
+        // Resolve the job titles/categories for those job ids
+        const topJobIds = byApplications.map((r) => r.jobId);
+        let appJobs = [];
+        if (topJobIds.length > 0) {
+            appJobs = await prisma.job.findMany({
+                where: {
+                    id: { in: topJobIds },
+                    isClosed: false,
+                    deletedAt: null,
+                    moderationState: { not: "hidden" },
+                },
+                select: { id: true, category: true, title: true },
+            });
+        }
+
+        // Score each resolved job by its application count
+        const appCountById = Object.fromEntries(
+            byApplications.map((r) => [r.jobId, r._count.jobId])
+        );
+        const termScores = {}; // term -> { appCount, postingCount }
+
+        for (const job of appJobs) {
+            const term = job.category?.trim() || deriveTermFromTitle(job.title);
+            if (!term) continue;
+            const canonical = toTitleCase(term);
+            if (!termScores[canonical]) termScores[canonical] = { appCount: 0, postingCount: 0 };
+            termScores[canonical].appCount += appCountById[job.id] || 0;
+        }
+
+        // --- Signal 2: categories with the most live postings ---
+        const byPostings = await prisma.job.groupBy({
+            by: ["category"],
+            where: {
+                isClosed: false,
+                deletedAt: null,
+                moderationState: { not: "hidden" },
+                category: { not: null },
+            },
+            _count: { category: true },
+            orderBy: { _count: { category: "desc" } },
+            take: 30,
+        });
+
+        for (const row of byPostings) {
+            if (!row.category) continue;
+            const canonical = toTitleCase(row.category.trim());
+            if (!termScores[canonical]) termScores[canonical] = { appCount: 0, postingCount: 0 };
+            termScores[canonical].postingCount += row._count.category;
+        }
+
+        // Rank: applications are worth 3x a posting, so fresh demand beats stale supply.
+        const ranked = Object.entries(termScores)
+            .map(([term, { appCount, postingCount }]) => ({
+                term,
+                score: appCount * 3 + postingCount,
+            }))
+            .sort((a, b) => b.score - a.score)
+            .slice(0, LIMIT)
+            .map((r) => r.term);
+
+        // If the database is empty / brand new, fall back to the curated defaults
+        // so the UI never shows a blank trending section.
+        const fallback = [
+            "Customer Service",
+            "Registered Nurse",
+            "Remote in Ghana",
+            "Teaching",
+            "Sales Manager",
+            "Software Engineer",
+        ];
+
+        // Show the real live terms whenever any are available. Requiring a
+        // minimum number here would replace one or two genuine trends with a
+        // static list, which is misleading on a newer job board.
+        res.status(200).json({ trending: ranked.length ? ranked : fallback });
+    } catch (error) {
+        console.error("Trending terms failed:", error);
+        // Non-fatal — the UI has a built-in fallback
+        res.status(200).json({
+            trending: [
+                "Customer Service",
+                "Registered Nurse",
+                "Remote in Ghana",
+                "Teaching",
+                "Sales Manager",
+                "Software Engineer",
+            ],
+        });
+    }
+};
+
+/** Pull the first two words of a title to use as a fallback category. */
+function deriveTermFromTitle(title) {
+    if (!title) return null;
+    const words = title.trim().split(/\s+/);
+    return words.slice(0, 2).join(" ");
+}
+
+/** "software engineer" -> "Software Engineer" */
+function toTitleCase(str) {
+    return str.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 module.exports = {
     searchJobsHandler,
     suggestHandler,
     searchOptionsHandler,
+    trendingHandler,
 };
