@@ -342,7 +342,7 @@ const JobPostingForm = () => {
                     </span>
                   </h1>
                 ) : (
-                  <h1 className="font-headline-xl text-headline-xl text-text-primary tracking-tight font-extrabold leading-tight">
+                  <h1 className="font-headline-lg text-headline-xl text-text-primary tracking-tight font-extrabold leading-tight">
                     Post a Job &amp; Reach{" "}
                     <span className="bg-primary bg-clip-text text-transparent">
                       45,000+ Verified
@@ -351,7 +351,7 @@ const JobPostingForm = () => {
                   </h1>
                 )}
 
-                <p className="font-body-lg text-body-lg text-text-secondary">
+                <p className="text-[12px] text-text-secondary">
                   {isEditing
                     ? "Every field from the original posting is here. Changes go live as soon as you save."
                     : "Connect with people across business, healthcare, education, construction, hospitality, technology, public service, and more."}
@@ -359,11 +359,7 @@ const JobPostingForm = () => {
               </div>
 
               {/* Trust Metric Badges */}
-              <div className="grid grid-cols-3 gap-3 bg-surface-card p-3 rounded-2xl border border-border-default shadow-xs shrink-0">
-                <div className="flex flex-col p-2.5 rounded-xl bg-surface-container-low">
-                  <span className="font-headline-sm text-primary font-bold">14 Leads</span>
-                  <span className="font-body-sm text-text-muted">Avg. in 48h</span>
-                </div>
+              <div className="grid grid-cols-2 gap-3 bg-surface-card p-3 rounded-2xl border border-border-default shadow-xs shrink-0">
                 <div className="flex flex-col p-2.5 rounded-xl bg-surface-container-low">
                   <span className="font-headline-sm text-salary-emerald font-bold">100%</span>
                   <span className="font-body-sm text-text-muted">Double-Blind</span>
