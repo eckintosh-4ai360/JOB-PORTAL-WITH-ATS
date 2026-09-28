@@ -12,7 +12,8 @@
     "search:setup": "node scripts/setupSearchIndexes.js",
     "search:backfill": "node scripts/backfillJobFacets.js",
     "postinstall": "prisma generate",
-    "check:fraud": "node scripts/checkFraudSignals.js"
+    "check:fraud": "node scripts/checkFraudSignals.js",
+    "alerts:send": "node scripts/sendJobAlerts.js"
   },
   "keywords": [],
   "author": "",
