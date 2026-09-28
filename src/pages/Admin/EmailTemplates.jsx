@@ -5,6 +5,7 @@ import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
+import { AdminPageHeader } from "./components/AdminUI";
 
 const PREVIEW_VALUES = {
   name: "Jordan Smith",
@@ -123,27 +124,26 @@ const EmailTemplates = () => {
 
   return (
     <DashboardLayout activeMenu={user?.role === "admin" ? "admin-email-templates" : "email-templates"}>
-      <div className="mx-auto max-w-[1500px] space-y-6">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Platform settings</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Email templates</h1>
-            <p className="mt-2 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
-              Edit the messages automatically sent to candidates and employers across the platform.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-400">
-            <ShieldCheck className="h-4 w-4" /> Employer &amp; admin access
-          </div>
-        </div>
+      <div className="mx-auto max-w-[1500px] space-y-7 pb-12">
+        <AdminPageHeader
+          icon={Mail}
+          eyebrow={user?.role === "admin" ? "Platform control" : "Platform settings"}
+          title="Email templates"
+          description="Edit the messages automatically sent to candidates and employers across the platform."
+          actions={(
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-400">
+              <ShieldCheck className="h-4 w-4" /> Employer &amp; admin access
+            </div>
+          )}
+        />
 
         {loading ? (
-          <div className="flex min-h-80 items-center justify-center rounded-2xl border border-gray-100 bg-white text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex min-h-80 items-center justify-center rounded-2xl border border-border-default bg-surface-card text-sm text-text-muted shadow-sm">
             Loading templates…
           </div>
         ) : (
           <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
-            <aside className="h-fit rounded-2xl border border-gray-100 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <aside className="h-fit rounded-2xl border border-border-default bg-surface-card p-3 shadow-sm">
               <div className="mb-3 flex items-center gap-2 px-3 py-2 text-sm font-bold text-gray-900 dark:text-white">
                 <Mail className="h-4 w-4 text-primary" />
                 Automated messages
@@ -168,7 +168,7 @@ const EmailTemplates = () => {
             </aside>
 
             {selectedTemplate && (
-              <section className="min-w-0 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-7">
+              <section className="min-w-0 rounded-2xl border border-border-default bg-surface-card p-5 shadow-sm sm:p-7">
                 <div className="flex flex-col justify-between gap-4 border-b border-gray-100 pb-5 dark:border-gray-800 sm:flex-row sm:items-start">
                   <div>
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedTemplate.name}</h2>

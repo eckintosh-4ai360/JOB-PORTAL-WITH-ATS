@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
-import { StatTile, StatePill, FilterTabs, SearchBox, EmptyRow, Pagination } from "./components/AdminUI";
+import { AdminPageHeader, StatTile, StatePill, FilterTabs, SearchBox, EmptyRow, Pagination } from "./components/AdminUI";
 
 /**
  * Every account on the platform, in one list.
@@ -66,38 +66,34 @@ const Accounts = () => {
 
   return (
     <DashboardLayout activeMenu="admin-accounts">
-      <div className="mx-auto max-w-7xl space-y-6 pb-12">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
-              <Users className="h-6 w-6 text-violet-600 dark:text-violet-400" />
-              Accounts
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Everyone signed up to the platform. Suspend or reinstate from Trust &amp; Safety, where the evidence is.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={load}
-            disabled={isLoading}
-            className="inline-flex items-center gap-2 self-start rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
-        </div>
+      <div className="mx-auto max-w-7xl space-y-7 pb-12">
+        <AdminPageHeader
+          icon={Users}
+          title="Accounts"
+          description="Everyone signed up to the platform. Suspend or reinstate from Trust &amp; Safety, where the evidence is."
+          actions={(
+            <button
+              type="button"
+              onClick={load}
+              disabled={isLoading}
+              className="inline-flex items-center gap-2 rounded-xl border border-border-default bg-surface-card px-4 py-2.5 text-sm font-bold text-text-secondary shadow-sm transition-all hover:border-primary/25 hover:bg-surface-container-low hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          )}
+        />
 
         {overview && (
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatTile label="Employers" value={overview.people?.employers ?? 0} />
-            <StatTile label="Jobseekers" value={overview.people?.jobseekers ?? 0} />
-            <StatTile label="Applications" value={overview.applications ?? 0} hint="all time" />
-            <StatTile label="Accounts" value={total} hint="matching this filter" />
+            <StatTile label="Employers" value={overview.people?.employers ?? 0} icon={Users} />
+            <StatTile label="Jobseekers" value={overview.people?.jobseekers ?? 0} tone="info" icon={Users} />
+            <StatTile label="Applications" value={overview.applications ?? 0} hint="all time" tone="info" icon={Inbox} />
+            <StatTile label="Accounts" value={total} hint="matching this filter" icon={Users} />
           </div>
         )}
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-2xl border border-border-default bg-surface-card p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <FilterTabs
             options={ROLE_TABS}
             value={role}
@@ -127,7 +123,7 @@ const Accounts = () => {
             {accounts.map((account) => (
               <div
                 key={account.id}
-                className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                className="flex items-center gap-4 rounded-2xl border border-border-default bg-surface-card p-4 shadow-sm transition-all hover:border-primary/25 hover:shadow-md"
               >
                 {account.avatar ? (
                   <img src={account.avatar} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />

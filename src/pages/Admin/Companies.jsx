@@ -10,7 +10,7 @@ import { API_PATHS } from "../../utils/apiPath";
 import { resolveFileUrl, downloadFileUrl } from "../../utils/fileUrl";
 import { COMPANY_STAGES, isCompanyStage } from "../../utils/companyStages";
 import {
-  StatTile, StatePill, FilterTabs, SearchBox, EmptyRow, DetailRow, Pagination,
+  AdminPageHeader, StatTile, StatePill, FilterTabs, SearchBox, EmptyRow, DetailRow, Pagination,
 } from "./components/AdminUI";
 
 /**
@@ -175,30 +175,26 @@ const Companies = () => {
 
   return (
     <DashboardLayout activeMenu="admin-companies">
-      <div className="mx-auto max-w-7xl space-y-6 pb-12">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
-              <Building2 className="h-6 w-6 text-violet-600 dark:text-violet-400" />
-              Companies
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Every business on the platform. A company cannot post a job until it is approved here.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              loadCompanies();
-              loadOverview();
-            }}
-            disabled={isLoading}
-            className="inline-flex items-center gap-2 self-start rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
-        </div>
+      <div className="mx-auto max-w-7xl space-y-7 pb-12">
+        <AdminPageHeader
+          icon={Building2}
+          title="Companies"
+          description="Review every business on the platform. Approval here is required before a company can publish a job."
+          actions={(
+            <button
+              type="button"
+              onClick={() => {
+                loadCompanies();
+                loadOverview();
+              }}
+              disabled={isLoading}
+              className="inline-flex items-center gap-2 rounded-xl border border-border-default bg-surface-card px-4 py-2.5 text-sm font-bold text-text-secondary shadow-sm transition-all hover:border-primary/25 hover:bg-surface-container-low hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          )}
+        />
 
         {overview && (
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
@@ -243,7 +239,7 @@ const Companies = () => {
           </div>
         )}
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-2xl border border-border-default bg-surface-card p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <FilterTabs options={STATE_TABS} value={state} onChange={changeState} />
           <SearchBox
             value={search}
@@ -272,27 +268,16 @@ const Companies = () => {
                 key={company.id}
                 type="button"
                 onClick={() => openCompany(company)}
-                className="group relative flex w-full overflow-hidden rounded-3xl border border-border-default bg-surface-card p-space-md text-left shadow-[0_10px_24px_rgba(40,34,86,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_16px_32px_rgba(89,47,174,0.12)] md:p-space-lg"
+                className="group flex w-full rounded-2xl border border-border-default bg-surface-card p-space-md text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md md:p-space-lg"
               >
-                <span
-                  className={`absolute inset-y-0 left-0 w-1 ${
-                    company.approvalState === "approved"
-                      ? "bg-emerald-500"
-                      : company.approvalState === "rejected"
-                        ? "bg-rose-500"
-                        : company.approvalState === "in_review"
-                          ? "bg-sky-500"
-                          : "bg-amber-500"
-                  }`}
-                />
                 {company.logo ? (
                   <img
                     src={company.logo}
                     alt=""
-                    className="ml-1 h-12 w-12 shrink-0 rounded-2xl border border-primary/10 bg-surface-card object-cover p-1 shadow-sm"
+                    className="h-12 w-12 shrink-0 rounded-2xl border border-primary/10 bg-surface-card object-cover p-1 shadow-sm"
                   />
                 ) : (
-                  <span className="ml-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-indigo-light text-primary shadow-sm">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-indigo-light text-primary shadow-sm">
                     <Building2 className="h-5 w-5" />
                   </span>
                 )}

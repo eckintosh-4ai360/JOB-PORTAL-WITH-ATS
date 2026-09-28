@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Briefcase, Building2, ChevronRight, LayoutDashboard, Loader2, RefreshCw, ShieldAlert, Users } from "lucide-react";
+import { Briefcase, Building2, ChevronRight, FileCheck2, LayoutDashboard, Loader2, RefreshCw, ShieldAlert, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
-import { StatTile } from "./components/AdminUI";
+import { AdminPageHeader, StatTile } from "./components/AdminUI";
 
 /**
  * Where an administrator lands.
@@ -70,27 +70,23 @@ const Overview = () => {
 
   return (
     <DashboardLayout activeMenu="admin-overview">
-      <div className="mx-auto max-w-7xl space-y-6 pb-12">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
-              <LayoutDashboard className="h-6 w-6 text-violet-600 dark:text-violet-400" />
-              Platform Control
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              The state of the platform, and anything waiting on a decision.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={load}
-            disabled={isLoading}
-            className="inline-flex items-center gap-2 self-start rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
-        </div>
+      <div className="mx-auto max-w-7xl space-y-7 pb-12">
+        <AdminPageHeader
+          icon={LayoutDashboard}
+          title="Platform Control"
+          description="A clear view of platform health, the people on it, and decisions that need your attention."
+          actions={(
+            <button
+              type="button"
+              onClick={load}
+              disabled={isLoading}
+              className="inline-flex items-center gap-2 rounded-xl border border-border-default bg-surface-card px-4 py-2.5 text-sm font-bold text-text-secondary shadow-sm transition-all hover:border-primary/25 hover:bg-surface-container-low hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700/80 dark:bg-[#111b2d] dark:text-slate-200 dark:hover:border-primary/50 dark:hover:bg-slate-800"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          )}
+        />
 
         {isLoading && !data ? (
           <div className="flex items-center justify-center py-20">
@@ -101,59 +97,62 @@ const Overview = () => {
             {pending > 0 && (
               <Link
                 to="/admin-companies"
-                className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 transition-colors hover:bg-amber-100/70 dark:border-amber-500/25 dark:bg-amber-500/10 dark:hover:bg-amber-500/15"
+                className="group flex items-center gap-4 rounded-2xl border border-amber-200/80 bg-amber-50/70 p-4 shadow-sm transition-all hover:border-amber-300 hover:bg-amber-50 dark:border-amber-400/30 dark:bg-[linear-gradient(135deg,rgba(120,53,15,0.28),rgba(69,26,3,0.18))] dark:shadow-[0_10px_24px_rgba(0,0,0,0.2)] dark:hover:border-amber-400/50 dark:hover:bg-amber-500/15"
               >
-                <Building2 className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-                <p className="flex-1 text-sm font-bold text-amber-800 dark:text-amber-300">
-                  {pending} company{pending === 1 ? "" : " profiles"} awaiting review
-                  {pending === 1 ? " is" : " are"} blocked from posting until you decide.
-                </p>
-                <ChevronRight className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                  <FileCheck2 className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-extrabold text-amber-900 dark:text-amber-200">Review queue needs attention</p>
+                  <p className="mt-0.5 text-sm text-amber-800/80 dark:text-amber-200/80">
+                    {pending} company{pending === 1 ? "" : " profiles"} {pending === 1 ? "is" : "are"} waiting before they can post a job.
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-amber-600 transition-transform group-hover:translate-x-0.5 dark:text-amber-400" />
               </Link>
             )}
 
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <StatTile
-                label="Awaiting review"
-                value={pending}
-                tone={pending ? "warn" : "default"}
-                hint="companies"
-              />
-              <StatTile label="Approved companies" value={data?.companies?.approved ?? 0} />
-              <StatTile label="Live postings" value={data?.jobs?.live ?? 0} />
-              <StatTile
-                label="Hidden postings"
-                value={data?.jobs?.hidden ?? 0}
-                tone={data?.jobs?.hidden ? "danger" : "default"}
-              />
-              <StatTile label="Employers" value={data?.people?.employers ?? 0} />
-              <StatTile label="Jobseekers" value={data?.people?.jobseekers ?? 0} />
-              <StatTile label="Applications" value={data?.applications ?? 0} hint="all time" />
-              <StatTile
-                label="Setup unfinished"
-                value={data?.companies?.awaitingSetup ?? 0}
-                hint="never submitted"
-              />
-            </div>
+            <section>
+              <div className="mb-3">
+                <p className="text-sm font-extrabold text-text-primary">Platform snapshot</p>
+                <p className="mt-0.5 text-xs text-text-muted">Live totals across the marketplace.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <StatTile label="Awaiting review" value={pending} tone={pending ? "warn" : "default"} hint="companies" icon={Building2} />
+                <StatTile label="Approved companies" value={data?.companies?.approved ?? 0} tone="success" icon={FileCheck2} />
+                <StatTile label="Live postings" value={data?.jobs?.live ?? 0} tone="info" icon={Briefcase} />
+                <StatTile label="Hidden postings" value={data?.jobs?.hidden ?? 0} tone={data?.jobs?.hidden ? "danger" : "default"} icon={ShieldAlert} />
+                <StatTile label="Employers" value={data?.people?.employers ?? 0} icon={Building2} />
+                <StatTile label="Jobseekers" value={data?.people?.jobseekers ?? 0} icon={Users} />
+                <StatTile label="Applications" value={data?.applications ?? 0} hint="all time" tone="info" icon={FileCheck2} />
+                <StatTile label="Setup unfinished" value={data?.companies?.awaitingSetup ?? 0} hint="never submitted" icon={LayoutDashboard} />
+              </div>
+            </section>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {destinations.map(({ to, icon: Icon, title, description }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4 transition-colors hover:border-violet-200 hover:bg-violet-50/30 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-violet-500/30 dark:hover:bg-violet-500/5"
-                >
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-300">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-extrabold text-gray-900 dark:text-gray-100">{title}</p>
-                    <p className="truncate text-xs text-gray-400 dark:text-gray-500">{description}</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 dark:text-gray-600" />
-                </Link>
-              ))}
-            </div>
+            <section>
+              <div className="mb-3">
+                <p className="text-sm font-extrabold text-text-primary">Manage the platform</p>
+                <p className="mt-0.5 text-xs text-text-muted">Jump directly to the workspace you need.</p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {destinations.map(({ to, icon: Icon, title, description }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    className="group flex items-center gap-4 rounded-2xl border border-border-default bg-surface-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md dark:border-slate-700/80 dark:bg-[#111b2d] dark:shadow-[0_10px_24px_rgba(0,0,0,0.2)] dark:hover:border-primary/50 dark:hover:bg-[#142037] dark:hover:shadow-[0_14px_30px_rgba(0,0,0,0.34)]"
+                  >
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-indigo-light text-primary dark:bg-indigo-400/15 dark:text-indigo-200">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-extrabold text-text-primary">{title}</p>
+                      <p className="mt-0.5 truncate text-xs text-text-muted">{description}</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                ))}
+              </div>
+            </section>
           </>
         )}
       </div>

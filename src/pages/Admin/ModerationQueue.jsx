@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
+import { AdminPageHeader, StatTile } from "./components/AdminUI";
 
 /**
  * The human half of the fraud pipeline.
@@ -77,16 +78,6 @@ const Band = ({ band, score }) => (
   <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${BAND_STYLES[band] || BAND_STYLES.low}`}>
     {band} · {score}
   </span>
-);
-
-const StatTile = ({ label, value, hint, tone = "default" }) => (
-  <div className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-    <p className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500">{label}</p>
-    <p className={`mt-1 text-2xl font-extrabold ${tone === "danger" ? "text-rose-600 dark:text-rose-400" : "text-gray-900 dark:text-gray-100"}`}>
-      {value}
-    </p>
-    {hint && <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{hint}</p>}
-  </div>
 );
 
 const ModerationQueue = () => {
@@ -205,40 +196,36 @@ const ModerationQueue = () => {
 
   return (
     <DashboardLayout activeMenu="admin-moderation">
-      <div className="mx-auto max-w-7xl space-y-6 pb-12">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
-              <ShieldAlert className="h-6 w-6 text-violet-600 dark:text-violet-400" />
-              Trust &amp; Safety
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Cases raised by automated screening. Every rule that fired is shown before you decide.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={loadQueue}
-            disabled={isLoading}
-            className="inline-flex items-center gap-2 self-start rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
-        </div>
+      <div className="mx-auto max-w-7xl space-y-7 pb-12">
+        <AdminPageHeader
+          icon={ShieldAlert}
+          title="Trust &amp; Safety"
+          description="Cases raised by automated screening. Every rule that fired is visible before you make a decision."
+          actions={(
+            <button
+              type="button"
+              onClick={loadQueue}
+              disabled={isLoading}
+              className="inline-flex items-center gap-2 rounded-xl border border-border-default bg-surface-card px-4 py-2.5 text-sm font-bold text-text-secondary shadow-sm transition-all hover:border-primary/25 hover:bg-surface-container-low hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          )}
+        />
 
         {/* Headline numbers */}
         {stats && (
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-            <StatTile label="Open cases" value={stats.openCases ?? 0} tone={stats.openCases ? "danger" : "default"} />
-            <StatTile label="Hidden jobs" value={stats.hiddenJobs ?? 0} />
-            <StatTile label="Suspended" value={stats.suspendedRecruiters ?? 0} hint="recruiters" />
-            <StatTile label="Scanned" value={stats.assessmentsLast30Days ?? 0} hint="last 30 days" />
+            <StatTile label="Open cases" value={stats.openCases ?? 0} tone={stats.openCases ? "danger" : "default"} icon={AlertTriangle} />
+            <StatTile label="Hidden jobs" value={stats.hiddenJobs ?? 0} icon={ShieldAlert} />
+            <StatTile label="Suspended" value={stats.suspendedRecruiters ?? 0} hint="recruiters" icon={UserX} />
+            <StatTile label="Scanned" value={stats.assessmentsLast30Days ?? 0} hint="last 30 days" tone="info" icon={Sparkles} />
             <StatTile
               label="Dismissed"
               value={stats.falsePositiveRate === null ? "—" : `${stats.falsePositiveRate}%`}
               hint="of decided cases"
+              icon={Check}
             />
           </div>
         )}
@@ -252,7 +239,7 @@ const ModerationQueue = () => {
         )}
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border-default bg-surface-card p-3 shadow-sm">
           {[
             { key: "state", value: "", label: "All states" },
             { key: "state", value: "open", label: "Open" },
@@ -316,7 +303,7 @@ const ModerationQueue = () => {
                   key={item.id}
                   type="button"
                   onClick={() => openCase(item.id)}
-                  className="group flex items-start gap-4 rounded-2xl border border-gray-100 bg-white p-4 text-left transition-all hover:border-violet-200 hover:shadow-md dark:border-gray-800 dark:bg-gray-900 dark:hover:border-violet-500/40"
+                  className="group flex items-start gap-4 rounded-2xl border border-border-default bg-surface-card p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
                 >
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-300">
                     <Icon className="h-5 w-5" />

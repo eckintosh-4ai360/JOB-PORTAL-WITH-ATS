@@ -6,29 +6,29 @@
 
 const STAT_TONES = {
   default: {
-    accent: "bg-slate-500",
-    icon: "bg-slate-100 text-slate-600 dark:bg-slate-500/10 dark:text-slate-300",
-    value: "text-gray-900 dark:text-gray-100",
+    dot: "bg-slate-400",
+    icon: "bg-slate-100 text-slate-600 dark:bg-slate-400/10 dark:text-slate-200",
+    value: "text-gray-900 dark:text-slate-50",
   },
   info: {
-    accent: "bg-sky-500",
-    icon: "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-300",
-    value: "text-sky-700 dark:text-sky-300",
+    dot: "bg-sky-500",
+    icon: "bg-sky-50 text-sky-600 dark:bg-sky-400/15 dark:text-sky-200",
+    value: "text-gray-900 dark:text-slate-50",
   },
   success: {
-    accent: "bg-emerald-500",
-    icon: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300",
-    value: "text-emerald-700 dark:text-emerald-300",
+    dot: "bg-emerald-500",
+    icon: "bg-emerald-50 text-emerald-600 dark:bg-emerald-400/15 dark:text-emerald-200",
+    value: "text-gray-900 dark:text-slate-50",
   },
   warn: {
-    accent: "bg-amber-500",
-    icon: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300",
-    value: "text-amber-700 dark:text-amber-300",
+    dot: "bg-amber-500",
+    icon: "bg-amber-50 text-amber-600 dark:bg-amber-400/15 dark:text-amber-200",
+    value: "text-gray-900 dark:text-slate-50",
   },
   danger: {
-    accent: "bg-rose-500",
-    icon: "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300",
-    value: "text-rose-700 dark:text-rose-300",
+    dot: "bg-rose-500",
+    icon: "bg-rose-50 text-rose-600 dark:bg-rose-400/15 dark:text-rose-200",
+    value: "text-gray-900 dark:text-slate-50",
   },
 };
 
@@ -36,25 +36,44 @@ export const StatTile = ({ label, value, hint, tone = "default", icon: Icon }) =
   const style = STAT_TONES[tone] || STAT_TONES.default;
 
   return (
-    <div className="group relative overflow-hidden rounded-3xl border border-border-default bg-surface-card p-space-md shadow-[0_10px_24px_rgba(40,34,86,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_16px_30px_rgba(89,47,174,0.10)]">
-      <span className={`absolute inset-x-0 top-0 h-1 ${style.accent}`} />
-      <div className="flex items-start justify-between gap-3 pt-1">
+    <div className="group h-full rounded-2xl border border-border-default bg-surface-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_12px_28px_rgba(40,34,86,0.08)] dark:border-slate-700/80 dark:bg-[#111b2d] dark:shadow-[0_10px_24px_rgba(0,0,0,0.2)] dark:hover:border-primary/50 dark:hover:shadow-[0_14px_30px_rgba(0,0,0,0.34)] sm:p-5">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+          <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-gray-400 dark:text-slate-400">
+            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${style.dot}`} aria-hidden="true" />
             {label}
           </p>
-          <p className={`mt-2 text-3xl font-extrabold tracking-tight ${style.value}`}>{value}</p>
+          <p className={`mt-3 text-3xl font-extrabold tracking-tight sm:text-[2rem] ${style.value}`}>{value}</p>
         </div>
         {Icon && (
-          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${style.icon}`}>
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${style.icon}`}>
             <Icon className="h-4.5 w-4.5" />
           </span>
         )}
       </div>
-      {hint && <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">{hint}</p>}
+      {hint && <p className="mt-3 text-xs text-gray-400 dark:text-slate-400">{hint}</p>}
     </div>
   );
 };
+
+/** Shared title treatment for the platform-control workspace. */
+export const AdminPageHeader = ({ icon: Icon, eyebrow = "Platform control", title, description, actions }) => (
+  <div className="flex flex-col gap-4 border-b border-border-default pb-5 dark:border-slate-700/80 sm:flex-row sm:items-end sm:justify-between">
+    <div className="min-w-0">
+      <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-primary">{eyebrow}</p>
+      <div className="mt-2 flex items-center gap-3">
+        {Icon && (
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-indigo-light text-primary dark:bg-indigo-400/15 dark:text-indigo-200">
+            <Icon className="h-5 w-5" />
+          </span>
+        )}
+        <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-slate-50 sm:text-3xl">{title}</h1>
+      </div>
+      {description && <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500 dark:text-slate-400">{description}</p>}
+    </div>
+    {actions && <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">{actions}</div>}
+  </div>
+);
 
 const PILL_STYLES = {
   in_review: "bg-sky-50 text-sky-700 ring-1 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30",

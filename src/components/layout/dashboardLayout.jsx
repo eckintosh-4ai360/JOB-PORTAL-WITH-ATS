@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
 import { ADMIN_NAVIGATION_MENU, NAVIGATION_MENU } from "../../utils/data";
 import ProfileDropdown from "./ProfileDropdown";
 import ThemeToggle from "./ThemeToggle";
@@ -57,7 +56,6 @@ const NavigationItem = ({ item, isActive, onClick, isCollapsed, isAdmin }) => {
 
 const DashboardLayout = ({ children, activeMenu }) => {
   const { user, logout } = useAuth();
-  const { setTheme } = useTheme();
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
   const navigationMenu = isAdmin ? ADMIN_NAVIGATION_MENU : NAVIGATION_MENU;
@@ -71,16 +69,6 @@ const DashboardLayout = ({ children, activeMenu }) => {
   );
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const adminThemeApplied = useRef(false);
-
-  // The admin workspace always opens in its calm, high-contrast light theme.
-  // Administrators can still switch themes explicitly with the header control.
-  useEffect(() => {
-    if (isAdmin && !adminThemeApplied.current) {
-      setTheme("light");
-      adminThemeApplied.current = true;
-    }
-  }, [isAdmin, setTheme]);
 
   // Handle responsive resize behavior
   useEffect(() => {
@@ -153,7 +141,7 @@ const DashboardLayout = ({ children, activeMenu }) => {
         } bg-[linear-gradient(155deg,#0f3a5c_0%,#1e3a8a_42%,#3730a3_100%)] dark:bg-[linear-gradient(155deg,#0f172a_0%,#1e1b4b_54%,#312e81_100%)]`;
 
   return (
-    <div className={`h-screen w-screen flex overflow-hidden font-display ${isAdmin ? "bg-[radial-gradient(circle_at_top_left,_#ede9fe_0%,_#f8fafc_42%,_#eef2ff_100%)] dark:bg-none dark:bg-slate-950" : "bg-secondary dark:bg-gray-900"} ${isMobile ? "p-0" : "p-3"}`}>
+    <div className={`h-screen w-screen flex overflow-hidden font-display ${isAdmin ? "bg-[radial-gradient(circle_at_top_left,_#ede9fe_0%,_#f8fafc_42%,_#eef2ff_100%)] dark:bg-[radial-gradient(circle_at_top_left,_#182447_0%,_#0b1220_42%,_#070b14_100%)]" : "bg-secondary dark:bg-gray-900"} ${isMobile ? "p-0" : "p-3"}`}>
       {/* Mobile Drawer Overlay */}
       {isMobile && sidebarOpen && (
         <div
@@ -277,13 +265,13 @@ const DashboardLayout = ({ children, activeMenu }) => {
       {/*  Main Inset Card Container   */}
       <div
         className={`flex-1 flex flex-col overflow-hidden ${
-          isAdmin ? "bg-white/80 dark:bg-slate-950" : "bg-[#f8faf9] dark:bg-gray-950"
+          isAdmin ? "bg-white/80 dark:bg-[#0b1220]" : "bg-[#f8faf9] dark:bg-gray-950"
         } ${
-          isMobile ? "rounded-none h-full" : isAdmin ? "h-[calc(100vh-24px)] rounded-[24px] border border-white/80 shadow-[0_18px_42px_rgba(76,55,143,0.10)] dark:border-slate-800 dark:shadow-[0_18px_42px_rgba(0,0,0,0.38)]" : "rounded-[24px] border border-white/5 h-[calc(100vh-24px)]"
+          isMobile ? "rounded-none h-full" : isAdmin ? "h-[calc(100vh-24px)] rounded-[24px] border border-white/80 shadow-[0_18px_42px_rgba(76,55,143,0.10)] dark:border-slate-700/80 dark:shadow-[0_18px_42px_rgba(0,0,0,0.48)]" : "rounded-[24px] border border-white/5 h-[calc(100vh-24px)]"
         }`}
       >
         {/* Inner Top Navbar */}
-        <header className={`h-16 flex items-center justify-between px-8 shrink-0 ${isAdmin ? "border-b border-violet-100 bg-white/90 dark:border-slate-800 dark:bg-slate-900" : "bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800"}`}>
+        <header className={`h-16 flex items-center justify-between px-8 shrink-0 ${isAdmin ? "border-b border-violet-100 bg-white/90 dark:border-slate-700/80 dark:bg-[#111a2b]/90" : "bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800"}`}>
           <div className="flex items-center gap-4">
             {isMobile && (
               <button
@@ -318,7 +306,7 @@ const DashboardLayout = ({ children, activeMenu }) => {
         </header>
 
         {/* Nested Page Content */}
-        <main className={`flex-1 p-8 overflow-y-auto ${isAdmin ? "bg-[linear-gradient(135deg,_rgba(248,250,252,0.96),_rgba(245,243,255,0.74))] dark:bg-slate-950" : "bg-slate-50/50 dark:bg-gray-950"}`}>
+        <main className={`flex-1 p-8 overflow-y-auto ${isAdmin ? "bg-[linear-gradient(135deg,_rgba(248,250,252,0.96),_rgba(245,243,255,0.74))] dark:bg-[radial-gradient(circle_at_top_right,_rgba(67,56,202,0.13),_transparent_32%),linear-gradient(135deg,_#0b1220,_#080e1b)]" : "bg-slate-50/50 dark:bg-gray-950"}`}>
           {children}
         </main>
       </div>

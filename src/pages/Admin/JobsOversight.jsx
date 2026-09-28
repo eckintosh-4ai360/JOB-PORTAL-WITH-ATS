@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
-import { StatTile, StatePill, FilterTabs, SearchBox, EmptyRow, Pagination } from "./components/AdminUI";
+import { AdminPageHeader, StatTile, StatePill, FilterTabs, SearchBox, EmptyRow, Pagination } from "./components/AdminUI";
 
 /**
  * Every posting on the platform, including the ones the public cannot see.
@@ -71,43 +71,40 @@ const JobsOversight = () => {
 
   return (
     <DashboardLayout activeMenu="admin-jobs">
-      <div className="mx-auto max-w-7xl space-y-6 pb-12">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
-              <Briefcase className="h-6 w-6 text-violet-600 dark:text-violet-400" />
-              Job Postings
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Every posting on the platform, including hidden and deleted ones.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={load}
-            disabled={isLoading}
-            className="inline-flex items-center gap-2 self-start rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
-        </div>
+      <div className="mx-auto max-w-7xl space-y-7 pb-12">
+        <AdminPageHeader
+          icon={Briefcase}
+          title="Job Postings"
+          description="Every posting on the platform, including listings that are hidden or have been deleted."
+          actions={(
+            <button
+              type="button"
+              onClick={load}
+              disabled={isLoading}
+              className="inline-flex items-center gap-2 rounded-xl border border-border-default bg-surface-card px-4 py-2.5 text-sm font-bold text-text-secondary shadow-sm transition-all hover:border-primary/25 hover:bg-surface-container-low hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          )}
+        />
 
         {overview && (
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatTile label="Live postings" value={overview.jobs?.live ?? 0} />
+            <StatTile label="Live postings" value={overview.jobs?.live ?? 0} tone="success" icon={Briefcase} />
             <StatTile
               label="Hidden"
               value={overview.jobs?.hidden ?? 0}
               tone={overview.jobs?.hidden ? "danger" : "default"}
               hint="by moderation"
+              icon={Briefcase}
             />
-            <StatTile label="Applications" value={overview.applications ?? 0} hint="all time" />
-            <StatTile label="Matching" value={total} hint="this filter" />
+            <StatTile label="Applications" value={overview.applications ?? 0} hint="all time" tone="info" icon={Briefcase} />
+            <StatTile label="Matching" value={total} hint="this filter" icon={Briefcase} />
           </div>
         )}
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-2xl border border-border-default bg-surface-card p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <FilterTabs
             options={STATUS_TABS}
             value={status}
@@ -140,7 +137,7 @@ const JobsOversight = () => {
               return (
                 <div
                   key={job.id}
-                  className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                  className="flex items-center gap-4 rounded-2xl border border-border-default bg-surface-card p-4 shadow-sm transition-all hover:border-primary/25 hover:shadow-md"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">

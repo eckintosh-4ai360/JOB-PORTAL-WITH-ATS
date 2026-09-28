@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
-import { StatTile, FilterTabs, EmptyRow } from "./components/AdminUI";
+import { AdminPageHeader, StatTile, FilterTabs, EmptyRow } from "./components/AdminUI";
 import { EVIDENCE_ICONS, FALLBACK_EVIDENCE_ICON, summarizeEvidence } from "../../utils/duplicateEvidence";
 
 /**
@@ -76,7 +76,7 @@ const ClusterCard = ({ cluster, onDecide, isDeciding }) => {
   const multiple = cluster.pairs.length > 1;
 
   return (
-    <article className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+    <article className="rounded-2xl border border-border-default bg-surface-card p-5 shadow-sm transition-all hover:border-primary/20 dark:shadow-none">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span
           className={`rounded-full px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide ${
@@ -236,18 +236,13 @@ const Duplicates = () => {
 
   return (
     <DashboardLayout activeMenu="admin-duplicates">
-      <div className="mx-auto max-w-6xl space-y-6 pb-12">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
-              <Users className="h-6 w-6 text-violet-600 dark:text-violet-400" />
-              Duplicate accounts
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Jobseeker accounts that look like the same person. A shared name alone never flags anyone.
-            </p>
-          </div>
-          <div className="flex gap-2 self-start">
+      <div className="mx-auto max-w-6xl space-y-7 pb-12">
+        <AdminPageHeader
+          icon={Users}
+          title="Duplicate accounts"
+          description="Jobseeker accounts that look like the same person. A shared name alone never flags anyone."
+          actions={(
+          <div className="flex gap-2">
             <button
               type="button"
               onClick={scan}
@@ -269,7 +264,8 @@ const Duplicates = () => {
               <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
             </button>
           </div>
-        </div>
+          )}
+        />
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatTile label="To review" value={counts.open} tone={counts.open ? "warn" : "default"} icon={Copy} />
@@ -284,15 +280,17 @@ const Duplicates = () => {
           />
         </div>
 
-        <FilterTabs
-          options={[
-            { id: "open", label: "To review", count: counts.open },
-            { id: "confirmed", label: "Same person", count: counts.confirmed },
-            { id: "dismissed", label: "Different people", count: counts.dismissed },
-          ]}
-          value={view}
-          onChange={setView}
-        />
+        <div className="rounded-2xl border border-border-default bg-surface-card p-3 shadow-sm">
+          <FilterTabs
+            options={[
+              { id: "open", label: "To review", count: counts.open },
+              { id: "confirmed", label: "Same person", count: counts.confirmed },
+              { id: "dismissed", label: "Different people", count: counts.dismissed },
+            ]}
+            value={view}
+            onChange={setView}
+          />
+        </div>
 
         {isLoading && !data ? (
           <div className="flex justify-center py-20">
