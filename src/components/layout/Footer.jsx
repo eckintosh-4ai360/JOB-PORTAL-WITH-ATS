@@ -1,6 +1,35 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import axiosInstance from "../../utils/axiosInstance";
+import { API_PATHS } from "../../utils/apiPath";
 
 const Footer = () => {
+  // The subscribe box takes an address from a visitor with no account, which
+  // is why it posts here rather than going through the signed-in settings.
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState("idle"); // idle | sending | done
+
+  const subscribe = async (event) => {
+    event.preventDefault();
+    if (state === "sending") return;
+
+    setState("sending");
+    try {
+      const res = await axiosInstance.post(API_PATHS.JOB_ALERTS.SUBSCRIBE, {
+        email,
+        source: "footer",
+        frequency: "weekly",
+      });
+      toast.success(res.data?.message || "You are on the list.");
+      setEmail("");
+      setState("done");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Could not sign you up just now.");
+      setState("idle");
+    }
+  };
+
   const candidateLinks = [
     ["Find a job", "/find-jobs"],
     ["Browse companies", "/browse-companies"],
@@ -91,22 +120,33 @@ const Footer = () => {
             </div>
             <h3 className="mt-3 font-headline-sm text-[#371060]">The good roles, delivered.</h3>
             <p className="mt-1 font-body-sm leading-relaxed text-[#572987]">A concise weekly edit of verified roles and salary intelligence.</p>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                alert("Thank you for subscribing to SPG JobPortal alerts!");
-              }}
-              className="mt-4"
-            >
+            <form onSubmit={subscribe} className="mt-4">
               <label className="sr-only" htmlFor="footer-email">Email address</label>
               <div className="flex rounded-xl bg-white p-1.5 shadow-sm focus-within:ring-2 focus-within:ring-[#6d2aad]/35">
-                <input id="footer-email" type="email" required placeholder="you@email.com" className="min-w-0 flex-1 bg-transparent px-2 font-body-sm text-[#32115d] placeholder:text-[#8c63aa] focus:outline-none" />
-                <button type="submit" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#4a197f] text-white transition hover:bg-[#35105f]" aria-label="Subscribe to job alerts">
-                  <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                <input
+                  id="footer-email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@email.com"
+                  className="min-w-0 flex-1 bg-transparent px-2 font-body-sm text-[#32115d] placeholder:text-[#8c63aa] focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={state === "sending"}
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#4a197f] text-white transition hover:bg-[#35105f] disabled:opacity-60"
+                  aria-label="Subscribe to job alerts"
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    {state === "sending" ? "hourglass_top" : state === "done" ? "check" : "arrow_forward"}
+                  </span>
                 </button>
               </div>
             </form>
-            <p className="mt-2 font-label-caps text-[#633193]">No noise. Unsubscribe anytime.</p>
+            <p className="mt-2 font-label-caps text-[#633193]">
+              {state === "done" ? "You're on the list. Check your inbox." : "No noise. Unsubscribe anytime."}
+            </p>
           </div>
         </div>
 

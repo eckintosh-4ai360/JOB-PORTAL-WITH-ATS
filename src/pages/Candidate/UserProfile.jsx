@@ -8,6 +8,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import CandidateHeader from "../../components/layout/CandidateHeader";
+import JobAlertsCard from "../../components/alerts/JobAlertsCard";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
@@ -421,6 +422,10 @@ const UserProfile = () => {
                 </button>
               </div>
             </div>
+
+            {/* Job updates by email — what they agreed to at sign-up, and the
+                one place to change or stop it. */}
+            <JobAlertsCard />
 
             {/* Applications Activity Card */}
             <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">

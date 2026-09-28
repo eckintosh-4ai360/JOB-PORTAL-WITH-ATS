@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import ApplyDrawer from "../../components/apply/ApplyDrawer";
+import JobAlertsPrompt from "../../components/alerts/JobAlertsPrompt";
 import { useAppliedJobs } from "../../hooks/useAppliedJobs";
 import { useJobSearch } from "../../hooks/useJobSearch";
 import SearchBox from "./components/SearchBox";
@@ -335,6 +336,9 @@ const FindJobs = () => {
             </aside>
 
             <div className="lg:col-span-8 xl:col-span-9 flex flex-col gap-space-md">
+              {/* Renders itself only for a candidate who has never been asked. */}
+              <JobAlertsPrompt />
+
               {isAuthenticated && needsResumeAnalysis && (
                 <div className="flex flex-col justify-between gap-space-sm rounded-2xl border border-primary/20 bg-brand-indigo-light p-space-md sm:flex-row sm:items-center">
                   <div className="flex items-start gap-space-sm">

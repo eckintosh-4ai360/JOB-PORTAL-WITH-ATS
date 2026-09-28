@@ -159,6 +159,17 @@ export const API_PATHS = {
     SUBMIT: "/api/salaries/submit",
   },
 
+  // Subscriptions to updates about newly posted roles. SUBSCRIBE works signed
+  // in or not; ME is the signed-in candidate's own settings. UNSUBSCRIBE is
+  // served as a page by the API and only ever reached from an email footer.
+  JOB_ALERTS: {
+    SUBSCRIBE: "/api/job-alerts/subscribe",
+    ME: "/api/job-alerts/me",
+    DECLINE: "/api/job-alerts/decline",
+    STATS: "/api/job-alerts/stats",
+    DISPATCH: "/api/job-alerts/dispatch",
+  },
+
   EMAIL_TEMPLATES: {
     GET_ALL: "/api/email-templates",
     UPDATE: (key) => `/api/email-templates/${key}`,
