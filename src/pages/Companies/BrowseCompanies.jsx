@@ -251,7 +251,10 @@ const BrowseCompanies = () => {
                 <div className="relative z-10">
                   {/* Top Header: Logo, Company Name, Verified & Stage Badges */}
                   <div className="flex items-start justify-between gap-space-sm mb-space-sm">
-                    <div className="flex items-start gap-space-md">
+                    <Link
+                      to={`/company/${company.id}`}
+                      className="flex items-start gap-space-md min-w-0"
+                    >
                       <div className="w-14 h-14 rounded-2xl bg-surface-container p-1 shadow-sm border border-border-default overflow-hidden shrink-0 flex items-center justify-center">
                         {company.logo || company.companyLogo ? (
                           <img
@@ -283,7 +286,7 @@ const BrowseCompanies = () => {
                           {company.industry}
                         </p>
                       </div>
-                    </div>
+                    </Link>
 
                     <span className="px-2.5 py-1 rounded-full bg-surface-container font-label-caps text-text-secondary font-bold shrink-0">
                       {company.stage}
@@ -434,10 +437,18 @@ const BrowseCompanies = () => {
               </div>
             </div>
 
-            <div className="pt-3 border-t border-border-default flex items-center justify-between">
+            <div className="pt-3 border-t border-border-default flex flex-wrap items-center justify-between gap-2">
               <span className="font-body-sm text-text-muted">
                 {activeCompanyModal.openRoles} active positions available
               </span>
+              <Link
+                to={`/company/${activeCompanyModal.id}`}
+                onClick={() => setActiveCompanyModal(null)}
+                className="inline-flex items-center gap-1 font-label-md font-semibold text-primary hover:text-brand-indigo-dark transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                View full profile
+              </Link>
               {/*
                 Carry the employer through to the jobs page. `userId` is the one
                 id present on both a registered company profile and an employer

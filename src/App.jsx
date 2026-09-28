@@ -10,6 +10,7 @@ import { Toaster } from "react-hot-toast";
 // New Redesigned Public & Core Pages matching SCREENS
 import FindJobs from "./pages/FindJobs/FindJobs";
 import BrowseCompanies from "./pages/Companies/BrowseCompanies";
+import CompanyProfile from "./pages/Companies/CompanyProfile";
 import SalariesInsights from "./pages/Salaries/SalariesInsights";
 import ResumeAnalyzer from "./pages/ResumeAnalyzer/ResumeAnalyzer";
 import SavedJobs from "./pages/Candidate/SavedJobs";
@@ -59,6 +60,7 @@ export const App = () => {
           <Route path="/" element={<LandingPage />} />
           <Route path="/find-jobs" element={<FindJobs />} />
           <Route path="/browse-companies" element={<BrowseCompanies />} />
+          <Route path="/company/:companyId" element={<CompanyProfile />} />
           <Route path="/salaries-insights" element={<SalariesInsights />} />
           <Route path="/resume-analyzer" element={<ResumeAnalyzer />} />
           <Route path="/job/:jobId" element={<JobDetails />} />

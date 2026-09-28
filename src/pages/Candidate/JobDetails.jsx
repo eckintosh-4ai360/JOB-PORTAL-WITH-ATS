@@ -209,6 +209,13 @@ const JobDetails = () => {
     job.companyProfile?.description ||
     job.company?.companyDescription ||
     `${companyName} has opportunities for qualified candidates.`;
+  const companyVerified = Boolean(job.companyProfile?.verified);
+  /*
+    The employer's own profile page. `companyProfileId` is the registered
+    Company record; an employer posting without one is looked up by their user
+    id, which is what `companyId` holds.
+  */
+  const companyProfileId = job.companyProfileId || job.companyId;
   const hasExactLocation =
     job.latitude !== null &&
     job.latitude !== undefined &&
@@ -433,31 +440,6 @@ const JobDetails = () => {
                     `${companyName} is seeking a motivated candidate to join its team.`}
                 </p>
 
-                {/* Impact Metrics Mini Bento */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-sm pt-space-xs">
-                  <div className="p-space-md rounded-xl bg-surface-container-low border border-border-default flex flex-col gap-1">
-                    <span className="font-headline-lg font-bold text-primary">2.4M+</span>
-                    <span className="font-body-sm text-text-secondary">
-                      Protected records processed monthly
-                    </span>
-                  </div>
-                  <div className="p-space-md rounded-xl bg-surface-container-low border border-border-default flex flex-col gap-1">
-                    <span className="font-headline-lg font-bold text-salary-emerald">
-                      99.98%
-                    </span>
-                    <span className="font-body-sm text-text-secondary">
-                      Uptime SLA standard target
-                    </span>
-                  </div>
-                  <div className="p-space-md rounded-xl bg-surface-container-low border border-border-default flex flex-col gap-1">
-                    <span className="font-headline-lg font-bold text-secondary">
-                      120ms
-                    </span>
-                    <span className="font-body-sm text-text-secondary">
-                      Sub-second latency target
-                    </span>
-                  </div>
-                </div>
               </div>
 
               {/* Responsibilities */}
@@ -625,15 +607,19 @@ const JobDetails = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-text-muted">Verification Status</span>
-                    <span className="font-semibold text-salary-emerald flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[16px]">verified</span>
-                      Certified Employer
-                    </span>
+                    {companyVerified ? (
+                      <span className="font-semibold text-salary-emerald flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[16px]">verified</span>
+                        Verified Employer
+                      </span>
+                    ) : (
+                      <span className="font-semibold text-text-muted">Not yet verified</span>
+                    )}
                   </div>
                 </div>
 
                 <Link
-                  to="/browse-companies"
+                  to={companyProfileId ? `/company/${companyProfileId}` : "/browse-companies"}
                   className="mt-2 w-full py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md font-semibold text-center transition-colors block"
                 >
                   View Company Profile
