@@ -1,10 +1,11 @@
 /**
  * Search facets derived from a job posting.
  *
- * Employers do not fill in an "experience level" box, and asking them to would
- * add a field to a form they already abandon. The information is in the advert
- * anyway — "Senior", "3+ years", "BSc required" — so it is read out once, when
- * the posting is written, and stored on the row.
+ * Education level and skills are never asked for — the information is in the
+ * advert anyway ("3+ years", "BSc required") — so they are read out once, when
+ * the posting is written, and stored on the row. Experience level is read the
+ * same way, but only as the fallback: an employer who picks one on the posting
+ * form states it outright, and jobController keeps that over the guess.
  *
  * Deriving at write time rather than at query time is the whole point: a filter
  * can only be fast and exact if the value it filters on is a column. Postings

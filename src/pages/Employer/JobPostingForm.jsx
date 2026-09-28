@@ -11,7 +11,7 @@ import JobDescriptionAssistant from "../../components/employer/JobDescriptionAss
 import TemplatePicker from "../../components/employer/TemplatePicker";
 import SaveTemplateDialog from "../../components/employer/SaveTemplateDialog";
 import { toEditorQuestions, toPayloadQuestions } from "../../utils/screeningQuestions";
-import { DEPARTMENT_OPTIONS, JOB_TYPE_OPTIONS } from "../../utils/jobOptions";
+import { DEPARTMENT_OPTIONS, JOB_TYPE_OPTIONS, EXPERIENCE_LEVEL_OPTIONS } from "../../utils/jobOptions";
 
 const JobPostingForm = () => {
   const navigate = useNavigate();
@@ -44,7 +44,7 @@ const JobPostingForm = () => {
   const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
   const [jobType, setJobType] = useState("Full-Time");
-  const [experienceLevel, setExperienceLevel] = useState("Mid-level");
+  const [experienceLevel, setExperienceLevel] = useState("");
   const [deadline, setDeadline] = useState("");
 
   // Custom category/type entries have no direct editor in this version of the
@@ -86,6 +86,7 @@ const JobPostingForm = () => {
         setLongitude(job.longitude ?? null);
         setDepartment(job.category || "Business & Professional Services");
         setJobType(job.type || job.jobType || "Full-Time");
+        setExperienceLevel(job.seniority || "");
         setWorkModel(job.workModel || "Hybrid");
         setCompanyName(job.companyName || job.company?.companyName || user?.companyName || "");
         setDescription(job.description || "");
@@ -263,6 +264,7 @@ const JobPostingForm = () => {
         salaryMax: Number(salaryMax) || 0,
         tags: tagsList,
         workModel,
+        experienceLevel,
         deadline: deadline || null,
         screeningQuestions: toPayloadQuestions(screeningQuestions),
       };
@@ -599,6 +601,27 @@ const JobPostingForm = () => {
                             </option>
                           ))}
                         </select>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="font-label-lg font-semibold text-text-primary">
+                          Experience Level
+                        </label>
+                        <select
+                          value={experienceLevel}
+                          onChange={(e) => setExperienceLevel(e.target.value)}
+                          className="h-12 px-4 rounded-xl bg-surface-container-low border border-border-default font-body-md text-on-surface focus:outline-none cursor-pointer"
+                        >
+                          {EXPERIENCE_LEVEL_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="font-body-sm text-text-muted">
+                          Candidates filter on this. Left on detect, it is read from your
+                          title and requirements instead.
+                        </span>
                       </div>
                     </div>
                   </div>

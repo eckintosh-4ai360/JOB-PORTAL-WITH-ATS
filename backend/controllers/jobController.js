@@ -1,9 +1,25 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
 const fraud = require("../services/fraudModerationService");
-const { deriveJobFacets } = require("../utils/jobFacets");
+const { deriveJobFacets, deriveSeniority } = require("../utils/jobFacets");
+const { SENIORITY_LEVELS } = require("../utils/searchLexicon");
 const { validateQuestions } = require("../utils/screeningQuestions");
 const { recordTemplateUse } = require("../utils/jobTemplates");
+
+const SENIORITY_KEYS = new Set(SENIORITY_LEVELS.map((level) => level.key));
+
+/**
+ * The experience level an employer stated on the posting form, or null when
+ * they left it on "detect from the advert".
+ *
+ * Only a key search already knows is accepted: the experience filter matches
+ * exact values, so a posting stored with anything else would be unfindable
+ * under every level, which is worse than the guess it replaced.
+ */
+const statedSeniority = (source = {}) => {
+    const value = String(source.seniority ?? source.experienceLevel ?? "").trim();
+    return SENIORITY_KEYS.has(value) ? value : null;
+};
 
 // @desc    Create a new job posting
 // @route   POST /api/jobs
@@ -144,6 +160,11 @@ const createJob = async (req, res) => {
             requirements: effectiveRequirements,
             tags: effectiveTags,
         });
+
+        // Except the experience level, which the employer can now state. What
+        // they picked outranks anything read out of their wording.
+        const stated = statedSeniority(req.body);
+        if (stated) facets.seniority = stated;
 
         const job = await prisma.job.create({
             data: {
@@ -415,7 +436,15 @@ const updateJob = async (req, res) => {
             return res.status(403).json({ message: "Not authorized to update this job" });
         }
 
-        const { companyId, id, createdAt, updatedAt, ...updateData } = req.body;
+        const {
+            companyId,
+            id,
+            createdAt,
+            updatedAt,
+            seniority,
+            experienceLevel,
+            ...updateData
+        } = req.body;
 
         // Stored as-is otherwise, so questions go through the same checks as
         // on create. An empty list clears them.
@@ -442,6 +471,20 @@ const updateJob = async (req, res) => {
                 requirements: updateData.requirements ?? job.requirements,
                 tags: updateData.tags ?? job.tags,
             }));
+        }
+
+        // Applied after the derivation so an edit to the title never overwrites
+        // the level the employer chose. Switching back to "detect" sends the
+        // field empty, which reads the advert again even if nothing else moved.
+        const stated = statedSeniority({ seniority, experienceLevel });
+        if (stated) {
+            updateData.seniority = stated;
+        } else if (seniority !== undefined || experienceLevel !== undefined) {
+            updateData.seniority = deriveSeniority({
+                title: updateData.title ?? job.title,
+                description: updateData.description ?? job.description,
+                requirements: updateData.requirements ?? job.requirements,
+            });
         }
 
         const updatedJob = await prisma.job.update({

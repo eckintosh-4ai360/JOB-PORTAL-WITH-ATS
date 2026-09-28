@@ -22,6 +22,22 @@ export const JOB_TYPE_OPTIONS = ["Full-Time", "Part-Time", "Contract", "Internsh
 
 export const WORK_MODEL_OPTIONS = ["Hybrid", "On-site", "Remote"];
 
+/**
+ * Experience level. The values are the keys the backend stores on a posting and
+ * the Find Jobs rail filters on, so a level an employer picks here is the exact
+ * value a candidate's filter matches. Empty means "read it from the advert" —
+ * the wording-based guess that was the only source before employers could say.
+ */
+export const EXPERIENCE_LEVEL_OPTIONS = [
+  { value: "", label: "Detect from the advert" },
+  { value: "intern", label: "Intern / Trainee" },
+  { value: "entry", label: "Entry Level" },
+  { value: "mid", label: "Mid Level" },
+  { value: "senior", label: "Senior" },
+  { value: "lead", label: "Lead / Manager" },
+  { value: "executive", label: "Executive" },
+];
+
 /** "GH₵ 4,000 – 6,000", or "" when no pay is set. */
 export const formatSalaryRange = (min, max) => {
   const format = (value) => Number(value).toLocaleString("en-GB");
