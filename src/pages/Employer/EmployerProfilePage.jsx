@@ -3,13 +3,14 @@ import {
   Building2, Mail, User2, FileText, Edit3, Save,
   X, Camera, Globe, MapPin, Phone, Upload, Check,
   Loader2, Briefcase, Star, Shield, ChevronRight,
-  Image as ImageIcon, Link2, AlertCircle,
+  Image as ImageIcon, Link2, AlertCircle, TrendingUp,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { useAuth } from "../../context/AuthContext";
+import { COMPANY_STAGES, isCompanyStage } from "../../utils/companyStages";
 
 //  Avatar Initials  
 const getInitials = (name = "") =>
@@ -91,21 +92,51 @@ const EmployerProfilePage = () => {
     companyDescription: "",
     companyLogo: "",
     avatar: "",
+    stage: "",
   });
   const [errors, setErrors] = useState({});
+
+  // Stage lives on the Company record rather than the account, so it is read
+  // separately from the auth user the rest of this form syncs from. Held apart
+  // as well so cancelling an edit restores what is actually stored.
+  const [savedStage, setSavedStage] = useState("");
 
   // Sync from auth user
   useEffect(() => {
     if (user) {
-      setForm({
+      setForm((prev) => ({
+        ...prev,
         name: user.name || "",
         companyName: user.companyName || "",
         companyDescription: user.companyDescription || "",
         companyLogo: user.companyLogo || "",
         avatar: user.avatar || "",
-      });
+      }));
     }
   }, [user]);
+
+  // An employer states their stage at setup; a company that has since grown
+  // needs to be able to say so here rather than waiting on a reviewer.
+  useEffect(() => {
+    let cancelled = false;
+
+    axiosInstance
+      .get(API_PATHS.COMPANIES.GET_MY_PROFILE)
+      .then((res) => {
+        if (cancelled) return;
+        const stage = isCompanyStage(res.data?.stage) ? res.data.stage : "";
+        setSavedStage(stage);
+        setForm((prev) => ({ ...prev, stage }));
+      })
+      .catch(() => {
+        // No company record yet, or the lookup failed — the select simply
+        // starts unset rather than blocking the rest of the profile.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -181,7 +212,9 @@ const EmployerProfilePage = () => {
           name: form.companyName,
           description: form.companyDescription,
           logo: form.companyLogo,
+          stage: form.stage,
         });
+        setSavedStage(form.stage);
       } catch (cErr) {
         console.warn("Could not sync company profile:", cErr);
       }
@@ -211,6 +244,7 @@ const EmployerProfilePage = () => {
         companyDescription: user.companyDescription || "",
         companyLogo: user.companyLogo || "",
         avatar: user.avatar || "",
+        stage: savedStage,
       });
     }
   };
@@ -450,6 +484,26 @@ const EmployerProfilePage = () => {
                     />
                   </FormField>
 
+                  <FormField label="Company Stage" icon={TrendingUp} error={errors.stage}>
+                    <select
+                      name="stage"
+                      value={form.stage}
+                      onChange={handleChange}
+                      className={`${inputCls(true, errors.stage)} cursor-pointer`}
+                    >
+                      <option value="">Not specified</option>
+                      {COMPANY_STAGES.map((stage) => (
+                        <option key={stage.value} value={stage.value}>
+                          {stage.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                      Your current funding or maturity stage. Candidates filter on it, and a
+                      platform reviewer can correct it.
+                    </p>
+                  </FormField>
+
                   <FormField label="About the Company" icon={FileText} error={errors.companyDescription}>
                     <textarea
                       name="companyDescription"
@@ -464,6 +518,7 @@ const EmployerProfilePage = () => {
               ) : (
                 <div>
                   <InfoRow icon={Building2} label="Company Name" value={user?.companyName} />
+                  <InfoRow icon={TrendingUp} label="Company Stage" value={savedStage} />
                   <InfoRow icon={Briefcase} label="Role" value="Employer" />
 
                   {/* About section */}
