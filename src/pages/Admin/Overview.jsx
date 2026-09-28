@@ -6,6 +6,7 @@ import DashboardLayout from "../../components/layout/dashboardLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPath";
 import { AdminPageHeader, StatTile } from "./components/AdminUI";
+import JobAlertsPanel from "./components/JobAlertsPanel";
 
 /**
  * Where an administrator lands.
@@ -128,6 +129,8 @@ const Overview = () => {
                 <StatTile label="Setup unfinished" value={data?.companies?.awaitingSetup ?? 0} hint="never submitted" icon={LayoutDashboard} />
               </div>
             </section>
+
+            <JobAlertsPanel />
 
             <section>
               <div className="mb-3">

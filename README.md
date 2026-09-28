@@ -68,6 +68,36 @@ Application statuses are `Applied`, `Under Review`, `Interviewing`, `Offered`, a
 - `GET /api/analytics` - authenticated employer dashboard analytics.
 - `GET /api/analytics/job/:jobId` - status breakdown for an owned job.
 
+### Job update subscriptions
+
+Candidates opt in to email updates about newly posted roles — at sign-up, from
+the prompt on Find Jobs, from their profile, or from the footer form without an
+account at all. Every subscription keeps a cursor at the newest role already
+mailed, so no role is sent twice and none is skipped.
+
+- `POST /api/job-alerts/subscribe` - subscribe. Works signed in or as a guest; a signed-in request always uses the account's own address.
+- `GET /api/job-alerts/me` - the authenticated user's subscription, and whether they have answered the question at all.
+- `PUT /api/job-alerts/me` - change cadence (`daily` | `weekly`), categories and locations, or turn updates off.
+- `POST /api/job-alerts/decline` - record a "no thanks" so the opt-in prompt stops appearing.
+- `GET /api/job-alerts/unsubscribe?token=` - one-click unsubscribe. Public, serves its own page, and is what every digest links to.
+- `GET /api/job-alerts/stats` - subscriber counts (admin).
+- `POST /api/job-alerts/dispatch` - send the digests that are due (admin). Accepts `{ frequency, limit, force, dryRun }`.
+
+Digests are sent by a scheduled run of the same code. From the `backend`
+directory:
+
+```bash
+npm run alerts:send              # send what is due
+npm run alerts:send -- --dry-run # report who would get one, send nothing
+```
+
+Point a cron job at it — every few hours is plenty. A subscription that is not
+due, or has nothing new to report, is passed over without being written to, so
+one schedule serves both daily and weekly subscribers.
+
+`API_PUBLIC_URL` must be set to where the API is reachable from the internet:
+it is what the unsubscribe link in every email points at.
+
 # Fraud Detection & AI Moderation
 
 This document covers the trust-and-safety layer: what it detects, how scores are
