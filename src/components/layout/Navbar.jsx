@@ -38,15 +38,12 @@ const Navbar = () => {
     { label: "AI Resume Match", path: "/resume-analyzer" },
   ];
 
-  // A signed-in candidate should not bounce between a public navigation and a
-  // second dashboard navigation. These destinations are the candidate's core
-  // workflow, and the Applications hub owns both application tracking and
-  // document management.
+  // Keep a signed-in candidate on the same discovery navigation as visitors.
+  // Account-only pages are no longer surfaced in the top-level navigation.
   const candidateNavLinks = [
     { label: "Find Jobs", path: "/find-jobs" },
-    { label: "Saved Jobs", path: "/saved-jobs" },
-    { label: "Applications & Docs", path: "/applications" },
-    { label: "Assessments", path: "/my-assessments" },
+    { label: "Browse Companies", path: "/browse-companies" },
+    { label: "Salaries & Insights", path: "/salaries-insights" },
     { label: "AI Resume Match", path: "/resume-analyzer" },
   ];
 
@@ -55,12 +52,6 @@ const Navbar = () => {
   const isActive = (path) => {
     if (path === "/find-jobs") {
       return location.pathname === "/" || location.pathname === "/find-jobs";
-    }
-    if (path === "/applications") {
-      return ["/applications", "/documents", "/my-applications"].includes(location.pathname);
-    }
-    if (path === "/my-assessments") {
-      return location.pathname === "/my-assessments" || location.pathname.startsWith("/assessment/");
     }
     return location.pathname.startsWith(path);
   };
@@ -127,20 +118,6 @@ const Navbar = () => {
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Always available, including for visitors. ThemeToggle persists mode. */}
           <ThemeToggle />
-
-          {/* A saved-jobs shortcut only makes sense for an authenticated candidate. */}
-          {isAuthenticated && user?.role === "jobseeker" && (
-            <Link
-              to="/saved-jobs"
-              aria-label="Saved Jobs shortcut"
-              className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-[#f5f1ff] hover:text-primary dark:hover:bg-slate-800"
-            >
-              <span className="material-symbols-outlined text-[20px]">
-                bookmark
-              </span>
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border border-white bg-[#ea8d76]" />
-            </Link>
-          )}
 
           <div className="h-6 w-px bg-border-default hidden sm:block shrink-0" />
 
