@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
-  Briefcase, Users, TrendingUp, Plus, ChevronUp,
-  ChevronDown, BarChart3, Bell, ArrowRight, Sparkles,
+  Briefcase, ClipboardCheck, Users, Plus, ChevronUp,
+  ChevronDown, BarChart3, Bell, ArrowRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
@@ -191,11 +191,9 @@ export const EmployerDashboard = () => {
               delay={80}
             />
             <StatCard
-              title="Hiring Rate"
-              value={`${counts.hiringRate ?? 0}%`}
-              icon={TrendingUp}
-              trendValue={counts.trends?.hiringRate ?? 0}
-              trendUp={(counts.trends?.hiringRate ?? 0) >= 0}
+              title="Candidates to Review"
+              value={counts.applicantsToReview ?? 0}
+              icon={ClipboardCheck}
               color="purple"
               delay={160}
             />
@@ -308,8 +306,8 @@ export const EmployerDashboard = () => {
                   </div>
                   <div className="h-px bg-indigo-100 dark:bg-indigo-500/20" />
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Hiring Rate</span>
-                    <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{counts.hiringRate ?? 0}%</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Candidates to Review</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{counts.applicantsToReview ?? 0}</span>
                   </div>
                 </div>
               </div>

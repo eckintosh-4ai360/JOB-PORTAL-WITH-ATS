@@ -7,13 +7,6 @@ const {
     getEmployerStages,
 } = require("../utils/hiringPipeline");
 
-/** Stage ids of the given types, plus the legacy names that meant the same. */
-const statusesOfType = (stages, types) => {
-    const ids = stages.filter((stage) => types.includes(stage.type)).map((stage) => stage.id);
-    const legacy = Object.keys(LEGACY_STATUSES).filter((name) => ids.includes(LEGACY_STATUSES[name]));
-    return [...ids, ...legacy];
-};
-
 // @desc    Get or generate analytics for the logged-in employer
 // @route   GET /api/analytics
 // @access  Private (Employer only)
@@ -40,18 +33,23 @@ const getEmployerAnalytics = async (req, res) => {
             where: { jobId: { in: jobIds } },
         });
 
-        // Offers count toward the rate as they always have; a hire is an offer
-        // that was accepted, so it counts too.
         const stages = await getEmployerStages(employerId);
-        const totalHired = await prisma.application.count({
-            where: {
-                jobId: { in: jobIds },
-                status: { in: statusesOfType(stages, ["offer", "hired"]) },
-            },
-        });
-
-        const hiringRate = totalApplicants > 0
-            ? Math.round((totalHired / totalApplicants) * 100)
+        // The first pipeline stage is where every new application lands. This
+        // is the most immediately useful dashboard queue: candidates an
+        // employer has not reviewed yet.
+        const firstStageId = stages[0]?.id;
+        const legacyFirstStageStatuses = firstStageId
+            ? Object.entries(LEGACY_STATUSES)
+                .filter(([, stageId]) => stageId === firstStageId)
+                .map(([status]) => status)
+            : [];
+        const applicantsToReview = firstStageId
+            ? await prisma.application.count({
+                where: {
+                    jobId: { in: jobIds },
+                    status: { in: [firstStageId, ...legacyFirstStageStatuses] },
+                },
+            })
             : 0;
 
         // Recent jobs (last 5, newest first) 
@@ -108,8 +106,8 @@ const getEmployerAnalytics = async (req, res) => {
             counts: {
                 totalActiveJobs,
                 totalApplicants,
-                hiringRate,
-                trends: { activeJobs: 0, applicants: 0, hiringRate: 0 },
+                applicantsToReview,
+                trends: { activeJobs: 0, applicants: 0 },
             },
             recentJobs:         recentJobsWithCount,
             recentApplications: recentApplicationsMapped,
