@@ -6,7 +6,7 @@ import {
   ExternalLink, Search, ArrowRight, Shield, Check,
   X, HelpCircle, FileCheck, Layers, Sparkles, Filter,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-  RefreshCw, Plus, Share2, Copy
+  RefreshCw, Plus, Share2, Copy, Star
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -167,6 +167,7 @@ export const MyDocuments = () => {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [docToDelete, setDocToDelete] = useState(null);
   const [isDeletingDoc, setIsDeletingDoc] = useState(false);
+  const [primaryDocId, setPrimaryDocId] = useState(null);
 
   // Pagination for Applications
   const [appPage, setAppPage] = useState(1);
@@ -264,7 +265,16 @@ export const MyDocuments = () => {
       });
 
       toast.dismiss(toastId);
-      toast.success(`${uploadCategory} uploaded successfully!`);
+      // A second CV is filed without taking the primary place, so say which
+      // resume applications will actually go out with.
+      const uploadedResume = backendCategory === "Resume" ? updatedDocs[0] : null;
+      if (uploadedResume && res.data?.resume === uploadedResume.url) {
+        toast.success(`${uploadCategory} uploaded — it is now your primary resume.`);
+      } else if (uploadedResume) {
+        toast.success(`${uploadCategory} uploaded. Star it to apply with this CV instead.`);
+      } else {
+        toast.success(`${uploadCategory} uploaded successfully!`);
+      }
       setCustomDocTitle("");
     } catch (err) {
       toast.dismiss(toastId);
@@ -273,6 +283,34 @@ export const MyDocuments = () => {
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  /**
+   * Choose which CV is the primary one. It is the resume an application
+   * attaches by default and the one the analyser reads, so switching it here
+   * is what changes the CV every later application goes out with.
+   */
+  const handleSetPrimaryResume = async (doc) => {
+    setPrimaryDocId(doc._id);
+    const toastId = toast.loading("Updating your primary resume…");
+
+    try {
+      const res = await axiosInstance.put(API_PATHS.DOCUMENTS.SET_PRIMARY_RESUME(doc._id));
+      const updatedDocs = res.data?.documents || [];
+      setDocuments(updatedDocs);
+      updateUser({
+        documents: updatedDocs,
+        resume: res.data?.resume ?? doc.url,
+      });
+      toast.dismiss(toastId);
+      toast.success(`${doc.name} is now your primary resume.`);
+    } catch (err) {
+      toast.dismiss(toastId);
+      console.error(err);
+      toast.error(err.response?.data?.message || "Could not update your primary resume.");
+    } finally {
+      setPrimaryDocId(null);
     }
   };
 
@@ -1251,7 +1289,8 @@ export const MyDocuments = () => {
                   {[...filteredDocuments]
                     .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))
                     .map((doc) => {
-                      const isResume = doc.category === "Resume" || doc.url === user?.resume;
+                      const isResume = doc.category === "Resume";
+                      const isPrimaryResume = isResume && doc.url === user?.resume;
                       return (
                         <div
                           key={doc._id}
@@ -1273,7 +1312,7 @@ export const MyDocuments = () => {
                               >
                                 {doc.category}
                               </span>
-                              {isResume && (
+                              {isPrimaryResume && (
                                 <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.2 text-[9px] font-extrabold text-emerald-800">
                                   <Check className="h-2.5 w-2.5" /> Primary Resume
                                 </span>
@@ -1285,6 +1324,20 @@ export const MyDocuments = () => {
                           </div>
 
                           <div className="flex items-center gap-1.5 shrink-0">
+                            {isResume && !isPrimaryResume && (
+                              <button
+                                onClick={() => handleSetPrimaryResume(doc)}
+                                disabled={primaryDocId === doc._id}
+                                className="h-8 w-8 rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50 flex items-center justify-center transition shadow-2xs disabled:opacity-60"
+                                title="Use this CV for new applications"
+                              >
+                                {primaryDocId === doc._id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Star className="h-3.5 w-3.5" />
+                                )}
+                              </button>
+                            )}
                             <a
                               href={resolveFileUrl(doc.url)}
                               target="_blank"

@@ -7,6 +7,7 @@ const {
 const {
     getDocuments,
     uploadDocument,
+    setPrimaryResume,
     deleteDocument,
 } = require("../controllers/documentController");
 const { protect } = require("../middlewares/authMiddleware");
@@ -23,6 +24,7 @@ router.delete("/resume", protect, deleteResume);
 // documents (CV, certificates, etc.)
 router.get("/documents", protect, getDocuments);
 router.post("/documents", protect, upload.single("file"), uploadDocument);
+router.put("/documents/:docId/primary", protect, setPrimaryResume);
 router.delete("/documents/:docId", protect, deleteDocument);
 router.post("/upload-resume", protect, upload.single("resume"), async (req, res) => {
     try {

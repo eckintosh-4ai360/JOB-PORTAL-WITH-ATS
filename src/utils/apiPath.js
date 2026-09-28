@@ -140,6 +140,7 @@ export const API_PATHS = {
   DOCUMENTS: {
     GET_DOCUMENTS: "/api/user/documents",
     UPLOAD_DOCUMENT: "/api/user/documents",
+    SET_PRIMARY_RESUME: (id) => `/api/user/documents/${id}/primary`,
     DELETE_DOCUMENT: (id) => `/api/user/documents/${id}`,
   },
 

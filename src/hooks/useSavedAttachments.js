@@ -42,12 +42,23 @@ export const useSavedAttachments = (enabled) => {
       .map((doc) => ({ id: doc._id || doc.id, name: doc.name, url: doc.url }));
 
   const resumeOptions = useMemo(() => {
-    const profileResume = user?.resume
-      ? [{ id: "profile-resume", name: "Primary resume", hint: "From your profile", url: user.resume }]
+    const saved = inCategory("Resume");
+
+    // The primary resume leads the list, so it is what the picker pre-selects.
+    // It is usually also filed as a document — name the option after that file
+    // so an applicant with several CVs can see which one is about to go out.
+    const primary = user?.resume
+      ? [
+          {
+            id: "profile-resume",
+            name: saved.find((doc) => doc.url === user.resume)?.name || "Primary resume",
+            hint: "Your primary resume",
+            url: user.resume,
+          },
+        ]
       : [];
 
-    // The profile resume is often also filed as a document; show it once.
-    return [...profileResume, ...inCategory("Resume").filter((doc) => doc.url !== user?.resume)];
+    return [...primary, ...saved.filter((doc) => doc.url !== user?.resume)];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documents, user?.resume]);
 

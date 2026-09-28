@@ -61,12 +61,22 @@ exports.uploadDocument = async (req, res) => {
             },
         });
 
-        // Keep the profile resume field in sync
+        // The first CV on the account becomes the primary one. A later upload
+        // does not take that place — an applicant who keeps several CVs picks
+        // which one is primary, and silently reassigning it would change what
+        // their next application attaches without them asking.
         if (docCategory === "Resume") {
-            await prisma.user.update({
+            const account = await prisma.user.findUnique({
                 where: { id: req.user._id },
-                data: { resume: url },
+                select: { resume: true },
             });
+
+            if (!account?.resume) {
+                await prisma.user.update({
+                    where: { id: req.user._id },
+                    data: { resume: url },
+                });
+            }
         }
 
         const documents = await prisma.document.findMany({
@@ -83,6 +93,48 @@ exports.uploadDocument = async (req, res) => {
     } catch (error) {
         console.error("Document upload error:", error);
         res.status(500).json({ message: "Document upload failed", error: error.message });
+    }
+};
+
+/**
+ * @desc  Choose which uploaded resume is the primary one
+ * @route PUT /api/user/documents/:docId/primary
+ *
+ * The primary resume is the single CV on the account — it is what an
+ * application attaches by default and what the resume analyser reads. An
+ * applicant may keep several CVs on file, so which one holds that place has to
+ * be their choice rather than whichever they happened to upload last.
+ */
+exports.setPrimaryResume = async (req, res) => {
+    try {
+        const { docId } = req.params;
+
+        const document = await prisma.document.findUnique({
+            where: { id: docId },
+        });
+
+        if (!document || document.userId !== req.user._id) {
+            return res.status(404).json({ message: "Document not found" });
+        }
+
+        if (document.category !== "Resume") {
+            return res.status(400).json({ message: "Only a resume can be your primary CV" });
+        }
+
+        await prisma.user.update({
+            where: { id: req.user._id },
+            data: { resume: document.url },
+        });
+
+        const documents = await prisma.document.findMany({
+            where: { userId: req.user._id },
+            orderBy: { uploadedAt: "desc" },
+        });
+
+        res.json({ documents: toClient(documents), resume: document.url });
+    } catch (error) {
+        console.error("Set primary resume error:", error);
+        res.status(500).json({ message: error.message });
     }
 };
 
