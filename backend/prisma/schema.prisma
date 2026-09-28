@@ -46,6 +46,7 @@ model User {
   assessmentAttempts    AssessmentAttempt[] @relation("CandidateAssessmentAttempts")
   careerPlan            CareerPlan?
   jobTemplates          JobTemplate[]  @relation("EmployerJobTemplates")
+  jobAlerts             JobAlertSubscription?
 
   @@index([email])
   @@index([clerkId])
@@ -588,6 +589,48 @@ model JobTemplate {
   updatedAt          DateTime  @updatedAt
 
   @@index([employerId, updatedAt])
+}
+
+// A standing request to be emailed the new roles posted on the platform.
+//
+// Keyed by email address rather than by account, so someone who subscribed
+// from the footer before signing up keeps the same subscription once their
+// account is linked to it — and nobody ends up on the list twice.
+//
+// The presence of a row is the record that a decision was made:
+// `unsubscribedAt == null` means "yes, send me these", a row with it set means
+// "no". That is what stops the platform asking the same person again.
+model JobAlertSubscription {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  userId           String?   @unique
+  user             User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String?
+
+  // daily | weekly — how often a digest may go out.
+  frequency        String    @default("weekly")
+  // What they asked to hear about. Empty means everything, which is the
+  // default: the new roles from every company on the platform.
+  categories       String[]  @default([])
+  locations        String[]  @default([])
+  // signup | footer | settings | prompt — where the consent was given.
+  source           String    @default("signup")
+
+  // Leaving takes no login: every digest carries this token in its footer, so
+  // one click is enough. Someone who cannot unsubscribe was never subscribed.
+  unsubscribeToken String    @unique
+  unsubscribedAt   DateTime?
+
+  lastSentAt       DateTime?
+  // When the newest job already mailed was published. The next digest starts
+  // from here, so no role is sent twice and none is silently skipped.
+  lastJobAt        DateTime?
+  sentCount        Int       @default(0)
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([unsubscribedAt, frequency])
 }
 
 model SavedJob {

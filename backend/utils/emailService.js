@@ -176,6 +176,37 @@ const DEFAULT_EMAIL_TEMPLATES = [
         `),
     },
     {
+        key: "job-alerts-subscribed",
+        name: "Job updates switched on",
+        description: "Sent when a candidate agrees to receive updates about newly posted roles.",
+        subject: "You're on the list \u2014 new roles are coming your way",
+        variables: ["name", "cadence", "browseUrl", "unsubscribeUrl"],
+        html: emailShell(`
+            <h2 style="color: #2563eb;">You're on the list</h2>
+            <p>Hi <strong>{{name}}</strong>,</p>
+            <p>From now on you'll get a <strong>{{cadence}}</strong> email with the roles newly posted on Job Portal \u2014 from every company hiring here, not only the ones you have already looked at.</p>
+            <p>We only write when there is something new. No new roles, no email.</p>
+            <p><a href="{{browseUrl}}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 8px; text-decoration: none;">Browse jobs now</a></p>
+            <p style="color: #6b7280; font-size: 14px;">Changed your mind? <a href="{{unsubscribeUrl}}" style="color: #6b7280;">Turn these emails off</a> \u2014 one click, no sign-in needed.</p>
+        `),
+    },
+    {
+        key: "job-alert-digest",
+        name: "New roles digest",
+        description: "The recurring email of newly posted roles, sent to candidates who asked for updates. {{jobList}} is the rendered list of roles and the point of the message \u2014 leave it in place.",
+        subject: "{{jobCount}} new {{roleWord}} on Job Portal",
+        variables: ["name", "jobCount", "roleWord", "companyCount", "companyWord", "period", "jobList", "moreLine", "browseUrl", "unsubscribeUrl"],
+        html: emailShell(`
+            <h2 style="color: #2563eb;">New roles this {{period}}</h2>
+            <p>Hi <strong>{{name}}</strong>,</p>
+            <p><strong>{{jobCount}}</strong> new {{roleWord}} went up across <strong>{{companyCount}}</strong> {{companyWord}} hiring on Job Portal.</p>
+            {{jobList}}
+            <p style="color: #4b5563; font-size: 14px;">{{moreLine}}</p>
+            <p><a href="{{browseUrl}}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 8px; text-decoration: none;">See every open role</a></p>
+            <p style="color: #6b7280; font-size: 14px;">You are getting this because you asked us for updates on new roles. <a href="{{unsubscribeUrl}}" style="color: #6b7280;">Unsubscribe</a> or change how often you hear from us at any time.</p>
+        `),
+    },
+    {
         key: "company-submitted",
         name: "Company verification submitted",
         description: "Sent to an employer when they submit their company setup for verification.",
@@ -241,9 +272,14 @@ const escapeHtml = (value) => String(value ?? "")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 
-const replaceVariables = (value, data, escapeValues = false) => value.replace(
+// `raw` names the variables whose value is HTML this file built itself — the
+// digest's list of roles is the only one. Everything else is escaped, because
+// every other value is something an employer or a candidate typed.
+const replaceVariables = (value, data, escapeValues = false, raw = []) => value.replace(
     /{{\s*([a-zA-Z0-9_]+)\s*}}/g,
-    (_, key) => escapeValues ? escapeHtml(data[key]) : String(data[key] ?? "")
+    (_, key) => escapeValues && !raw.includes(key)
+        ? escapeHtml(data[key])
+        : String(data[key] ?? "")
 );
 
 const getTemplate = async (key) => {
@@ -259,11 +295,14 @@ const getTemplate = async (key) => {
     }
 };
 
+// Never throws: a notification failing is not a reason for the action that
+// triggered it to fail. The return value says what happened, which the job
+// alert digest needs — it may only move its cursor past roles it delivered.
 const sendEmail = async ({ to, subject, html }) => {
     try {
         if (!resend) {
             console.warn("RESEND_API_KEY is not configured; skipping email notification");
-            return;
+            return { sent: false, reason: "RESEND_API_KEY is not configured" };
         }
 
         const { error } = await resend.emails.send({
@@ -274,17 +313,19 @@ const sendEmail = async ({ to, subject, html }) => {
         });
         if (error) throw new Error(error.message);
         console.log(`📧 Email sent to ${to}: ${subject}`);
+        return { sent: true };
     } catch (error) {
         console.error("Failed to send email:", error.message);
+        return { sent: false, reason: error.message };
     }
 };
 
-const sendTemplatedEmail = async ({ key, to, data }) => {
+const sendTemplatedEmail = async ({ key, to, data, raw = [] }) => {
     const template = await getTemplate(key);
-    await sendEmail({
+    return sendEmail({
         to,
         subject: replaceVariables(template.subject, data),
-        html: replaceVariables(template.html, data, true),
+        html: replaceVariables(template.html, data, true, raw),
     });
 };
 
@@ -355,6 +396,39 @@ const sendTalentInviteEmail = async ({ to, candidateName, companyName, jobTitle,
     data: { candidateName: candidateName || "there", companyName, jobTitle, jobUrl },
 });
 
+const sendJobAlertsSubscribedEmail = async ({ to, name, cadence, browseUrl, unsubscribeUrl }) => sendTemplatedEmail({
+    key: "job-alerts-subscribed",
+    to,
+    data: {
+        name: name || "there",
+        cadence: cadence === "daily" ? "daily" : "weekly",
+        browseUrl,
+        unsubscribeUrl,
+    },
+});
+
+// `jobListHtml` is built by services/jobAlertService from escaped values, so it
+// is the one variable passed through unescaped.
+const sendJobAlertDigestEmail = async ({
+    to, name, jobCount, companyCount, period, jobListHtml, moreLine, browseUrl, unsubscribeUrl,
+}) => sendTemplatedEmail({
+    key: "job-alert-digest",
+    to,
+    data: {
+        name: name || "there",
+        jobCount,
+        roleWord: jobCount === 1 ? "role" : "roles",
+        companyCount,
+        companyWord: companyCount === 1 ? "company" : "companies",
+        period,
+        jobList: jobListHtml,
+        moreLine: moreLine || "",
+        browseUrl,
+        unsubscribeUrl,
+    },
+    raw: ["jobList"],
+});
+
 const sendCompanySubmittedEmail = async ({ to, contactName, companyName }) => sendTemplatedEmail({
     key: "company-submitted",
     to,
@@ -399,6 +473,8 @@ module.exports = {
     sendHiredEmail,
     sendTalentInviteEmail,
     sendAssessmentInviteEmail,
+    sendJobAlertsSubscribedEmail,
+    sendJobAlertDigestEmail,
     sendCompanySubmittedEmail,
     sendCompanyUnderReviewEmail,
     sendCompanyApprovedEmail,
