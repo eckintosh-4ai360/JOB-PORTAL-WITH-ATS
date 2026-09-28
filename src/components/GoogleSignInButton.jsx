@@ -4,7 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 // GoogleSignInButton
-const GoogleSignInButton = ({ role = null, label = "Continue with Google" }) => {
+//
+// `jobAlerts` carries the sign-up page's job-updates choice through the Google
+// redirect, which is the only place it can survive: the account is created on
+// the callback page, after this component is gone. Left null on pages that do
+// not ask (Login), where nothing is recorded either way.
+const GoogleSignInButton = ({ role = null, jobAlerts = null, label = "Continue with Google" }) => {
     const clerk = useClerk();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -15,6 +20,9 @@ const GoogleSignInButton = ({ role = null, label = "Continue with Google" }) => 
         try {
             const callbackUrl = new URL("/sso-callback", window.location.origin);
             if (role) callbackUrl.searchParams.set("role", role);
+            if (typeof jobAlerts === "boolean") {
+                callbackUrl.searchParams.set("alerts", jobAlerts ? "1" : "0");
+            }
             const callbackHref = callbackUrl.toString();
 
             if (clerk.session) {

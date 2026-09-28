@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { createClerkClient, verifyToken } = require("@clerk/backend");
 const { sendAccountCreatedEmail } = require("../utils/emailService");
+const { recordConsent } = require("../services/jobAlertService");
 const { toClient } = require("../utils/prismaHelper");
 
 const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
@@ -28,10 +29,34 @@ const genarateToken = (id) => {
     return jwt.sign({id}, process.env.JWT_SECRET, {expiresIn: "30d"});
 };
 
+/**
+ * Record what a brand-new candidate said about job updates.
+ *
+ * Both a yes and a no are recorded: the no is what stops the platform asking
+ * again on every visit. Anything other than a boolean means the question was
+ * not put to them (an employer, or a client that does not ask yet), and
+ * nothing is written.
+ *
+ * Never awaited and never allowed to throw: a mailing-list row must not be
+ * able to fail an account being created.
+ */
+const recordJobAlertConsent = (user, agreed) => {
+    if (typeof agreed !== "boolean") return;
+    if (user.role !== "jobseeker") return;
+
+    recordConsent({
+        email: user.email,
+        name: user.name,
+        userId: user.id,
+        agreed,
+        source: "signup",
+    }).catch((error) => console.warn("Could not record job update consent:", error.message));
+};
+
 // @desc Register a new user
 exports.register = async (req, res) => {
     try{
-        const {name, email, password, avatar, role} = req.body;
+        const {name, email, password, avatar, role, jobAlerts} = req.body;
         if (!role || !["jobseeker", "employer"].includes(role)) {
             return res.status(400).json({message: "A valid user role is required"});
         }
@@ -61,6 +86,8 @@ exports.register = async (req, res) => {
             name: user.name,
             role: user.role,
         });
+
+        recordJobAlertConsent(user, jobAlerts);
 
         res.status(201).json({
             token: genarateToken(user.id),
@@ -116,7 +143,7 @@ exports.getMe = async (req, res) => {
 // @access Public
 exports.clerkAuth = async (req, res) => {
     try {
-        const { clerkToken, role } = req.body;
+        const { clerkToken, role, jobAlerts } = req.body;
 
         if (!clerkToken) {
             return res.status(400).json({ message: "Clerk token is required" });
@@ -189,6 +216,7 @@ exports.clerkAuth = async (req, res) => {
                 name: user.name,
                 role: user.role,
             });
+            recordJobAlertConsent(user, jobAlerts);
         }
 
         res.json({

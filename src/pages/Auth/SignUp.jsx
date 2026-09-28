@@ -10,6 +10,7 @@ import {
   Briefcase,
   Building2,
   Users,
+  Bell,
   Loader2,
   AlertCircle,
   CheckCircle,
@@ -33,7 +34,11 @@ const SignUp = () => {
     email: "",
     password: "",
     role: "jobseeker", // 'jobseeker' or 'employer'
-    avatar: null
+    avatar: null,
+    // Job updates by email. Ticked by default because it is the thing a
+    // jobseeker signed up for; the box is in plain sight and every digest
+    // carries a one-click unsubscribe.
+    jobAlerts: true,
   })
 
   const [avatarPreview, setAvatarPreview] = useState(null)
@@ -177,7 +182,9 @@ const SignUp = () => {
         email: formData.email,
         password: formData.password,
         role: formData.role,
-        avatar: avatarUrl
+        avatar: avatarUrl,
+        // Recorded either way: a "no" is what stops us asking again later.
+        jobAlerts: formData.role === "jobseeker" ? formData.jobAlerts : false,
       })
 
       const { token, user } = response.data
@@ -329,7 +336,11 @@ const SignUp = () => {
           </div>
 
           {/* Social Logins */}
-          <GoogleSignInButton role={formData.role} label="Sign up with Google" />
+          <GoogleSignInButton
+            role={formData.role}
+            jobAlerts={formData.role === "jobseeker" ? formData.jobAlerts : false}
+            label="Sign up with Google"
+          />
 
           <div className="relative flex items-center justify-center">
             <div className="absolute inset-0 flex items-center">
@@ -583,6 +594,29 @@ const SignUp = () => {
 
               </div>
             </div>
+
+            {/* Job updates — asked of candidates, who are the ones we would write to */}
+            {formData.role === "jobseeker" && (
+              <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-gray-200 bg-gray-50/50 p-3 transition-colors hover:border-gray-300 dark:border-gray-700 dark:bg-gray-900/50 dark:hover:border-gray-600">
+                <input
+                  type="checkbox"
+                  name="jobAlerts"
+                  checked={formData.jobAlerts}
+                  onChange={(e) => setFormData(prev => ({ ...prev, jobAlerts: e.target.checked }))}
+                  className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-primary"
+                />
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1.5 text-[13px] font-bold text-gray-700 dark:text-gray-200">
+                    <Bell className="h-3.5 w-3.5 text-primary" />
+                    Email me new roles as they are posted
+                  </span>
+                  <span className="mt-0.5 block text-[11px] leading-relaxed text-gray-400 dark:text-gray-500">
+                    A weekly round-up of jobs from every company hiring here. Change how often or stop it in one click,
+                    any time.
+                  </span>
+                </span>
+              </label>
+            )}
 
             {/* Submit Button */}
             <button

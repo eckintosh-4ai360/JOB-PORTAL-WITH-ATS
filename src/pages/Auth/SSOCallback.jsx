@@ -25,6 +25,11 @@ const SSOCallback = () => {
     const [searchParams] = useSearchParams();
 
     const selectedRole = searchParams.get("role");
+    // The job-updates choice made on the sign-up page, carried through the
+    // Google redirect. Absent when the page never asked, and then nothing is
+    // recorded — an existing user is prompted in the app instead.
+    const alertsParam = searchParams.get("alerts");
+    const jobAlerts = alertsParam === null ? undefined : alertsParam === "1";
     const isExistingSession = searchParams.get("existing") === "true";
     const [step, setStep] = useState("loading"); // "loading" | "pick-role" | "done" | "error"
     const [pendingToken, setPendingToken] = useState(null);
@@ -83,6 +88,9 @@ const SSOCallback = () => {
                 if (selectedRole) {
                     payload.role = selectedRole;
                 }
+                if (jobAlerts !== undefined) {
+                    payload.jobAlerts = jobAlerts;
+                }
 
                 const response = await axiosInstance.post(API_PATHS.AUTH.CLERK_AUTH, payload);
                 const { token, user } = response.data;
@@ -107,7 +115,7 @@ const SSOCallback = () => {
         };
 
         exchangeToken();
-    }, [callbackReady, session, selectedRole, login, navigate]);
+    }, [callbackReady, session, selectedRole, jobAlerts, login, navigate]);
 
     // Step 3 — user picks role (first-time Google sign-in only)
     const handleRoleSelect = async (role) => {
@@ -116,6 +124,7 @@ const SSOCallback = () => {
             const response = await axiosInstance.post(API_PATHS.AUTH.CLERK_AUTH, {
                 clerkToken: pendingToken,
                 role,
+                ...(jobAlerts === undefined ? {} : { jobAlerts }),
             });
 
             const { token, user } = response.data;
