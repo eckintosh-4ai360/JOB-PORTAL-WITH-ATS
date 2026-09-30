@@ -98,6 +98,29 @@ one schedule serves both daily and weekly subscribers.
 `API_PUBLIC_URL` must be set to where the API is reachable from the internet:
 it is what the unsubscribe link in every email points at.
 
+### CV builder
+
+Candidates write CVs on the platform at `/resume-builder` instead of, or as
+well as, uploading one. A CV is stored as structured content and rendered to a
+PDF on demand, so switching template never means retyping. Every template is
+single-column real text, and the ATS check proves it: the API renders the PDF,
+reads it back with the same extractor used for uploaded CVs, and scores it with
+the Resume Analyzer's structural checks.
+
+- `GET /api/resume-builder` - the candidate's CVs.
+- `POST /api/resume-builder` - start a CV. `{ source: "profile" }` fills it in from the latest resume analysis and matching profile; `"blank"` fills in only name and email.
+- `GET /api/resume-builder/:id` - one CV.
+- `PUT /api/resume-builder/:id` - save any of `title`, `template` (`modern` | `classic` | `compact`), `accent` and `content`.
+- `DELETE /api/resume-builder/:id` - delete a CV. Its saved PDF stays in the document library.
+- `POST /api/resume-builder/:id/duplicate` - copy a CV, e.g. to tailor it to one job.
+- `GET /api/resume-builder/:id/pdf` - the PDF (`?inline=1` to view rather than download).
+- `POST /api/resume-builder/:id/check` - ATS checks on the rendered PDF, with the text a parser reads from it.
+- `POST /api/resume-builder/:id/document` - save the PDF to the document library, where applications can attach it. `{ makePrimary: true }` also makes it the profile CV. Saving again refreshes the same entry; applications already sent keep the file they went with.
+- `POST /api/resume-builder/assist` - AI writing help (Groq): `{ kind: "summary" | "bullets" | "skills", content, index?, notes? }`. Suggestions only — nothing is saved, and the model is told never to invent facts.
+
+The feature adds the `BuiltResume` table. After pulling, run `npm run prisma:push`
+from the `backend` directory.
+
 # Fraud Detection & AI Moderation
 
 This document covers the trust-and-safety layer: what it detects, how scores are

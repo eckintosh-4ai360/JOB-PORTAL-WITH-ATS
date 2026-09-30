@@ -78,7 +78,8 @@ const resolveResumeSource = async (req) => {
             pageCount: Math.max(1, Math.round(wordCount / 500)),
             multiColumn: false,
             source: "pasted",
-            fileName: "Pasted resume",
+            // The CV builder sends its text with the CV's title.
+            fileName: String(req.body?.fileName || "").trim().slice(0, 120) || "Pasted resume",
             resumeUrl: null,
         };
     }

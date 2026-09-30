@@ -24,6 +24,7 @@ const jobTemplateRoutes = require("./routes/jobTemplateRoutes");
 const shortlistRoutes = require("./routes/shortlistRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const jobAlertRoutes = require("./routes/jobAlertRoutes");
+const resumeBuilderRoutes = require("./routes/resumeBuilderRoutes");
 
 
 const app = express();
@@ -61,6 +62,7 @@ app.use('/api/job-templates', jobTemplateRoutes);
 app.use('/api/shortlists', shortlistRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/job-alerts', jobAlertRoutes);
+app.use('/api/resume-builder', resumeBuilderRoutes);
 
 // Serve uploads folder.
 //
