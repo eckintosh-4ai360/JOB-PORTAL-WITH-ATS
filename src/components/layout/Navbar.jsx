@@ -122,6 +122,22 @@ const Navbar = () => {
           {/* Always available, including for visitors. ThemeToggle persists mode. */}
           <ThemeToggle />
 
+          {isAuthenticated && user?.role === "jobseeker" && (
+            <Link
+              to="/saved-jobs"
+              onClick={() => setMobileMenuOpen(false)}
+              title="Saved jobs"
+              aria-label="Open saved jobs"
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                location.pathname === "/saved-jobs"
+                  ? "bg-brand-indigo-light text-primary"
+                  : "text-text-secondary hover:bg-[#f7f3ff] hover:text-primary dark:hover:bg-slate-800"
+              }`}
+            >
+              <span className="material-symbols-outlined text-[21px]">bookmark</span>
+            </Link>
+          )}
+
           <div className="h-6 w-px bg-border-default hidden sm:block shrink-0" />
 
           {/* User Auth or Sign In */}
