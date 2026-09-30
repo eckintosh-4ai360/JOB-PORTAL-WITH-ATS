@@ -6,6 +6,10 @@ const {
     sendCompanyRejectedEmail,
 } = require("../utils/emailService");
 const { COMPANY_STAGES } = require("../utils/searchLexicon");
+const {
+    EXPIRED_REASON,
+    deactivateExpiredAccounts,
+} = require("../services/accountAccessService");
 
 // pending = submitted and queued, in_review = a reviewer has picked it up.
 const APPROVAL_STATES = ["pending", "in_review", "approved", "rejected"];
@@ -35,7 +39,13 @@ const companyDetailSelect = {
     approvalState: true, approvalNote: true, reviewedAt: true, reviewedById: true,
     submittedForReviewAt: true, verified: true, trustState: true, rating: true,
     createdAt: true, updatedAt: true,
-    user: { select: { id: true, name: true, email: true, role: true, trustState: true, createdAt: true } },
+    user: {
+        select: {
+            id: true, name: true, email: true, role: true, trustState: true,
+            isActive: true, subscriptionEndsAt: true, subscriptionRenews: true,
+            deactivatedAt: true, deactivationReason: true, createdAt: true,
+        },
+    },
     _count: { select: { jobs: true } },
 };
 
@@ -44,12 +54,25 @@ const companyDetailSelect = {
 // @access  Private (Admin only)
 const getOverview = async (req, res) => {
     try {
-        const [byState, totalCompanies, employers, jobseekers, liveJobs, hiddenJobs, applications, awaitingSetup] =
+        await deactivateExpiredAccounts({ force: true });
+        const [
+            byState, totalCompanies, employers, jobseekers, inactiveAccounts,
+            nonRenewingAccounts, liveJobs, hiddenJobs, applications, awaitingSetup,
+        ] =
             await Promise.all([
                 prisma.company.groupBy({ by: ["approvalState"], _count: { _all: true } }),
                 prisma.company.count(),
                 prisma.user.count({ where: { role: "employer" } }),
                 prisma.user.count({ where: { role: "jobseeker" } }),
+                prisma.user.count({ where: { isActive: false } }),
+                prisma.user.count({
+                    where: {
+                        role: { not: "admin" },
+                        isActive: true,
+                        subscriptionRenews: false,
+                        subscriptionEndsAt: { gt: new Date() },
+                    },
+                }),
                 prisma.job.count({ where: { deletedAt: null, isClosed: false } }),
                 prisma.job.count({ where: { deletedAt: null, moderationState: "hidden" } }),
                 prisma.application.count(),
@@ -67,7 +90,7 @@ const getOverview = async (req, res) => {
 
         res.status(200).json({
             companies: { total: totalCompanies, ...tally, awaitingSetup },
-            people: { employers, jobseekers },
+            people: { employers, jobseekers, inactive: inactiveAccounts, nonRenewing: nonRenewingAccounts },
             jobs: { live: liveJobs, hidden: hiddenJobs },
             applications,
         });
@@ -82,6 +105,7 @@ const getOverview = async (req, res) => {
 // @access  Private (Admin only)
 const listCompanies = async (req, res) => {
     try {
+        await deactivateExpiredAccounts();
         const { state, search } = req.query;
         const { page, limit, skip } = getPagination(req.query);
 
@@ -115,7 +139,11 @@ const listCompanies = async (req, res) => {
         if (page === 1 && (!state || state === "pending")) {
             const stalled = await prisma.user.findMany({
                 where: { role: "employer", employerOnboardingComplete: false, company: { is: null } },
-                select: { id: true, name: true, email: true, companyName: true, createdAt: true },
+                select: {
+                    id: true, name: true, email: true, companyName: true,
+                    isActive: true, subscriptionEndsAt: true, subscriptionRenews: true,
+                    deactivatedAt: true, deactivationReason: true, createdAt: true,
+                },
                 orderBy: { createdAt: "desc" },
             });
             incomplete = stalled.map((user) => ({
@@ -124,7 +152,16 @@ const listCompanies = async (req, res) => {
                 name: user.companyName || user.name,
                 approvalState: "setup_incomplete",
                 verified: false,
-                user: { id: user.id, name: user.name, email: user.email },
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    isActive: user.isActive,
+                    subscriptionEndsAt: user.subscriptionEndsAt,
+                    subscriptionRenews: user.subscriptionRenews,
+                    deactivatedAt: user.deactivatedAt,
+                    deactivationReason: user.deactivationReason,
+                },
                 createdAt: user.createdAt,
                 _count: { jobs: 0 },
             }));
@@ -148,6 +185,7 @@ const listCompanies = async (req, res) => {
 // @access  Private (Admin only)
 const getCompany = async (req, res) => {
     try {
+        await deactivateExpiredAccounts();
         const company = await prisma.company.findUnique({
             where: { id: req.params.id },
             select: {
@@ -333,12 +371,21 @@ const updateCompanyStage = async (req, res) => {
 // @access  Private (Admin only)
 const listAccounts = async (req, res) => {
     try {
-        const { role, trustState, search } = req.query;
+        await deactivateExpiredAccounts();
+        const { role, trustState, status, search } = req.query;
         const { page, limit, skip } = getPagination(req.query);
 
         const where = {};
         if (role && ["jobseeker", "employer", "admin"].includes(role)) where.role = role;
         if (trustState && ["clear", "flagged", "suspended"].includes(trustState)) where.trustState = trustState;
+        if (status === "active") where.isActive = true;
+        if (status === "inactive") where.isActive = false;
+        if (status === "ending") {
+            where.AND = [...(where.AND || []), { role: { not: "admin" } }];
+            where.isActive = true;
+            where.subscriptionRenews = false;
+            where.subscriptionEndsAt = { gt: new Date() };
+        }
         if (search) {
             where.OR = [
                 { name: { contains: search, mode: "insensitive" } },
@@ -354,6 +401,8 @@ const listAccounts = async (req, res) => {
                 select: {
                     id: true, name: true, email: true, role: true, avatar: true,
                     companyName: true, trustState: true, employerOnboardingComplete: true, createdAt: true,
+                    isActive: true, subscriptionEndsAt: true, subscriptionRenews: true,
+                    deactivatedAt: true, deactivationReason: true,
                     company: { select: { id: true, name: true, approvalState: true } },
                     _count: { select: { postedJobs: true, applications: true } },
                 },
@@ -372,6 +421,96 @@ const listAccounts = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+// @desc    Change account access and subscription lifecycle
+// @route   PATCH /api/admin/accounts/:id/access
+// @access  Private (Admin only)
+const updateAccountAccess = async (req, res) => {
+    try {
+        const account = await prisma.user.findUnique({
+            where: { id: req.params.id },
+            select: {
+                id: true, name: true, email: true, role: true, isActive: true,
+                subscriptionEndsAt: true, subscriptionRenews: true,
+                deactivatedAt: true, deactivationReason: true,
+            },
+        });
+
+        if (!account) return res.status(404).json({ message: "Account not found." });
+
+        const hasActive = typeof req.body?.isActive === "boolean";
+        const hasRenews = typeof req.body?.subscriptionRenews === "boolean";
+        const hasEndDate = Object.prototype.hasOwnProperty.call(req.body || {}, "subscriptionEndsAt");
+        const reason = String(req.body?.reason || "").trim().slice(0, 300);
+
+        if (!hasActive && !hasRenews && !hasEndDate && !reason) {
+            return res.status(400).json({ message: "No account access changes were supplied." });
+        }
+        if (account.role === "admin" && hasActive && req.body.isActive === false) {
+            return res.status(422).json({ message: "Administrator accounts cannot be deactivated here." });
+        }
+        if (account.id === req.user._id && hasActive && req.body.isActive === false) {
+            return res.status(422).json({ message: "You cannot deactivate your own account." });
+        }
+
+        let subscriptionEndsAt = account.subscriptionEndsAt;
+        if (hasEndDate) {
+            if (req.body.subscriptionEndsAt === null || req.body.subscriptionEndsAt === "") {
+                subscriptionEndsAt = null;
+            } else {
+                subscriptionEndsAt = new Date(req.body.subscriptionEndsAt);
+                if (Number.isNaN(subscriptionEndsAt.getTime())) {
+                    return res.status(422).json({ message: "Choose a valid subscription end date." });
+                }
+            }
+        }
+
+        const subscriptionRenews = hasRenews
+            ? req.body.subscriptionRenews
+            : account.subscriptionRenews;
+        let isActive = hasActive ? req.body.isActive : account.isActive;
+        const expiredWithoutRenewal = account.role !== "admin"
+            && subscriptionRenews === false
+            && subscriptionEndsAt
+            && subscriptionEndsAt <= new Date();
+        if (expiredWithoutRenewal) isActive = false;
+
+        const deactivationReason = isActive
+            ? null
+            : expiredWithoutRenewal
+                ? EXPIRED_REASON
+                : reason || account.deactivationReason || "Deactivated by administrator";
+
+        const updated = await prisma.user.update({
+            where: { id: account.id },
+            data: {
+                isActive,
+                subscriptionEndsAt,
+                subscriptionRenews,
+                deactivatedAt: isActive ? null : account.deactivatedAt || new Date(),
+                deactivationReason,
+            },
+            select: {
+                id: true, name: true, email: true, role: true, avatar: true,
+                companyName: true, trustState: true, employerOnboardingComplete: true,
+                isActive: true, subscriptionEndsAt: true, subscriptionRenews: true,
+                deactivatedAt: true, deactivationReason: true, createdAt: true,
+                company: { select: { id: true, name: true, approvalState: true } },
+                _count: { select: { postedJobs: true, applications: true } },
+            },
+        });
+
+        res.status(200).json({
+            message: updated.isActive
+                ? `${updated.name}'s account is active.`
+                : `${updated.name}'s account is inactive.`,
+            account: toClient(updated),
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Could not update account access." });
     }
 };
 
@@ -441,5 +580,6 @@ module.exports = {
     decideCompany,
     updateCompanyStage,
     listAccounts,
+    updateAccountAccess,
     listJobs,
 };

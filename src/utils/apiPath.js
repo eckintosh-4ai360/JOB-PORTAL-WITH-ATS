@@ -76,6 +76,7 @@ export const API_PATHS = {
     DECIDE_COMPANY: (id) => `/api/admin/companies/${id}/decision`,
     UPDATE_COMPANY_STAGE: (id) => `/api/admin/companies/${id}/stage`,
     GET_ACCOUNTS: "/api/admin/accounts",
+    UPDATE_ACCOUNT_ACCESS: (id) => `/api/admin/accounts/${id}/access`,
     DUPLICATES: "/api/admin/duplicates",
     DUPLICATES_SCAN: "/api/admin/duplicates/scan",
     DUPLICATES_REVIEW: "/api/admin/duplicates/review",

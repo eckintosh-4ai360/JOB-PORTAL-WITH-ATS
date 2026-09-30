@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  Building2, Check, ExternalLink, FileText, Inbox, Loader2, RefreshCw, ShieldCheck, X,
+  Building2, CalendarClock, Check, ExternalLink, FileText, Inbox,
+  Loader2, RefreshCw, ShieldCheck, UserX, X,
 } from "lucide-react";
 import moment from "moment";
 import toast from "react-hot-toast";
@@ -30,6 +31,15 @@ const STATE_TABS = [
   { id: "", label: "All" },
 ];
 
+const accessDraftFrom = (user) => ({
+  isActive: user?.isActive !== false,
+  subscriptionEndsAt: user?.subscriptionEndsAt
+    ? moment(user.subscriptionEndsAt).format("YYYY-MM-DD")
+    : "",
+  subscriptionRenews: user?.subscriptionRenews !== false,
+  reason: user?.deactivationReason || "",
+});
+
 const Companies = () => {
   const [overview, setOverview] = useState(null);
   const [companies, setCompanies] = useState([]);
@@ -46,6 +56,8 @@ const Companies = () => {
   const [isDeciding, setIsDeciding] = useState(false);
   const [stageDraft, setStageDraft] = useState("");
   const [isUpdatingStage, setIsUpdatingStage] = useState(false);
+  const [accessDraft, setAccessDraft] = useState(null);
+  const [isSavingAccess, setIsSavingAccess] = useState(false);
 
   const loadOverview = useCallback(async () => {
     try {
@@ -88,17 +100,50 @@ const Companies = () => {
 
   const openCompany = async (company) => {
     setSelected(company);
+    setAccessDraft(accessDraftFrom(company.user));
     setNote("");
     setStageDraft(isCompanyStage(company.stage) ? company.stage : "");
     setIsLoadingDetail(true);
     try {
       const res = await axiosInstance.get(API_PATHS.ADMIN.GET_COMPANY(company.id));
       setSelected(res.data.company);
+      setAccessDraft(accessDraftFrom(res.data.company?.user));
       setStageDraft(isCompanyStage(res.data.company?.stage) ? res.data.company.stage : "");
     } catch (err) {
       toast.error(err.response?.data?.message || "Could not load that company.");
     } finally {
       setIsLoadingDetail(false);
+    }
+  };
+
+  const saveCompanyAccess = async () => {
+    if (!selected?.user?.id || !accessDraft) return;
+    setIsSavingAccess(true);
+    try {
+      const subscriptionEndsAt = accessDraft.subscriptionEndsAt
+        ? new Date(`${accessDraft.subscriptionEndsAt}T23:59:59.999Z`).toISOString()
+        : null;
+      const res = await axiosInstance.patch(
+        API_PATHS.ADMIN.UPDATE_ACCOUNT_ACCESS(selected.user.id),
+        {
+          isActive: accessDraft.isActive,
+          subscriptionEndsAt,
+          subscriptionRenews: accessDraft.subscriptionRenews,
+          reason: accessDraft.reason.trim(),
+        }
+      );
+      toast.success(res.data.message);
+      setSelected((current) => ({
+        ...current,
+        user: { ...current.user, ...res.data.account },
+      }));
+      setAccessDraft(accessDraftFrom(res.data.account));
+      loadCompanies();
+      loadOverview();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not update company access.");
+    } finally {
+      setIsSavingAccess(false);
     }
   };
 
@@ -288,6 +333,13 @@ const Companies = () => {
                       {company.name}
                     </span>
                     <StatePill state={company.approvalState} />
+                    <StatePill
+                      tone={company.user?.isActive === false ? "rejected" : "approved"}
+                      label={company.user?.isActive === false ? "inactive" : "active"}
+                    />
+                    {company.user?.isActive !== false && company.user?.subscriptionRenews === false && (
+                      <StatePill tone="pending" label="not renewing" />
+                    )}
                     {company.verified && (
                       <ShieldCheck className="h-4 w-4 shrink-0 text-verified-badge" aria-label="Verified" />
                     )}
@@ -338,6 +390,10 @@ const Companies = () => {
                         <p className="truncate font-body-sm text-text-muted">{entry.user?.email}</p>
                       </div>
                       <StatePill state="setup_incomplete" />
+                      <StatePill
+                        tone={entry.user?.isActive === false ? "rejected" : "approved"}
+                        label={entry.user?.isActive === false ? "inactive" : "active"}
+                      />
                     </div>
                   ))}
                 </div>
@@ -358,6 +414,10 @@ const Companies = () => {
                 <h2 className="truncate text-lg font-extrabold text-gray-900 dark:text-gray-100">{selected.name}</h2>
                 <div className="mt-1 flex items-center gap-2">
                   <StatePill state={selected.approvalState} />
+                  <StatePill
+                    tone={selected.user?.isActive === false ? "rejected" : "approved"}
+                    label={selected.user?.isActive === false ? "inactive" : "active"}
+                  />
                   <span className="text-xs text-gray-400 dark:text-gray-500">
                     {selected.user?.email}
                   </span>
@@ -413,6 +473,94 @@ const Companies = () => {
                       </p>
                     )}
                   </section>
+
+                  {accessDraft && (
+                    <section className="mt-4 rounded-2xl border border-sky-100 bg-sky-50/60 p-4 dark:border-sky-500/20 dark:bg-sky-500/10">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[11px] font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-300">
+                            Subscription &amp; platform access
+                          </p>
+                          <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-gray-300">
+                            This controls the employer account behind the company. Inactive companies cannot sign in and their jobs disappear from public discovery.
+                          </p>
+                        </div>
+                        {accessDraft.isActive ? (
+                          <ShieldCheck className="h-5 w-5 shrink-0 text-emerald-500" />
+                        ) : (
+                          <UserX className="h-5 w-5 shrink-0 text-rose-500" />
+                        )}
+                      </div>
+
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <label className="text-xs font-bold text-slate-700 dark:text-gray-200">
+                          Account state
+                          <select
+                            value={accessDraft.isActive ? "active" : "inactive"}
+                            onChange={(event) => setAccessDraft((current) => ({ ...current, isActive: event.target.value === "active" }))}
+                            className="mt-1.5 w-full rounded-xl border border-sky-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20 dark:border-sky-500/30 dark:bg-gray-900 dark:text-gray-100"
+                          >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                          </select>
+                        </label>
+                        <label className="text-xs font-bold text-slate-700 dark:text-gray-200">
+                          Subscription end
+                          <input
+                            type="date"
+                            value={accessDraft.subscriptionEndsAt}
+                            onChange={(event) => setAccessDraft((current) => ({ ...current, subscriptionEndsAt: event.target.value }))}
+                            className="mt-1.5 w-full rounded-xl border border-sky-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20 dark:border-sky-500/30 dark:bg-gray-900 dark:text-gray-100"
+                          />
+                        </label>
+                      </div>
+
+                      <label className="mt-3 flex items-start gap-2.5 rounded-xl border border-sky-100 bg-white/70 p-3 dark:border-sky-500/20 dark:bg-gray-900/60">
+                        <input
+                          type="checkbox"
+                          checked={accessDraft.subscriptionRenews}
+                          onChange={(event) => setAccessDraft((current) => ({ ...current, subscriptionRenews: event.target.checked }))}
+                          className="mt-0.5 h-4 w-4 accent-sky-600"
+                        />
+                        <span>
+                          <span className="block text-xs font-bold text-slate-800 dark:text-gray-100">Subscription renews</span>
+                          <span className="mt-0.5 block text-[11px] leading-4 text-slate-500 dark:text-gray-400">
+                            Turn off to deactivate this company automatically after the end date.
+                          </span>
+                        </span>
+                      </label>
+
+                      <label className="mt-3 block text-xs font-bold text-slate-700 dark:text-gray-200">
+                        Admin note
+                        <input
+                          type="text"
+                          value={accessDraft.reason}
+                          onChange={(event) => setAccessDraft((current) => ({ ...current, reason: event.target.value }))}
+                          placeholder="Why access was deactivated"
+                          className="mt-1.5 w-full rounded-xl border border-sky-200 bg-white px-3 py-2.5 text-sm font-normal text-slate-900 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20 dark:border-sky-500/30 dark:bg-gray-900 dark:text-gray-100"
+                        />
+                      </label>
+
+                      {selected.user?.subscriptionEndsAt && (
+                        <p className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-gray-400">
+                          <CalendarClock className="h-3.5 w-3.5" />
+                          Current end date: {moment(selected.user.subscriptionEndsAt).format("D MMMM YYYY")}
+                        </p>
+                      )}
+
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={saveCompanyAccess}
+                          disabled={isSavingAccess}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-sky-700 disabled:opacity-60"
+                        >
+                          {isSavingAccess ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                          Save access
+                        </button>
+                      </div>
+                    </section>
+                  )}
 
                   <div className="mt-4 grid grid-cols-1 gap-x-6 sm:grid-cols-2">
                     <DetailRow label="Registered legal name" value={selected.legalName} />

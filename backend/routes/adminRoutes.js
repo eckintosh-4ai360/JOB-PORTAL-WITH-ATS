@@ -9,6 +9,7 @@ const {
     decideCompany,
     updateCompanyStage,
     listAccounts,
+    updateAccountAccess,
     listJobs,
 } = require("../controllers/adminController");
 
@@ -32,6 +33,7 @@ router.post("/companies/:id/decision", decideCompany);
 router.patch("/companies/:id/stage", updateCompanyStage);
 
 router.get("/accounts", listAccounts);
+router.patch("/accounts/:id/access", updateAccountAccess);
 
 // Jobseeker accounts that look like the same person.
 router.get("/duplicates", listPlatformDuplicates);
