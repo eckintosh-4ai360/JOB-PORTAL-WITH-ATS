@@ -3,6 +3,7 @@ const { toClient } = require("../utils/prismaHelper");
 const fraud = require("../services/fraudModerationService");
 const { sendCompanySubmittedEmail } = require("../utils/emailService");
 const { COMPANY_STAGES } = require("../utils/searchLexicon");
+const { deactivateExpiredAccounts } = require("../services/accountAccessService");
 
 const ORGANIZATION_TYPES = new Set([
     "Sole proprietorship",
@@ -151,10 +152,11 @@ const requireEmployer = (req, res) => {
 // @access  Public
 const getCompanies = async (req, res) => {
     try {
+        await deactivateExpiredAccounts();
         const { industry, hq, stage, search } = req.query;
 
         // 1. Fetch registered Company profiles
-        const whereClause = {};
+        const whereClause = { user: { isActive: true } };
         if (industry) whereClause.industry = { contains: industry, mode: "insensitive" };
         if (hq) whereClause.hq = { contains: hq, mode: "insensitive" };
         if (stage) whereClause.stage = { contains: stage, mode: "insensitive" };
@@ -182,7 +184,10 @@ const getCompanies = async (req, res) => {
                     },
                 },
                 user: {
-                    select: { id: true, name: true, email: true, avatar: true, employerOnboardingComplete: true },
+                    select: {
+                        id: true, name: true, email: true, avatar: true,
+                        employerOnboardingComplete: true, isActive: true,
+                    },
                 },
             },
             orderBy: { createdAt: "desc" },
@@ -199,6 +204,7 @@ const getCompanies = async (req, res) => {
             where: {
                 role: { in: ["employer", "admin"] },
                 employerOnboardingComplete: true,
+                isActive: true,
                 id: { notIn: Array.from(existingCompanyUserIds) },
             },
             select: {
@@ -296,6 +302,7 @@ const getCompanies = async (req, res) => {
 // @access  Public
 const getCompanyById = async (req, res) => {
     try {
+        await deactivateExpiredAccounts();
         const { id } = req.params;
 
         // Check if query is for an employer-fallback ID
@@ -313,7 +320,8 @@ const getCompanyById = async (req, res) => {
             if (
                 !user ||
                 !["employer", "admin"].includes(user.role) ||
-                user.employerOnboardingComplete === false
+                user.employerOnboardingComplete === false ||
+                user.isActive === false
             ) {
                 return res.status(404).json({ message: "Company not found" });
             }
@@ -350,18 +358,26 @@ const getCompanyById = async (req, res) => {
         const company = await prisma.company.findFirst({
             where: {
                 OR: [{ id }, { userId: id }],
+                user: { isActive: true },
             },
             include: {
                 jobs: {
                     where: LIVE_JOB_WHERE,
                 },
                 user: {
-                    select: { id: true, name: true, email: true, avatar: true, employerOnboardingComplete: true },
+                    select: {
+                        id: true, name: true, email: true, avatar: true,
+                        employerOnboardingComplete: true, isActive: true,
+                    },
                 },
             },
         });
 
-        if (!company || company.user?.employerOnboardingComplete === false) {
+        if (
+            !company ||
+            company.user?.employerOnboardingComplete === false ||
+            company.user?.isActive === false
+        ) {
             return res.status(404).json({ message: "Company not found" });
         }
 

@@ -56,7 +56,10 @@ const getSavedJobs = async (req, res) => {
         }
 
         const savedJobs = await prisma.savedJob.findMany({
-            where: { jobSeekerId: req.user._id, job: { deletedAt: null } },
+            where: {
+                jobSeekerId: req.user._id,
+                job: { deletedAt: null, company: { isActive: true } },
+            },
             include: {
                 job: {
                     select: {

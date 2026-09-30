@@ -279,6 +279,7 @@ const trendingHandler = async (_req, res) => {
                     isClosed: false,
                     deletedAt: null,
                     moderationState: { not: "hidden" },
+                    company: { isActive: true },
                 },
                 select: { id: true, category: true, title: true },
             });
@@ -305,6 +306,7 @@ const trendingHandler = async (_req, res) => {
                 isClosed: false,
                 deletedAt: null,
                 moderationState: { not: "hidden" },
+                company: { isActive: true },
                 category: { not: null },
             },
             _count: { category: true },

@@ -219,6 +219,7 @@ const newJobsFor = async (subscription, now = new Date()) => {
 
     const where = {
         ...LIVE_JOB,
+        company: { isActive: true },
         createdAt: { gt: since },
         // An advert whose deadline has already passed is not an opportunity.
         AND: [{ OR: [{ deadline: null }, { deadline: { gte: now } }] }],

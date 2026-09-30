@@ -5,6 +5,7 @@ const { deriveJobFacets, deriveSeniority } = require("../utils/jobFacets");
 const { SENIORITY_LEVELS } = require("../utils/searchLexicon");
 const { validateQuestions } = require("../utils/screeningQuestions");
 const { recordTemplateUse } = require("../utils/jobTemplates");
+const { deactivateExpiredAccounts } = require("../services/accountAccessService");
 
 const SENIORITY_KEYS = new Set(SENIORITY_LEVELS.map((level) => level.key));
 
@@ -219,10 +220,12 @@ const createJob = async (req, res) => {
 // @access  Public
 const getCompanies = async (req, res) => {
     try {
+        await deactivateExpiredAccounts();
         const employers = await prisma.user.findMany({
             where: {
                 role: { in: ["employer", "admin"] },
                 employerOnboardingComplete: true,
+                isActive: true,
             },
             select: {
                 id: true,
@@ -284,11 +287,17 @@ const getCompanies = async (req, res) => {
 // @access  Public
 const getAllJobs = async (req, res) => {
     try {
+        await deactivateExpiredAccounts();
         const { keyword, location, category, type, page = 1, limit = 50 } = req.query;
 
         // `hidden` is set by moderation; `flagged` stays visible on purpose so a
         // false positive never silently removes a real advert.
-        const where = { isClosed: false, moderationState: { not: "hidden" }, deletedAt: null };
+        const where = {
+            isClosed: false,
+            moderationState: { not: "hidden" },
+            deletedAt: null,
+            company: { isActive: true },
+        };
 
         if (keyword) {
             where.OR = [
@@ -348,11 +357,15 @@ const getAllJobs = async (req, res) => {
 // @access  Public
 const getJobById = async (req, res) => {
     try {
+        await deactivateExpiredAccounts();
         const job = await prisma.job.findUnique({
             where: { id: req.params.id },
             include: {
                 company: {
-                    select: { id: true, name: true, companyName: true, companyLogo: true, companyDescription: true, email: true }
+                    select: {
+                        id: true, name: true, companyName: true, companyLogo: true,
+                        companyDescription: true, email: true, isActive: true,
+                    }
                 },
                 companyProfile: true,
             }
@@ -360,6 +373,11 @@ const getJobById = async (req, res) => {
 
         if (!job || job.deletedAt) {
             return res.status(404).json({ message: "Job not found" });
+        }
+
+        if (job.company?.isActive === false) {
+            const privileged = req.user?.role === "admin" || req.user?._id === job.companyId;
+            if (!privileged) return res.status(404).json({ message: "Job not found" });
         }
 
         // A hidden job stays reachable for the employer who owns it and for

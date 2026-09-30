@@ -107,9 +107,10 @@ const applyForJob = async (req, res) => {
     try {
         const job = await prisma.job.findUnique({
             where: { id: req.params.jobId },
+            include: { company: { select: { isActive: true } } },
         });
 
-        if (!job || job.deletedAt) {
+        if (!job || job.deletedAt || job.company?.isActive === false) {
             return res.status(404).json({ message: "Job not found" });
         }
 
@@ -763,10 +764,13 @@ const getApplicationReadiness = async (req, res) => {
 
         const job = await prisma.job.findUnique({
             where: { id: req.params.jobId },
-            select: { id: true, title: true, isClosed: true, deletedAt: true, screeningQuestions: true },
+            select: {
+                id: true, title: true, isClosed: true, deletedAt: true,
+                screeningQuestions: true, company: { select: { isActive: true } },
+            },
         });
 
-        if (!job || job.deletedAt) {
+        if (!job || job.deletedAt || job.company?.isActive === false) {
             return res.status(404).json({ message: "Job not found" });
         }
 
