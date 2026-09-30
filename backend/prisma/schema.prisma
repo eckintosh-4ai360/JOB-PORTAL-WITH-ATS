@@ -55,6 +55,7 @@ model User {
   careerPlan            CareerPlan?
   jobTemplates          JobTemplate[]         @relation("EmployerJobTemplates")
   jobAlerts             JobAlertSubscription?
+  builtResumes          BuiltResume[]
 
   @@index([email])
   @@index([clerkId])
@@ -235,7 +236,32 @@ model Document {
   resourceType String?
   uploadedAt   DateTime @default(now())
 
+  builtResume BuiltResume?
+
   @@index([userId])
+}
+
+// A CV written in the resume builder. `content` is the structured CV — see
+// utils/resumeContent for its shape — and the PDF is rendered from it on
+// demand, so changing the template never means retyping anything.
+// `documentId` is the copy saved to the candidate's document library, which
+// is what an application attaches; saving again refreshes that same entry.
+model BuiltResume {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title      String
+  // modern | classic | compact — all single-column, so every one parses.
+  template   String    @default("modern")
+  accent     String    @default("indigo")
+  content    Json
+  documentId String?   @unique
+  document   Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  savedAt    DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([userId, updatedAt])
 }
 
 // Company profile — rich employer-managed company page
