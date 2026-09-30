@@ -24,6 +24,7 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
 const { deactivateExpiredAccounts } = require("./accountAccessService");
+const { activeEmployerWhere } = require("./employerVisibility");
 const { parseQuery, emptyFilters, emptyBoosts } = require("../utils/queryParser");
 const { correctQuery } = require("./searchVocabulary");
 const {
@@ -141,7 +142,7 @@ const jobDocument = jobDocumentInline;
 const COMPANY_NAME = `coalesce(c."name", u."companyName", u."name", '')`;
 
 /** Live, publicly listable postings. Mirrors the rule in jobController. */
-const BASE_PREDICATE = `j."isClosed" = false AND j."moderationState" <> 'hidden' AND j."deletedAt" IS NULL AND u."isActive" = true`;
+const BASE_PREDICATE = `j."isClosed" = false AND j."moderationState" <> 'hidden' AND j."deletedAt" IS NULL AND u."isActive" = true AND (u."role" = 'admin' OR u."subscriptionRenews" = true OR u."subscriptionEndsAt" IS NULL OR u."subscriptionEndsAt" > NOW())`;
 
 const sqlString = (value) => `'${String(value).replace(/'/g, "''")}'`;
 
@@ -1009,7 +1010,7 @@ const hydrate = async (ranked) => {
 
     const ids = ranked.map((row) => row.id);
     const jobs = await prisma.job.findMany({
-        where: { id: { in: ids }, company: { isActive: true } },
+        where: { id: { in: ids }, company: activeEmployerWhere() },
         include: {
             company: {
                 select: { id: true, name: true, companyName: true, companyLogo: true, companyDescription: true },

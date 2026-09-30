@@ -4,6 +4,7 @@ const fraud = require("../services/fraudModerationService");
 const { sendCompanySubmittedEmail } = require("../utils/emailService");
 const { COMPANY_STAGES } = require("../utils/searchLexicon");
 const { deactivateExpiredAccounts } = require("../services/accountAccessService");
+const { activeEmployerWhere, employerIsVisible } = require("../services/employerVisibility");
 
 const ORGANIZATION_TYPES = new Set([
     "Sole proprietorship",
@@ -156,7 +157,7 @@ const getCompanies = async (req, res) => {
         const { industry, hq, stage, search } = req.query;
 
         // 1. Fetch registered Company profiles
-        const whereClause = { user: { isActive: true } };
+        const whereClause = { user: activeEmployerWhere() };
         if (industry) whereClause.industry = { contains: industry, mode: "insensitive" };
         if (hq) whereClause.hq = { contains: hq, mode: "insensitive" };
         if (stage) whereClause.stage = { contains: stage, mode: "insensitive" };
@@ -204,7 +205,7 @@ const getCompanies = async (req, res) => {
             where: {
                 role: { in: ["employer", "admin"] },
                 employerOnboardingComplete: true,
-                isActive: true,
+                ...activeEmployerWhere(),
                 id: { notIn: Array.from(existingCompanyUserIds) },
             },
             select: {
@@ -321,7 +322,7 @@ const getCompanyById = async (req, res) => {
                 !user ||
                 !["employer", "admin"].includes(user.role) ||
                 user.employerOnboardingComplete === false ||
-                user.isActive === false
+                !employerIsVisible(user)
             ) {
                 return res.status(404).json({ message: "Company not found" });
             }
@@ -358,7 +359,7 @@ const getCompanyById = async (req, res) => {
         const company = await prisma.company.findFirst({
             where: {
                 OR: [{ id }, { userId: id }],
-                user: { isActive: true },
+                user: activeEmployerWhere(),
             },
             include: {
                 jobs: {

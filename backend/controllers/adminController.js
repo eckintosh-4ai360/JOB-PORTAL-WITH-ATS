@@ -6,6 +6,7 @@ const {
     sendCompanyRejectedEmail,
 } = require("../utils/emailService");
 const { COMPANY_STAGES } = require("../utils/searchLexicon");
+const { resetVocabulary } = require("../services/searchVocabulary");
 const {
     EXPIRED_REASON,
     deactivateExpiredAccounts,
@@ -448,8 +449,8 @@ const updateAccountAccess = async (req, res) => {
         if (!hasActive && !hasRenews && !hasEndDate && !reason) {
             return res.status(400).json({ message: "No account access changes were supplied." });
         }
-        if (account.role === "admin" && hasActive && req.body.isActive === false) {
-            return res.status(422).json({ message: "Administrator accounts cannot be deactivated here." });
+        if (account.role === "admin") {
+            return res.status(422).json({ message: "Administrator account access cannot be changed here." });
         }
         if (account.id === req.user._id && hasActive && req.body.isActive === false) {
             return res.status(422).json({ message: "You cannot deactivate your own account." });
@@ -501,6 +502,8 @@ const updateAccountAccess = async (req, res) => {
                 _count: { select: { postedJobs: true, applications: true } },
             },
         });
+
+        resetVocabulary();
 
         res.status(200).json({
             message: updated.isActive

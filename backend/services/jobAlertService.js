@@ -15,6 +15,7 @@
 
 const crypto = require("crypto");
 const prisma = require("../config/prisma");
+const { activeEmployerWhere } = require("./employerVisibility");
 const {
     sendJobAlertDigestEmail,
     sendJobAlertsSubscribedEmail,
@@ -219,7 +220,7 @@ const newJobsFor = async (subscription, now = new Date()) => {
 
     const where = {
         ...LIVE_JOB,
-        company: { isActive: true },
+        company: activeEmployerWhere(now),
         createdAt: { gt: since },
         // An advert whose deadline has already passed is not an opportunity.
         AND: [{ OR: [{ deadline: null }, { deadline: { gte: now } }] }],

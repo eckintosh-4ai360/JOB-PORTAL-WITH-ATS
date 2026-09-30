@@ -1,4 +1,5 @@
 const prisma = require("../config/prisma");
+const { resetVocabulary } = require("./searchVocabulary");
 
 const ACCOUNT_INACTIVE_CODE = "ACCOUNT_INACTIVE";
 const EXPIRED_REASON = "Subscription ended without renewal";
@@ -36,8 +37,11 @@ const deactivateExpiredAccounts = async ({ force = false } = {}) => {
             deactivatedAt: now,
             deactivationReason: EXPIRED_REASON,
         },
-    }).finally(() => {
+    }).then((result) => {
         lastSweepAt = Date.now();
+        if (result.count > 0) resetVocabulary();
+        return result;
+    }).finally(() => {
         pendingSweep = null;
     });
 
@@ -50,15 +54,36 @@ const enforceAccountAccess = async (account) => {
     if (!subscriptionHasExpired(account)) return account;
 
     const deactivatedAt = new Date();
-    await prisma.user.update({
-        where: { id: account.id },
+    const result = await prisma.user.updateMany({
+        where: {
+            id: account.id,
+            role: { not: "admin" },
+            isActive: true,
+            subscriptionRenews: false,
+            subscriptionEndsAt: { lte: deactivatedAt },
+        },
         data: {
             isActive: false,
             deactivatedAt,
             deactivationReason: EXPIRED_REASON,
         },
-        select: { id: true },
     });
+    if (result.count === 0) {
+        // An administrator may have renewed the account between the read and
+        // this conditional write. Re-read its access fields before deciding.
+        const current = await prisma.user.findUnique({
+            where: { id: account.id },
+            select: {
+                isActive: true,
+                subscriptionEndsAt: true,
+                subscriptionRenews: true,
+                deactivatedAt: true,
+                deactivationReason: true,
+            },
+        });
+        return current ? { ...account, ...current } : { ...account, isActive: false };
+    }
+    resetVocabulary();
     return {
         ...account,
         isActive: false,

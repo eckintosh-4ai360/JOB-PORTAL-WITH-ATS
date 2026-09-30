@@ -6,6 +6,7 @@ const { SENIORITY_LEVELS } = require("../utils/searchLexicon");
 const { validateQuestions } = require("../utils/screeningQuestions");
 const { recordTemplateUse } = require("../utils/jobTemplates");
 const { deactivateExpiredAccounts } = require("../services/accountAccessService");
+const { activeEmployerWhere, employerIsVisible } = require("../services/employerVisibility");
 
 const SENIORITY_KEYS = new Set(SENIORITY_LEVELS.map((level) => level.key));
 
@@ -225,7 +226,7 @@ const getCompanies = async (req, res) => {
             where: {
                 role: { in: ["employer", "admin"] },
                 employerOnboardingComplete: true,
-                isActive: true,
+                ...activeEmployerWhere(),
             },
             select: {
                 id: true,
@@ -296,7 +297,7 @@ const getAllJobs = async (req, res) => {
             isClosed: false,
             moderationState: { not: "hidden" },
             deletedAt: null,
-            company: { isActive: true },
+            company: activeEmployerWhere(),
         };
 
         if (keyword) {
@@ -364,7 +365,8 @@ const getJobById = async (req, res) => {
                 company: {
                     select: {
                         id: true, name: true, companyName: true, companyLogo: true,
-                        companyDescription: true, email: true, isActive: true,
+                        companyDescription: true, email: true, role: true,
+                        isActive: true, subscriptionRenews: true, subscriptionEndsAt: true,
                     }
                 },
                 companyProfile: true,
@@ -375,7 +377,7 @@ const getJobById = async (req, res) => {
             return res.status(404).json({ message: "Job not found" });
         }
 
-        if (job.company?.isActive === false) {
+        if (!employerIsVisible(job.company)) {
             const privileged = req.user?.role === "admin" || req.user?._id === job.companyId;
             if (!privileged) return res.status(404).json({ message: "Job not found" });
         }
@@ -400,6 +402,10 @@ const getJobById = async (req, res) => {
         } else {
             clientJob.company.companyName = compName;
             clientJob.company.companyLogo = compLogo;
+            delete clientJob.company.role;
+            delete clientJob.company.isActive;
+            delete clientJob.company.subscriptionRenews;
+            delete clientJob.company.subscriptionEndsAt;
         }
 
         res.status(200).json(clientJob);

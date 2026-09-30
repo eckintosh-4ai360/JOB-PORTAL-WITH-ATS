@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const { toClient } = require("../utils/prismaHelper");
+const { activeEmployerWhere } = require("../services/employerVisibility");
 
 // @desc    Save a job
 // @route   POST /api/saved-jobs/:jobId
@@ -10,8 +11,8 @@ const saveJob = async (req, res) => {
             return res.status(403).json({ message: "Only jobseekers can save jobs" });
         }
 
-        const job = await prisma.job.findUnique({
-            where: { id: req.params.jobId },
+        const job = await prisma.job.findFirst({
+            where: { id: req.params.jobId, deletedAt: null, company: activeEmployerWhere() },
         });
 
         if (!job || job.deletedAt) {
@@ -58,7 +59,7 @@ const getSavedJobs = async (req, res) => {
         const savedJobs = await prisma.savedJob.findMany({
             where: {
                 jobSeekerId: req.user._id,
-                job: { deletedAt: null, company: { isActive: true } },
+                job: { deletedAt: null, company: activeEmployerWhere() },
             },
             include: {
                 job: {
@@ -117,7 +118,11 @@ const checkIfJobSaved = async (req, res) => {
             },
         });
 
-        res.status(200).json({ isSaved: !!savedJob });
+        const visibleJob = savedJob && await prisma.job.findFirst({
+            where: { id: req.params.jobId, deletedAt: null, company: activeEmployerWhere() },
+            select: { id: true },
+        });
+        res.status(200).json({ isSaved: Boolean(visibleJob) });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error", error: error.message });

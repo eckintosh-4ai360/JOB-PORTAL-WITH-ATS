@@ -1,4 +1,5 @@
 const prisma = require("../config/prisma");
+const { activeEmployerWhere } = require("../services/employerVisibility");
 const { toClient } = require("../utils/prismaHelper");
 const {
     LEGACY_STATUSES,
@@ -179,11 +180,17 @@ const getJobAnalytics = async (req, res) => {
 // @access  Public
 const getPlatformSummary = async (req, res) => {
     try {
-        const totalJobs = await prisma.job.count({ where: { isClosed: false, deletedAt: null } });
+        const visibleJobs = {
+            isClosed: false,
+            deletedAt: null,
+            moderationState: { not: "hidden" },
+            company: activeEmployerWhere(),
+        };
+        const totalJobs = await prisma.job.count({ where: visibleJobs });
         const totalApplications = await prisma.application.count();
         const companies = await prisma.job.groupBy({
             by: ["companyId"],
-            where: { deletedAt: null },
+            where: visibleJobs,
         });
         const totalEmployers = companies.length;
 

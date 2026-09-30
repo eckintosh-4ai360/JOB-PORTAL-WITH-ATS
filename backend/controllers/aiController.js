@@ -16,6 +16,7 @@ const { fingerprintInBackground } = require("../services/duplicateDetectionServi
 const groq = require("../utils/groqClient");
 const { analyzeResume } = require("../services/resumeAnalysisService");
 const matchService = require("../services/jobMatchService");
+const { activeEmployerWhere, employerIsVisible } = require("../services/employerVisibility");
 const {
     extractFromBuffer,
     extractFromUrl,
@@ -509,7 +510,11 @@ const getJobMatches = async (req, res) => {
         const refresh = req.query.refresh === "true";
         const profileKey = profileKeyFor(profile);
 
-        const where = { isClosed: false, deletedAt: null };
+        const where = {
+            isClosed: false,
+            deletedAt: null,
+            company: activeEmployerWhere(),
+        };
         if (req.query.keyword) {
             where.OR = [
                 { title: { contains: String(req.query.keyword), mode: "insensitive" } },
@@ -636,11 +641,18 @@ const getJobMatch = async (req, res) => {
         const job = await prisma.job.findUnique({
             where: { id: req.params.jobId },
             include: {
-                company: { select: { id: true, name: true, companyName: true, companyLogo: true } },
+                company: {
+                    select: {
+                        id: true, name: true, companyName: true, companyLogo: true,
+                        role: true, isActive: true, subscriptionRenews: true, subscriptionEndsAt: true,
+                    },
+                },
                 companyProfile: { select: { id: true, name: true, logo: true } },
             },
         });
-        if (!job || job.deletedAt) return res.status(404).json({ message: "Job not found" });
+        if (!job || job.deletedAt || !employerIsVisible(job.company)) {
+            return res.status(404).json({ message: "Job not found" });
+        }
 
         const { profile, resumeText } = await loadCandidateContext(req.user._id);
         if (!profile || (!profile.skills?.length && !profile.yearsOfExperience)) {

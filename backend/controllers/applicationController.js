@@ -20,6 +20,13 @@ const { fingerprintInBackground } = require("../services/duplicateDetectionServi
 const { moveApplication } = require("../services/stageMoveService");
 const { summarizeAttempts } = require("../services/shortlistService");
 const { statusFilter, buildApplicationWhere } = require("../utils/applicationFilters");
+const { enforceAccountAccess } = require("../services/accountAccessService");
+
+const employerAccessSelect = {
+    id: true, role: true, isActive: true,
+    subscriptionEndsAt: true, subscriptionRenews: true,
+    deactivatedAt: true, deactivationReason: true,
+};
 
 /** The employer's view: the stage id, with legacy status names translated. */
 const normalizeApplication = (application) => {
@@ -107,10 +114,14 @@ const applyForJob = async (req, res) => {
     try {
         const job = await prisma.job.findUnique({
             where: { id: req.params.jobId },
-            include: { company: { select: { isActive: true } } },
+            include: { company: { select: employerAccessSelect } },
         });
 
-        if (!job || job.deletedAt || job.company?.isActive === false) {
+        if (!job || job.deletedAt || !job.company) {
+            return res.status(404).json({ message: "Job not found" });
+        }
+        const employer = await enforceAccountAccess(job.company);
+        if (employer.isActive === false) {
             return res.status(404).json({ message: "Job not found" });
         }
 
@@ -766,11 +777,15 @@ const getApplicationReadiness = async (req, res) => {
             where: { id: req.params.jobId },
             select: {
                 id: true, title: true, isClosed: true, deletedAt: true,
-                screeningQuestions: true, company: { select: { isActive: true } },
+                screeningQuestions: true, company: { select: employerAccessSelect },
             },
         });
 
-        if (!job || job.deletedAt || job.company?.isActive === false) {
+        if (!job || job.deletedAt || !job.company) {
+            return res.status(404).json({ message: "Job not found" });
+        }
+        const employer = await enforceAccountAccess(job.company);
+        if (employer.isActive === false) {
             return res.status(404).json({ message: "Job not found" });
         }
 

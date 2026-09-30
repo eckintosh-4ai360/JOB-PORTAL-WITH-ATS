@@ -12,6 +12,7 @@ const { suggest } = require("../services/searchVocabulary");
 const { parseQuery, hasUnresolvedIntent } = require("../utils/queryParser");
 const { readIntent, mergeIntent } = require("../services/searchIntentService");
 const prisma = require("../config/prisma");
+const { activeEmployerWhere } = require("../services/employerVisibility");
 const {
     WORK_MODELS,
     EMPLOYMENT_TYPES,
@@ -279,7 +280,7 @@ const trendingHandler = async (_req, res) => {
                     isClosed: false,
                     deletedAt: null,
                     moderationState: { not: "hidden" },
-                    company: { isActive: true },
+                    company: activeEmployerWhere(),
                 },
                 select: { id: true, category: true, title: true },
             });
@@ -306,7 +307,7 @@ const trendingHandler = async (_req, res) => {
                 isClosed: false,
                 deletedAt: null,
                 moderationState: { not: "hidden" },
-                company: { isActive: true },
+                company: activeEmployerWhere(),
                 category: { not: null },
             },
             _count: { category: true },

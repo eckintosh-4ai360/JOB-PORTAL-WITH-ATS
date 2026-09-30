@@ -16,6 +16,7 @@
  */
 
 const prisma = require("../config/prisma");
+const { activeEmployerWhere } = require("./employerVisibility");
 const { normalize, STOP_WORDS } = require("../utils/searchLexicon");
 
 /** How long a built vocabulary is trusted before it is rebuilt. */
@@ -107,15 +108,22 @@ const addPhrase = (counts, phrases, value, weight = 1) => {
 const build = async () => {
     const counts = new Map();
     const phrases = new Map();
+    const now = new Date();
 
     const [jobs, companies] = await Promise.all([
         prisma.job.findMany({
-            where: { isClosed: false, deletedAt: null, moderationState: { not: "hidden" } },
+            where: {
+                isClosed: false,
+                deletedAt: null,
+                moderationState: { not: "hidden" },
+                company: activeEmployerWhere(now),
+            },
             select: { title: true, tags: true, searchSkills: true, location: true, category: true },
             orderBy: { createdAt: "desc" },
             take: SOURCE_LIMIT,
         }),
         prisma.company.findMany({
+            where: { user: activeEmployerWhere(now) },
             select: { name: true, industry: true, hq: true },
             take: SOURCE_LIMIT,
         }),
