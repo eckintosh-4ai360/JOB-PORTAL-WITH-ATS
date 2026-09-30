@@ -17,7 +17,7 @@ const Navbar = () => {
 
   useEffect(() => {
     lastScrollY.current = window.scrollY;
-    setIsVisible(true);
+    const visibilityFrame = window.requestAnimationFrame(() => setIsVisible(true));
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -28,7 +28,10 @@ const Navbar = () => {
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.cancelAnimationFrame(visibilityFrame);
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, [location.pathname]);
 
   const publicNavLinks = [
