@@ -56,9 +56,11 @@ const Footer = () => {
           <div className="flex flex-col justify-between rounded-3xl border border-white/10 bg-white/[0.07] p-space-lg backdrop-blur-sm lg:col-span-5">
             <div>
               <Link to="/find-jobs" className="group flex w-fit items-center gap-3 focus:outline-none">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f4d68f] via-[#e79fbb] to-[#c471ec] text-[#39136d] shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition-transform group-hover:scale-105">
-                  <span className="material-symbols-outlined text-[25px]">work</span>
-                </div>
+                <img
+                  src="/spg-logo.png"
+                  alt="SPG JobPortal logo"
+                  className="h-12 w-[5.25rem] shrink-0 rounded-xl object-contain shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition-transform group-hover:scale-105"
+                />
                 <div>
                   <span className="block font-headline-md text-[1.35rem] font-bold leading-none tracking-tight text-white">SPG</span>
                   <span className="mt-1 block font-label-caps uppercase tracking-[0.18em] text-[#d9bdff]">Talent network</span>

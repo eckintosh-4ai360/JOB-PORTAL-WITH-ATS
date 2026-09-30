@@ -79,12 +79,12 @@ const Navbar = () => {
             to="/"
             className="group flex shrink-0 items-center gap-2.5 rounded-xl px-1 py-1 focus:outline-none"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#3a1b8a] via-[#6833c4] to-[#b26ee9] shadow-[0_5px_14px_rgba(90,45,180,0.35)] transition-transform group-hover:scale-105">
-              <span className="material-symbols-outlined text-on-primary text-[22px]">
-                work
-              </span>
-            </div>
-            <div className="flex flex-col">
+            <img
+              src="/spg-logo.png"
+              alt="SPG JobPortal logo"
+              className="h-10 w-14 shrink-0 rounded-xl object-contain shadow-[0_5px_14px_rgba(9,150,215,0.20)] transition-transform group-hover:scale-105"
+            />
+            <div className="hidden flex-col sm:flex">
               <span className="font-headline-md text-headline-md bg-gradient-to-r from-[#3d197f] via-primary to-[#b15adf] bg-clip-text font-bold leading-none tracking-tight text-transparent">
                 SPG
               </span>

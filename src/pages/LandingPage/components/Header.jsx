@@ -52,10 +52,10 @@ const Header = () => {
           >
             <img
               src="/spg-logo.png"
-              alt="SPG JobPortal"
-              className="h-9 w-9 shrink-0 object-contain"
+              alt="SPG JobPortal logo"
+              className="h-9 w-16 shrink-0 rounded-lg object-contain shadow-sm"
             />
-            <span className="truncate text-lg font-bold tracking-normal text-secondary">
+            <span className="hidden truncate text-lg font-bold tracking-normal text-secondary sm:inline">
               SPG JobPortal
             </span>
           </button>

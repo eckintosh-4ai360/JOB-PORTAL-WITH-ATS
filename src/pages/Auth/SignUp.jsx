@@ -235,9 +235,11 @@ const SignUp = () => {
 
         {/* Logo Header */}
         <div className="relative z-10 flex items-center space-x-3.5 cursor-pointer" onClick={() => navigate("/")}>
-          <div className="w-10 h-10 rounded-full border-2 border-white/80 flex items-center justify-center overflow-hidden shadow-sm">
-            <img src="/spg-logo.png" alt="SPG Logo" className="w-full h-full object-cover" />
-          </div>
+          <img
+            src="/spg-logo.png"
+            alt="SPG JobPortal logo"
+            className="h-10 w-[4.5rem] rounded-lg object-contain shadow-sm"
+          />
           <span className="text-2xl xl:text-[26px] font-bold text-white tracking-tight">
             SPG <span className="text-[#f97316]">JobPortal</span>
           </span>
