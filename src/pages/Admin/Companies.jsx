@@ -34,7 +34,7 @@ const STATE_TABS = [
 const accessDraftFrom = (user) => ({
   isActive: user?.isActive !== false,
   subscriptionEndsAt: user?.subscriptionEndsAt
-    ? moment(user.subscriptionEndsAt).format("YYYY-MM-DD")
+    ? moment.utc(user.subscriptionEndsAt).format("YYYY-MM-DD")
     : "",
   subscriptionRenews: user?.subscriptionRenews !== false,
   reason: user?.deactivationReason || "",
@@ -544,7 +544,7 @@ const Companies = () => {
                       {selected.user?.subscriptionEndsAt && (
                         <p className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-gray-400">
                           <CalendarClock className="h-3.5 w-3.5" />
-                          Current end date: {moment(selected.user.subscriptionEndsAt).format("D MMMM YYYY")}
+                          Current end date: {moment.utc(selected.user.subscriptionEndsAt).format("D MMMM YYYY")}
                         </p>
                       )}
 

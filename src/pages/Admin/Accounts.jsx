@@ -33,7 +33,7 @@ const TRUST_TONE = { suspended: "rejected", flagged: "pending", clear: "approved
 const draftFrom = (account) => ({
   isActive: account.isActive !== false,
   subscriptionEndsAt: account.subscriptionEndsAt
-    ? moment(account.subscriptionEndsAt).format("YYYY-MM-DD")
+    ? moment.utc(account.subscriptionEndsAt).format("YYYY-MM-DD")
     : "",
   subscriptionRenews: account.subscriptionRenews !== false,
   reason: account.deactivationReason || "",
@@ -218,7 +218,7 @@ const Accounts = () => {
                   </p>
                   <p className="mt-1 truncate text-[11px] text-gray-400 dark:text-gray-500">
                     {account.subscriptionEndsAt
-                      ? `Subscription ${account.subscriptionRenews === false ? "ends" : "renews"} ${moment(account.subscriptionEndsAt).format("D MMM YYYY")}`
+                      ? `Subscription ${account.subscriptionRenews === false ? "ends" : "renews"} ${moment.utc(account.subscriptionEndsAt).format("D MMM YYYY")}`
                       : "No subscription end date"}
                     {account.deactivationReason ? ` · ${account.deactivationReason}` : ""}
                   </p>
