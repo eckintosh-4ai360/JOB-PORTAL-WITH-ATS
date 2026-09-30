@@ -65,12 +65,7 @@ app.use('/api/job-alerts', jobAlertRoutes);
 app.use('/api/resume-builder', resumeBuilderRoutes);
 
 // Serve uploads folder.
-//
-// A link's `download` attribute is honoured only for same-origin URLs, and the
-// SPA runs on a different port — so "Download" silently degrades to "View"
-// unless the server declares the attachment itself. `?download=1` is how the
-// client asks for that. Without it a file is offered inline, which lets a PDF
-// open in the browser's viewer rather than landing in the downloads folder.
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
     setHeaders: (res, filePath) => {
         const disposition = res.req?.query?.download === "1" ? "attachment" : "inline";
@@ -83,10 +78,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 
 //Error handling for routes
 app.use((err, req, res, next) => {
-    // Upload rejections are user mistakes, not server faults. They are thrown
-    // by multer before any controller runs, so they bypass controller
-    // try/catch blocks and would otherwise surface as a bare 500 — which tells
-    // someone who picked the wrong file that the site is broken.
+
     if (err instanceof multer.MulterError) {
         const messages = {
             LIMIT_FILE_SIZE: "That file is too large. Please upload a file under 12MB.",
