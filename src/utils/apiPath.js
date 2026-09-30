@@ -171,6 +171,21 @@ export const API_PATHS = {
     DISPATCH: "/api/job-alerts/dispatch",
   },
 
+  // CVs written on the platform. PDF and CHECK render the CV on the server;
+  // SAVE_DOCUMENT stores that PDF in the document library.
+  RESUME_BUILDER: {
+    LIST: "/api/resume-builder",
+    CREATE: "/api/resume-builder",
+    ASSIST: "/api/resume-builder/assist",
+    GET: (id) => `/api/resume-builder/${id}`,
+    UPDATE: (id) => `/api/resume-builder/${id}`,
+    DELETE: (id) => `/api/resume-builder/${id}`,
+    DUPLICATE: (id) => `/api/resume-builder/${id}/duplicate`,
+    PDF: (id) => `/api/resume-builder/${id}/pdf`,
+    CHECK: (id) => `/api/resume-builder/${id}/check`,
+    SAVE_DOCUMENT: (id) => `/api/resume-builder/${id}/document`,
+  },
+
   EMAIL_TEMPLATES: {
     GET_ALL: "/api/email-templates",
     UPDATE: (key) => `/api/email-templates/${key}`,

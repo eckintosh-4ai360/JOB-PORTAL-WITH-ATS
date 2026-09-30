@@ -25,6 +25,8 @@ import SSOCallback from "./pages/Auth/SSOCallback";
 // Protected Candidate & Employer Pages
 import UserProfile from "./pages/Candidate/UserProfile";
 import MyDocuments from "./pages/Candidate/MyDocuments";
+import ResumeBuilder from "./pages/ResumeBuilder/ResumeBuilder";
+import ResumeEditor from "./pages/ResumeBuilder/ResumeEditor";
 import EmployerDashboard from "./pages/Employer/EmployerDashboard";
 import Applicants from "./pages/Employer/Applicants";
 import ManageJobs from "./pages/Employer/ManageJobs";
@@ -77,6 +79,8 @@ export const App = () => {
             <Route path="/applications" element={<MyDocuments />} />
             <Route path="/my-assessments" element={<MyAssessments />} />
             <Route path="/assessment/:attemptId" element={<TakeAssessment />} />
+            <Route path="/resume-builder" element={<ResumeBuilder />} />
+            <Route path="/resume-builder/:id" element={<ResumeEditor />} />
             {/* Keep old bookmarks and shared links working while directing the
                 candidate to the single applications-and-documents hub. */}
             <Route path="/documents" element={<Navigate to="/applications" replace />} />
