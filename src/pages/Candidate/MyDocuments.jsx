@@ -1234,6 +1234,26 @@ export const MyDocuments = () => {
                   Supported formats: PDF, DOC, DOCX, JPEG, PNG · Maximum file size: 10 MB
                 </p>
               </div>
+
+              <Link
+                to="/resume-builder"
+                className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-border-default bg-surface-container-low px-4 py-3 transition-colors hover:border-primary"
+              >
+                <span className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-[20px] text-primary" aria-hidden="true">
+                    edit_document
+                  </span>
+                  <span>
+                    <span className="block text-xs font-bold text-text-primary">No CV to upload?</span>
+                    <span className="block text-[11px] text-text-muted">
+                      Build a professional, ATS-friendly one with the CV Builder and save it here.
+                    </span>
+                  </span>
+                </span>
+                <span className="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">
+                  arrow_forward
+                </span>
+              </Link>
             </div>
 
             {/* Uploaded Documents List */}

@@ -283,6 +283,16 @@ const Navbar = () => {
                         Applications &amp; Docs
                       </Link>
                       <Link
+                        to="/resume-builder"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 font-label-md text-text-secondary hover:text-primary hover:bg-surface-container-low transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          edit_document
+                        </span>
+                        CV Builder
+                      </Link>
+                      <Link
                         to="/my-assessments"
                         onClick={() => setUserDropdownOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2.5 font-label-md text-text-secondary hover:text-primary hover:bg-surface-container-low transition-colors"

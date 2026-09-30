@@ -249,6 +249,18 @@ const ResumeUploadPanel = ({
         </p>
       )}
 
+      <p className="flex items-center gap-1.5 text-[12px] leading-5 text-text-muted">
+        <span className="material-symbols-outlined text-[16px] text-primary" aria-hidden="true">
+          edit_document
+        </span>
+        <span>
+          No CV yet, or want a cleaner one?{" "}
+          <Link to="/resume-builder" className="font-bold text-primary hover:underline">
+            Build one with the CV Builder
+          </Link>
+        </span>
+      </p>
+
       {authPromptOpen && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-space-md"
