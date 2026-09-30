@@ -9,47 +9,57 @@ datasource db {
 }
 
 model User {
-  id                 String        @id @default(cuid())
-  name               String
-  email              String        @unique
-  password           String?
-  role               String        @default("jobseeker")
-  avatar             String?
-  resume             String?
-  clerkId            String?       @unique
-  companyName        String?
-  companyDescription String?
-  companyLogo        String?
+  id                            String    @id @default(cuid())
+  name                          String
+  email                         String    @unique
+  password                      String?
+  role                          String    @default("jobseeker")
+  avatar                        String?
+  resume                        String?
+  clerkId                       String?   @unique
+  companyName                   String?
+  companyDescription            String?
+  companyLogo                   String?
   // Existing employer accounts default to complete so this onboarding launch
   // only gates employers created after it is introduced.
   employerOnboardingComplete    Boolean   @default(true)
   employerOnboardingCompletedAt DateTime?
   // clear | flagged | suspended. A suspended recruiter cannot publish jobs.
-  trustState         String        @default("clear")
-  trustReviewedAt    DateTime?
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  trustState                    String    @default("clear")
+  trustReviewedAt               DateTime?
+  // Platform access and subscription lifecycle. `isActive` is the enforced
+  // switch; a non-renewing subscription is changed to inactive once its end
+  // date passes. Admins can also deactivate an account immediately.
+  isActive                      Boolean   @default(true)
+  subscriptionEndsAt            DateTime?
+  subscriptionRenews            Boolean   @default(true)
+  deactivatedAt                 DateTime?
+  deactivationReason            String?
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
 
-  documents          Document[]
-  postedJobs         Job[]         @relation("EmployerJobs")
-  applications       Application[] @relation("ApplicantApplications")
-  savedJobs          SavedJob[]
-  analytics          Analytics?
-  company            Company?
-  candidateProfile   CandidateProfile?
-  resumeAnalyses     ResumeAnalysis[]
-  jobMatches         JobMatch[]
-  hiringPipeline     HiringPipeline?
-  talentInvitesSent     TalentInvite[] @relation("TalentInvitesSent")
-  talentInvitesReceived TalentInvite[] @relation("TalentInvitesReceived")
-  assessments           Assessment[]   @relation("EmployerAssessments")
-  assessmentAttempts    AssessmentAttempt[] @relation("CandidateAssessmentAttempts")
+  documents             Document[]
+  postedJobs            Job[]                 @relation("EmployerJobs")
+  applications          Application[]         @relation("ApplicantApplications")
+  savedJobs             SavedJob[]
+  analytics             Analytics?
+  company               Company?
+  candidateProfile      CandidateProfile?
+  resumeAnalyses        ResumeAnalysis[]
+  jobMatches            JobMatch[]
+  hiringPipeline        HiringPipeline?
+  talentInvitesSent     TalentInvite[]        @relation("TalentInvitesSent")
+  talentInvitesReceived TalentInvite[]        @relation("TalentInvitesReceived")
+  assessments           Assessment[]          @relation("EmployerAssessments")
+  assessmentAttempts    AssessmentAttempt[]   @relation("CandidateAssessmentAttempts")
   careerPlan            CareerPlan?
-  jobTemplates          JobTemplate[]  @relation("EmployerJobTemplates")
+  jobTemplates          JobTemplate[]         @relation("EmployerJobTemplates")
   jobAlerts             JobAlertSubscription?
 
   @@index([email])
   @@index([clerkId])
+  @@index([isActive])
+  @@index([subscriptionEndsAt])
 }
 
 // Matching profile for a candidate. Splits cleanly in two:
@@ -57,25 +67,25 @@ model User {
 //  - a snapshot of skills/experience lifted from their latest resume analysis
 // Both feed utils/matchEngine so a match can be scored without re-parsing a CV.
 model CandidateProfile {
-  id                    String   @id @default(cuid())
-  userId                String   @unique
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Candidate-controlled preferences
-  location              String?
-  expectedSalaryMin     Float?
-  expectedSalaryMax     Float?
-  salaryCurrency        String   @default("GH₵")
-  salaryPeriod          String   @default("month")
-  willingToRelocate     Boolean  @default(false)
-  openToRemote          Boolean  @default(true)
-  targetRoles           String[] @default([])
+  location          String?
+  expectedSalaryMin Float?
+  expectedSalaryMax Float?
+  salaryCurrency    String   @default("GH₵")
+  salaryPeriod      String   @default("month")
+  willingToRelocate Boolean  @default(false)
+  openToRemote      Boolean  @default(true)
+  targetRoles       String[] @default([])
 
   // Snapshot from the most recent resume analysis
-  skills                String[] @default([])
-  softSkills            String[] @default([])
-  certifications        String[] @default([])
-  industries            String[] @default([])
+  skills                String[]  @default([])
+  softSkills            String[]  @default([])
+  certifications        String[]  @default([])
+  industries            String[]  @default([])
   yearsOfExperience     Float?
   highestEducationLevel String?
   seniority             String?
@@ -85,11 +95,11 @@ model CandidateProfile {
 
   // Opt-in visibility to verified employers in Talent Search. Off by default:
   // applying to one employer never makes a candidate findable by the rest.
-  discoverable          Boolean  @default(false)
-  discoverableAt        DateTime?
+  discoverable   Boolean   @default(false)
+  discoverableAt DateTime?
 
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([discoverable])
 }
@@ -97,23 +107,23 @@ model CandidateProfile {
 // One stored AI resume analysis. Keyed by a hash of the extracted text so an
 // unchanged resume is never billed to Groq twice.
 model ResumeAnalysis {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  fileName      String?
-  resumeUrl     String?
-  resumeHash    String
-  targetRole    String?
-  targetJobId   String?
+  id          String  @id @default(cuid())
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName    String?
+  resumeUrl   String?
+  resumeHash  String
+  targetRole  String?
+  targetJobId String?
 
-  overallScore  Int
-  atsScore      Int
-  qualityScore  Int
-  grammarScore  Int?
+  overallScore Int
+  atsScore     Int
+  qualityScore Int
+  grammarScore Int?
 
-  wordCount     Int?
-  pageCount     Int?
-  multiColumn   Boolean  @default(false)
+  wordCount   Int?
+  pageCount   Int?
+  multiColumn Boolean @default(false)
 
   // Full payloads kept as JSON — the shapes are presentation detail and
   // querying inside them is never needed.
@@ -128,10 +138,10 @@ model ResumeAnalysis {
   keywords      Json?
   redFlags      Json?
 
-  resumeText    String?
-  model         String?
-  degraded      Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  resumeText String?
+  model      String?
+  degraded   Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
   @@index([userId, createdAt])
   @@index([userId, resumeHash])
@@ -140,9 +150,9 @@ model ResumeAnalysis {
 // AI-extracted structured requirements for a job posting. Cached per job and
 // re-extracted only when the posting text changes (tracked by sourceHash).
 model JobRequirementSpec {
-  id                     String   @id @default(cuid())
-  jobId                  String   @unique
-  job                    Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  id    String @id @default(cuid())
+  jobId String @unique
+  job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   requiredSkills         String[] @default([])
   preferredSkills        String[] @default([])
@@ -155,18 +165,18 @@ model JobRequirementSpec {
   sourceHash             String
   model                  String?
 
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // A candidate-facing match score for one job. Cached so listing pages are fast
 // and invalidated when the candidate's resume analysis changes.
 model JobMatch {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  jobId         String
-  job           Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId  String
+  job    Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   matchScore    Int
   verdict       String
@@ -179,8 +189,8 @@ model JobMatch {
   profileKey    String?
   model         String?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, jobId])
   @@index([userId, matchScore])
@@ -190,10 +200,10 @@ model JobMatch {
 // An employer-facing score for one application, so a recruiter can rank a
 // shortlist by fit instead of by arrival order.
 model ApplicantScore {
-  id             String   @id @default(cuid())
-  applicationId  String   @unique
-  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  jobId          String
+  id            String      @id @default(cuid())
+  applicationId String      @unique
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  jobId         String
 
   matchScore     Int
   verdict        String
@@ -206,8 +216,8 @@ model ApplicantScore {
   model          String?
   degraded       Boolean  @default(false)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([jobId, matchScore])
 }
@@ -230,41 +240,41 @@ model Document {
 
 // Company profile — rich employer-managed company page
 model Company {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  logo        String?
-  cover       String?
-  description String?
-  hq          String?
-  stage       String?
-  employees   String?
-  industry    String?
-  website     String?
-  legalName   String?
-  organizationType String?
-  registrationNumber String?
-  contactName String?
-  contactTitle String?
-  contactEmail String?
-  contactPhone String?
-  authorityConfirmedAt DateTime?
-  termsAcceptedAt DateTime?
+  id                     String    @id @default(cuid())
+  userId                 String    @unique
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                   String
+  logo                   String?
+  cover                  String?
+  description            String?
+  hq                     String?
+  stage                  String?
+  employees              String?
+  industry               String?
+  website                String?
+  legalName              String?
+  organizationType       String?
+  registrationNumber     String?
+  contactName            String?
+  contactTitle           String?
+  contactEmail           String?
+  contactPhone           String?
+  authorityConfirmedAt   DateTime?
+  termsAcceptedAt        DateTime?
   hiringPolicyAcceptedAt DateTime?
-  rating      Float?   @default(0)
+  rating                 Float?    @default(0)
   // The public badge. Driven by `approvalState` rather than set by hand — a
   // company is "verified" precisely because a reviewer approved it.
-  verified    Boolean  @default(false)
+  verified               Boolean   @default(false)
 
   // pending | approved | rejected. A company must be approved before it can
   // publish jobs. Unapproved companies still appear in the public directory,
   // they simply carry no badge and cannot post. New rows start pending; the
   // companies that existed before review was introduced were approved in bulk.
-  approvalState      String    @default("pending")
-  approvalNote       String?
-  reviewedAt         DateTime?
-  reviewedById       String?
+  approvalState        String    @default("pending")
+  approvalNote         String?
+  reviewedAt           DateTime?
+  reviewedById         String?
   submittedForReviewAt DateTime?
   // Business registration certificate, supplied at onboarding and the main
   // thing a reviewer is looking at.
@@ -272,19 +282,19 @@ model Company {
   registrationDocName  String?
   // clear | flagged | rejected — the automated trust signal, distinct from the
   // editorial `verified` badge above.
-  trustState  String   @default("clear")
-  stack       String[]
-  perks       String[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  jobs        Job[]    @relation("CompanyJobs")
+  trustState           String    @default("clear")
+  stack                String[]
+  perks                String[]
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  jobs                 Job[]     @relation("CompanyJobs")
 
   @@index([industry])
   @@index([approvalState])
 }
 
 model Job {
-  id               String        @id @default(cuid())
+  id               String    @id @default(cuid())
   title            String
   description      String
   requirements     String
@@ -293,18 +303,18 @@ model Job {
   longitude        Float?
   category         String?
   customCategory   String?
-  tags             String[]      @default([])
+  tags             String[]  @default([])
   type             String
   workModel        String?
   customJobType    String?
   deadline         DateTime?
   companyId        String
-  company          User          @relation("EmployerJobs", fields: [companyId], references: [id], onDelete: Cascade)
+  company          User      @relation("EmployerJobs", fields: [companyId], references: [id], onDelete: Cascade)
   companyProfileId String?
-  companyProfile   Company?      @relation("CompanyJobs", fields: [companyProfileId], references: [id], onDelete: SetNull)
+  companyProfile   Company?  @relation("CompanyJobs", fields: [companyProfileId], references: [id], onDelete: SetNull)
   salaryMin        Float?
   salaryMax        Float?
-  isClosed         Boolean       @default(false)
+  isClosed         Boolean   @default(false)
   // Soft delete. A removed advert keeps its row so applications, saved jobs
   // and match history still point at something real — a candidate's record of
   // applying should outlive the employer taking the advert down. `null` means
@@ -312,7 +322,7 @@ model Job {
   deletedAt        DateTime?
   // clear | flagged | hidden. Only `hidden` removes a job from public listings;
   // `flagged` stays live so a false positive never silently kills a real advert.
-  moderationState  String        @default("clear")
+  moderationState  String    @default("clear")
   contentHash      String?
   duplicateOfId    String?
   jobType          String?
@@ -324,25 +334,25 @@ model Job {
   // and fast if the value it filters on is a column. Existing rows are
   // filled in by scripts/backfillJobFacets.js.
   // intern | entry | mid | senior | lead | executive
-  seniority        String?
+  seniority      String?
   // secondary | certificate | diploma | bachelor | master | doctorate
-  educationLevel   String?
+  educationLevel String?
   // Canonical skills, so a skills filter never depends on free text.
-  searchSkills     String[]      @default([])
+  searchSkills   String[] @default([])
 
   // Employer-specific questions asked when applying — see
   // utils/screeningQuestions for the shape. Null or empty means none.
   screeningQuestions Json?
 
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  applications     Application[]
-  savedBy          SavedJob[]
-  requirementSpec  JobRequirementSpec?
-  matches          JobMatch[]
-  talentInvites    TalentInvite[]
-  assessments      Assessment[]
+  applications    Application[]
+  savedBy         SavedJob[]
+  requirementSpec JobRequirementSpec?
+  matches         JobMatch[]
+  talentInvites   TalentInvite[]
+  assessments     Assessment[]
 
   @@index([companyId])
   @@index([companyProfileId])
@@ -388,18 +398,18 @@ model Application {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  aiScore           ApplicantScore?
-  interviewGuide    InterviewGuide?
+  aiScore            ApplicantScore?
+  interviewGuide     InterviewGuide?
   assessmentAttempts AssessmentAttempt[]
 
-  @@index([jobId])
-  @@index([applicantId])
-  @@index([jobId, shortlistedAt])
   // One application per job per account. Postgres treats NULLs as distinct, so
   // this constrains signed-in applicants only and leaves guest rows (which
   // carry no applicantId) alone. The controller's own check gives the friendly
   // message; this is what makes the rule true when two submits race.
   @@unique([jobId, applicantId])
+  @@index([jobId])
+  @@index([applicantId])
+  @@index([jobId, shortlistedAt])
 }
 
 // The stages an employer moves applications through. One per employer; an
@@ -453,23 +463,23 @@ model TalentInvite {
 // sent, so editing an assessment never changes a test someone is taking.
 // See utils/assessmentQuestions for the question shape.
 model Assessment {
-  id               String   @id @default(cuid())
+  id               String              @id @default(cuid())
   employerId       String
-  employer         User     @relation("EmployerAssessments", fields: [employerId], references: [id], onDelete: Cascade)
+  employer         User                @relation("EmployerAssessments", fields: [employerId], references: [id], onDelete: Cascade)
   // Optional: an assessment tied to a job is sent to that job's applicants.
   jobId            String?
-  job              Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  job              Job?                @relation(fields: [jobId], references: [id], onDelete: SetNull)
   title            String
   instructions     String?
   questions        Json
   // null means untimed.
   timeLimitMinutes Int?
-  passMark         Int      @default(60)
-  defaultDueDays   Int      @default(7)
+  passMark         Int                 @default(60)
+  defaultDueDays   Int                 @default(7)
   // draft | active | archived
-  status           String   @default("draft")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  status           String              @default("draft")
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
   attempts         AssessmentAttempt[]
 
   @@index([employerId, status])
@@ -538,7 +548,7 @@ model DuplicateReview {
   id          String   @id @default(cuid())
   scope       String
   pairKey     String
-  decision    String   // same | distinct
+  decision    String // same | distinct
   note        String?
   decidedById String
   createdAt   DateTime @default(now())
@@ -601,34 +611,34 @@ model JobTemplate {
 // `unsubscribedAt == null` means "yes, send me these", a row with it set means
 // "no". That is what stops the platform asking the same person again.
 model JobAlertSubscription {
-  id               String    @id @default(cuid())
-  email            String    @unique
-  userId           String?   @unique
-  user             User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name             String?
+  id     String  @id @default(cuid())
+  email  String  @unique
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String?
 
   // daily | weekly — how often a digest may go out.
-  frequency        String    @default("weekly")
+  frequency  String   @default("weekly")
   // What they asked to hear about. Empty means everything, which is the
   // default: the new roles from every company on the platform.
-  categories       String[]  @default([])
-  locations        String[]  @default([])
+  categories String[] @default([])
+  locations  String[] @default([])
   // signup | footer | settings | prompt — where the consent was given.
-  source           String    @default("signup")
+  source     String   @default("signup")
 
   // Leaving takes no login: every digest carries this token in its footer, so
   // one click is enough. Someone who cannot unsubscribe was never subscribed.
   unsubscribeToken String    @unique
   unsubscribedAt   DateTime?
 
-  lastSentAt       DateTime?
+  lastSentAt DateTime?
   // When the newest job already mailed was published. The next digest starts
   // from here, so no role is sent twice and none is silently skipped.
-  lastJobAt        DateTime?
-  sentCount        Int       @default(0)
+  lastJobAt  DateTime?
+  sentCount  Int       @default(0)
 
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([unsubscribedAt, frequency])
 }
@@ -720,16 +730,16 @@ model SalarySubmission {
 
 model RiskAssessment {
   id           String   @id @default(cuid())
-  entityType   String   // company | job | user | resume
+  entityType   String // company | job | user | resume
   entityId     String
-  category     String   // fake_company | duplicate_job | spam_recruiter | fake_resume
-  score        Int      // final 0-100 risk after any AI adjustment
-  band         String   // low | medium | high | critical
-  ruleScore    Int      // deterministic score before AI
+  category     String // fake_company | duplicate_job | spam_recruiter | fake_resume
+  score        Int // final 0-100 risk after any AI adjustment
+  band         String // low | medium | high | critical
+  ruleScore    Int // deterministic score before AI
   aiAdjustment Int      @default(0)
   aiVerdict    String?
   aiConfidence Int?
-  signals      Json     // the deterministic rule hits behind ruleScore
+  signals      Json // the deterministic rule hits behind ruleScore
   aiReasons    Json?
   model        String?
   degraded     Boolean  @default(false) // true when AI was unavailable
@@ -742,25 +752,25 @@ model RiskAssessment {
 }
 
 model ModerationCase {
-  id           String    @id @default(cuid())
+  id           String          @id @default(cuid())
   entityType   String
   entityId     String
   category     String
   score        Int
   band         String
-  state        String    @default("open") // open | in_review | actioned | dismissed
+  state        String          @default("open") // open | in_review | actioned | dismissed
   summary      String
-  autoAction   String?   // what enforcement fired automatically, if any
-  assessmentId String?   @unique
+  autoAction   String? // what enforcement fired automatically, if any
+  assessmentId String?         @unique
   assessment   RiskAssessment? @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
-  decision     String?   // upheld | dismissed
+  decision     String? // upheld | dismissed
   decisionNote String?
   decidedById  String?
   decidedAt    DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
-  events       ModerationEvent[]
+  events ModerationEvent[]
 
   @@index([state, band, createdAt])
   @@index([entityType, entityId, state])

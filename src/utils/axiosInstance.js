@@ -31,6 +31,15 @@ axiosInstance.interceptors.response.use(
         const isLoginRequest = error.config?.url?.includes("/api/auth/login");
         const isClerkAuthRequest = error.config?.url?.includes("/api/auth/clerk");
         const isGuestApply = error.config?.method === "post" && error.config?.url?.includes("/api/applications/");
+        const isInactiveAccount =
+            error.response?.status === 403 && error.response?.data?.code === "ACCOUNT_INACTIVE";
+        if (isInactiveAccount) {
+            localStorage.removeItem("token")
+            localStorage.removeItem("user")
+            if (!isLoginRequest && !isClerkAuthRequest) {
+                window.location.href = "/login"
+            }
+        }
         if (error.response && error.response.status === 401 && !isLoginRequest && !isClerkAuthRequest && !isGuestApply) {
             localStorage.removeItem("token")
             localStorage.removeItem("user")

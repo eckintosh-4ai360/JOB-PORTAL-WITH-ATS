@@ -5,6 +5,10 @@ const { createClerkClient, verifyToken } = require("@clerk/backend");
 const { sendAccountCreatedEmail } = require("../utils/emailService");
 const { recordConsent } = require("../services/jobAlertService");
 const { toClient } = require("../utils/prismaHelper");
+const {
+    enforceAccountAccess,
+    inactiveAccountPayload,
+} = require("../services/accountAccessService");
 
 const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 
@@ -22,6 +26,9 @@ const toAuthUser = (user) => toClient({
     // employers are explicitly created with `false` below.
     employerOnboardingComplete: user.employerOnboardingComplete !== false,
     employerOnboardingCompletedAt: user.employerOnboardingCompletedAt || null,
+    isActive: user.isActive !== false,
+    subscriptionEndsAt: user.subscriptionEndsAt || null,
+    subscriptionRenews: user.subscriptionRenews !== false,
 });
 
 //Generate Token
@@ -103,7 +110,7 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     try{
         const {email, password} = req.body;
-        const user = await prisma.user.findUnique({ where: { email } });
+        let user = await prisma.user.findUnique({ where: { email } });
 
         if(!user || !user.password) {
             return res.status(401).json({message: "Invalid credentials"});
@@ -112,6 +119,11 @@ exports.login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({message: "Invalid credentials"});
+        }
+
+        user = await enforceAccountAccess(user);
+        if (user.isActive === false) {
+            return res.status(403).json(inactiveAccountPayload(user));
         }
 
         res.json({
@@ -217,6 +229,11 @@ exports.clerkAuth = async (req, res) => {
                 role: user.role,
             });
             recordJobAlertConsent(user, jobAlerts);
+        }
+
+        user = await enforceAccountAccess(user);
+        if (user.isActive === false) {
+            return res.status(403).json(inactiveAccountPayload(user));
         }
 
         res.json({

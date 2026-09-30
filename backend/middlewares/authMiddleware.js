@@ -1,5 +1,19 @@
 const jwt = require("jsonwebtoken");
 const prisma = require("../config/prisma");
+const {
+    enforceAccountAccess,
+    inactiveAccountPayload,
+} = require("../services/accountAccessService");
+
+const accountSelect = {
+    id: true, name: true, email: true, role: true,
+    avatar: true, resume: true, clerkId: true,
+    companyName: true, companyDescription: true, companyLogo: true,
+    employerOnboardingComplete: true, employerOnboardingCompletedAt: true,
+    trustState: true, isActive: true, subscriptionEndsAt: true,
+    subscriptionRenews: true, deactivatedAt: true, deactivationReason: true,
+    createdAt: true, updatedAt: true,
+};
 
 // Middleware to protect route 
 const protect = async (req, res, next) => {
@@ -10,18 +24,16 @@ const protect = async (req, res, next) => {
             token = token.split(" ")[1];          //Exttract the token
 
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            const user = await prisma.user.findUnique({
+            let user = await prisma.user.findUnique({
                 where: { id: decoded.id },
-                select: {
-                    id: true, name: true, email: true, role: true,
-                    avatar: true, resume: true, clerkId: true,
-                    companyName: true, companyDescription: true, companyLogo: true,
-                    employerOnboardingComplete: true, employerOnboardingCompletedAt: true,
-                    createdAt: true, updatedAt: true,
-                }
+                select: accountSelect,
             });
             if (!user) {
                 return res.status(401).json({message: "Not authorized, user not found"});
+            }
+            user = await enforceAccountAccess(user);
+            if (user.isActive === false) {
+                return res.status(403).json(inactiveAccountPayload(user));
             }
             // Add _id alias for backward compatibility
             req.user = { ...user, _id: user.id };
@@ -44,17 +56,15 @@ const optionalAuth = async (req, res, next) => {
         if (token && token.startsWith("Bearer")) {
             token = token.split(" ")[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            const user = await prisma.user.findUnique({
+            let user = await prisma.user.findUnique({
                 where: { id: decoded.id },
-                select: {
-                    id: true, name: true, email: true, role: true,
-                    avatar: true, resume: true, clerkId: true,
-                    companyName: true, companyDescription: true, companyLogo: true,
-                    employerOnboardingComplete: true, employerOnboardingCompletedAt: true,
-                    createdAt: true, updatedAt: true,
-                }
+                select: accountSelect,
             });
             if (user) {
+                user = await enforceAccountAccess(user);
+                if (user.isActive === false) {
+                    return res.status(403).json(inactiveAccountPayload(user));
+                }
                 req.user = { ...user, _id: user.id };
             }
         }
